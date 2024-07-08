@@ -190,4 +190,9 @@ class PegawaiController extends Controller
         // Format tanggal ke format "01 Oktober 2034"
         return $pensiunDate->translatedFormat('d F Y');
     }
+    public function fetch()
+    {
+        $pegawais = Pegawai::select('pegawai.id', 'pegawai.nama')->get();
+        return response()->json($pegawais);
+    }
 }

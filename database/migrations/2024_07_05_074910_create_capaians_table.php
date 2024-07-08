@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jabatan', function (Blueprint $table) {
+        Schema::create('capaians', function (Blueprint $table) {
             $table->id();
-            $table->string('nama');
-            $table->integer('angka_kredit')->nullable();
+            $table->unsignedBigInteger('pegawai_id');
+            $table->string('tahun_bulan',7); // store month year in MM-YYYY
+            $table->integer('predikat');
             $table->timestamps();
         });
     }
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jabatan');
+        Schema::dropIfExists('capaians');
     }
 };

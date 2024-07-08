@@ -16,9 +16,9 @@ return new class extends Migration
             $table->string('nip_bps');
             $table->string('nip');
             $table->string('nama');
-            $table->string('jabatan');
+            $table->string('jabatan_id');
             $table->string('unit_kerja');
-            $table->string('pangkat_golongan_ruang');
+            $table->string('pangkat_golongan_ruang')->nullable();
             $table->string('angka_kredit_konvensional')->nullable();
             $table->string('angka_kredit_integrasi')->nullable();
             $table->string('predikat_kinerja')->nullable();

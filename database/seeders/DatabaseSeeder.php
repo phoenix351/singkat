@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             JabatanSeeder::class,
             UserSeeder::class,
             PegawaiSeeder::class,
+            PredikatSeeder::class,
+            CapaianSeeder::class
         ]);
     }
 }

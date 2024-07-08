@@ -34,7 +34,7 @@ class PegawaiImport implements ToModel, ToCollection
                 'nip_bps'           => $row[1],
                 'nip'           => $row[2],
                 'nama'          => $row[3],
-                'jabatan'       => $row[4],
+                'jabatan_id'       => $row[4],
                 "unit_kerja" => $row[5],
                 'pangkat_golongan_ruang'      => $row[6],
                 "angka_kredit_konvensional" => $row[7],
