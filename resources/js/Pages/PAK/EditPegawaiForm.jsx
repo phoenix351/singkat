@@ -101,7 +101,7 @@ const EditPegawaiForm = ({
                     />
                 </Form.Item>
                 <Form.Item
-                    name="jabatan"
+                    name="jabatan_id"
                     label="Jabatan"
                     rules={[{ required: true }]}
                     className="focus:border-none"

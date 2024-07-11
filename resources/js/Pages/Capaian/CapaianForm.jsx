@@ -2,81 +2,22 @@ import React, { useEffect, useState } from "react";
 import { Modal, Form, Input, Select, InputNumber, DatePicker, message } from "antd";
 import { router } from "@inertiajs/react";
 
-import calculateAkumulasiAk from "@/Utils/calculateAkumulasiAk";
 import axios from "axios";
 
 const disabledStyle = {
     color: "#000",
 };
 
-const validateNip = (_, value) => {
-    if (!value) {
-        return Promise.reject(new Error("NIP tidak boleh kosong."));
-    }
-    if (/^\d{18}$/.test(value)) {
-        return Promise.resolve();
-    }
-    return Promise.reject(new Error("NIP harus terdiri dari 18 angka."));
-};
 
-const validateNipBps = (_, value) => {
-    if (!value) {
-        return Promise.reject(new Error("NIP BPS tidak boleh kosong."));
-    }
-    if (/^\d+$/.test(value)) {
-        return Promise.resolve();
-    }
-    return Promise.reject(new Error("NIP BPS harus angka."));
-};
-
-const AddCapaianForm = ({ visible, onCancel }) => {
-    const [form] = Form.useForm();
+const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText }) => {
+    
     const [predikats, setPredikats] = useState([]);
     const [pegawais, setPegawais] = useState([]);
 
     // define message
     const [messageApi, contextHolder] = message.useMessage();
 
-    const handleValuesChange = (changedValues, allValues) => {
-        const akumulasi_ak = calculateAkumulasiAk(allValues);
-
-        form.setFieldsValue({ akumulasi_ak });
-    };
-
-    const handleSubmit = async (values) => {
-        try {
-            messageApi.open({
-                key: 'submit-form',
-                type: 'loading',
-                content: 'menambahkan capaian pegawai'
-            })
-            let tahun_bulan = new Date(values.tahun);
-            let preparedTahun = `${tahun_bulan.getFullYear()}`;
-            const data = { ...values };
-            data.tahun = preparedTahun;
-            // return 
-            const response = await axios.post('/capaian', data, { headers: { "Content-Type": "application/json" } })
-            messageApi.open({
-                key: 'submit-form',
-                type: 'success',
-                content: 'telah ditambahkan 1 capaian pegawai'
-            })
-
-        } catch (error) {
-            console.log({error});
-            messageApi.open(
-                {
-                    key: 'submit-form',
-                    type: 'error',
-                    content: error.response.data.error
-                }
-            )
-        } finally {
-            router.get('/kelola-ckp', {}, { preserveState: true })
-        }
-
-
-    };
+   
 
     const fetchPredikats = async () => {
         try {
@@ -91,7 +32,6 @@ const AddCapaianForm = ({ visible, onCancel }) => {
     const fetchPegawais = async () => {
         try {
             const { data } = await axios.get('/api/pegawais');
-            console.log({ data });
             setPegawais(data);
         } catch (error) {
             console.error('Error when get predikat data');
@@ -101,7 +41,9 @@ const AddCapaianForm = ({ visible, onCancel }) => {
 
     useEffect(() => {
         fetchPredikats();
-        fetchPegawais()
+        fetchPegawais();
+        // form.setFieldsValue(capaian);
+        // console.log({capaian});
     }, [])
 
 
@@ -109,26 +51,29 @@ const AddCapaianForm = ({ visible, onCancel }) => {
         <>
             {contextHolder}
             <Modal
-                title="Tambah CKP"
+                title={title}
                 open={visible}
                 onCancel={onCancel}
                 style={{ top: 20 }}
                 onOk={() => form.submit()}
                 width={600}
-                okText="Tambah"
+                okText={okText}
                 cancelText="Batal"
             >
                 <Form
                     form={form}
-                    onValuesChange={handleValuesChange}
+                    // onValuesChange={handleValuesChange}
                     name="control-hooks"
-                    onFinish={handleSubmit}
+                    onFinish={onFinish}
                     style={{ maxWidth: 600 }}
                     layout="vertical"
                     wrapperCol={{ span: 24 }}
                     autoComplete="off"
                     size="large"
                 >
+                    <Form.Item name="id" label="ID" className="focus:border-none" hidden>
+                        <Input />
+                    </Form.Item>
 
                     <Form.Item
                         name="pegawai_id"
@@ -144,7 +89,7 @@ const AddCapaianForm = ({ visible, onCancel }) => {
                         />
                     </Form.Item>
                     <Form.Item
-                        name="predikat"
+                        name="predikat_id"
                         label="Predikat Kinerja"
                         className="focus:border-none"
                     >
@@ -161,10 +106,10 @@ const AddCapaianForm = ({ visible, onCancel }) => {
                     </Form.Item>
                     <Form.Item name={"periode"} label="Periode Penilaian">
                         <Select placeholder="Pilih Periode" allowClear showSearch options={[
-                            {label:'Tahunan',value:'Tahunan'},
-                            {label:'Semester 1',value:'Semester 1'},
-                            {label:'Semester 2',value:'Semester 2'},
-                        ]}/>
+                            { label: 'Tahunan', value: 'Tahunan' },
+                            { label: 'Semester 1', value: 'Semester 1' },
+                            { label: 'Semester 2', value: 'Semester 2' },
+                        ]} />
                     </Form.Item>
 
                 </Form>
@@ -173,4 +118,4 @@ const AddCapaianForm = ({ visible, onCancel }) => {
     );
 };
 
-export default AddCapaianForm;
+export default CapaianForm;

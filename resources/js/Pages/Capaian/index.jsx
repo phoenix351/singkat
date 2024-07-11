@@ -1,5 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
 import Breadcrumb from "@/Components/Breadcrumb";
 import SearchInput from "@/Components/SearchInput";
@@ -7,15 +7,19 @@ import SearchInput from "@/Components/SearchInput";
 import Pagination from "@/Components/Pagination";
 
 import AddCapaianForm from "@/Pages/Capaian/AddCapaianForm";
-import EditCapaianForm from "@/Pages/Capaian/EditCapaianForm";
 import ExportModal from "@/Pages/Capaian/ExportModal";
 import Table from "./TableCapaian";
+import CapaianForm from "./CapaianForm";
+import dayjs from "dayjs";
+import { Form, message } from "antd";
 // import Alert from "@/Components/Alert";
 
 const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
+    const [editForm] = Form.useForm();
+    const [messageApi, contextHolder] = message.useMessage();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [currentcapaian, setCurrentcapaian] = useState(null);
+    const [currentCapaian, setCurrentCapaian] = useState(null);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     const { errors, flash } = usePage().props;
@@ -27,24 +31,74 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     const closeExportModal = () => setIsExportModalOpen(false);
 
     const openEditModal = (capaian) => {
-        setCurrentcapaian(capaian);
+        setCurrentCapaian(capaian);
         setIsEditModalOpen(true);
     };
 
     const closeEditModal = () => setIsEditModalOpen(false);
 
     const handleDelete = (id) => {
-        router.delete(`/kelola-pak/${id}`).then(() => {
+        router.delete(`/kelola-ckp/${id}`).then(() => {
             // Refresh the page or handle post-delete actions here
         });
     };
 
     const handleSearch = (query) => {
-        router.get("/kelola-pak", { search: query }, { replace: true });
+        const url = new URL(`http://localhost:8000/kelola-ckp`);
+
+
+        url.searchParams.set('search', query);
+        router.get(url, { replace: true });
     };
+    const handleSave = async (values) => {
+        try {
+            messageApi.open({
+                key: 'submit-form',
+                type: 'loading',
+                content: 'menyimpan capaian pegawai'
+            })
+            let tahun_bulan = new Date(values.tahun);
+            let preparedTahun = `${tahun_bulan.getFullYear()}`;
+            const data = { ...values };
+            data.tahun = preparedTahun;
+            // return 
+            const response = await axios.patch(`/capaian/${values.id}`, data, { headers: { "Content-Type": "application/json" } })
+            messageApi.open({
+                key: 'submit-form',
+                type: 'success',
+                content: 'perubahan telah disimpan'
+            })
+            router.get('/kelola-ckp', {}, { preserveState: true });
+            setIsEditModalOpen(false)
+
+        } catch (error) {
+            // console.log({ error });
+            messageApi.open(
+                {
+                    key: 'submit-form',
+                    type: 'error',
+                    content: error.response.data.error
+                }
+            )
+        } finally {
+            router.get('/kelola-ckp', {}, { preserveState: true })
+        }
+
+
+    };
+    useEffect(() => {
+        // console.log({currentCapaian});
+        if (!currentCapaian) return
+        let capaian = { ...currentCapaian };
+        console.log({ capaian });
+        capaian.tahun = dayjs(new Date(`${currentCapaian.tahun}-01-01`));
+        editForm.setFieldsValue(capaian);
+        // editForm.setFieldValue('id', currentCapaian.id);
+    }, [currentCapaian])
 
     return (
         <AuthenticatedLayout user={auth.user}>
+            {contextHolder}
             {flash.success && <Alert tipe="success" pesan={flash.success} />}
 
             {errors && Object.keys(errors).length > 0 && (
@@ -93,13 +147,13 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
 
                     {(auth.user.role === "admin" ||
                         auth.user.role === "super admin") && (
-                        <button
-                            onClick={openModal}
-                            className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
-                        >
-                            Tambah capaian
-                        </button>
-                    )}
+                            <button
+                                onClick={openModal}
+                                className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
+                            >
+                                Tambah capaian
+                            </button>
+                        )}
                 </div>
             </div>
 
@@ -130,7 +184,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 onCancel={closeModal}
                 role={auth.user.role}
             />
-            <EditCapaianForm
+            {/* <EditCapaianForm
                 jabatan={jabatan}
                 // capaian
                 unitKerja={unitKerja}
@@ -138,8 +192,17 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 onCancel={closeEditModal}
                 capaian={currentcapaian}
                 role={auth.user.role}
-            />
+            /> */}
 
+            <CapaianForm
+                visible={isEditModalOpen}
+                onCancel={closeEditModal}
+                capaian={currentCapaian}
+                onFinish={handleSave}
+                form={editForm}
+                title="Ubah CKP"
+                okText="Simpan"
+            />
             {/* Export Modal */}
             <ExportModal
                 visible={isExportModalOpen}

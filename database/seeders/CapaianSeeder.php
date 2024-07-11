@@ -14,11 +14,15 @@ class CapaianSeeder extends Seeder
     public function run(): void
     {
         $capaians = [
-            ['pegawai_id'=>5,'tahun_bulan'=>'202401','predikat'=>1],
-            ['pegawai_id'=>5,'tahun_bulan'=>'202402','predikat'=>2],
-            ['pegawai_id'=>5,'tahun_bulan'=>'202403','predikat'=>2],
-            ['pegawai_id'=>5,'tahun_bulan'=>'202404','predikat'=>1],
+            ['pegawai_id'=>5, 'periode'=>'semester 1', 'tahun'=>'2024','predikat_id'=>1],
+            ['pegawai_id'=>5, 'periode'=>'semester 2', 'tahun'=>'2024','predikat_id'=>2],
+            ['pegawai_id'=>5, 'periode'=>'tahunan', 'tahun'=>'2023','predikat_id'=>2],
+            ['pegawai_id'=>5, 'periode'=>'tahunan', 'tahun'=>'2022','predikat_id'=>1],
+            ['pegawai_id'=>5, 'periode'=>'tahunan', 'tahun'=>'2021','predikat_id'=>1],
         ];
-        Capaian::insert($capaians);
+        foreach ($capaians as $value) {
+            $capaian = new Capaian($value);
+            $capaian->save();
+        }
     }
 }

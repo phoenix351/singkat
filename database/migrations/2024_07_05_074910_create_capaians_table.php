@@ -14,8 +14,11 @@ return new class extends Migration
         Schema::create('capaians', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('pegawai_id');
-            $table->string('tahun_bulan',7); // store month year in MM-YYYY
-            $table->integer('predikat');
+            $table->string('periode',10); // store month year in MM-YYYY
+            $table->year('tahun',7); // store month year in MM-YYYY
+            $table->integer('predikat_id');
+            $table->float('angka_kredit')->default(0);
+            $table->unique(['pegawai_id','tahun','periode']);
             $table->timestamps();
         });
     }

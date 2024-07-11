@@ -40,14 +40,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
+
     // CKP
     Route::get("kelola-ckp", [CapaianController::class, "index"])->name("kelola-ckp");
-    Route::get('/kelola-ckp/{ckp}', [CapaianController::class, 'show']);
+    Route::get('/kelola-ckp/{capaian}', [CapaianController::class, 'show']);
     Route::post('/capaian', [CapaianController::class, 'store'])->name('capaian.store');
     Route::put('/kelola-ckp/{ckp}', [CapaianController::class, 'update']);
     Route::delete('/kelola-ckp/{ckp}', [CapaianController::class, 'destroy']);
-    
+
+    Route::patch('/capaian/{capaian}', [CapaianController::class, 'update'])->name('capaian.update');
 });
 
 Route::get('/export-pegawai', [PegawaiController::class, 'export'])->middleware(['auth'])->name('pegawai.export');
@@ -68,8 +69,8 @@ Route::delete('/kelola-abk/{abk}', [AbkController::class, 'destroy'])->middlewar
 // Get Api Available Jabatan
 Route::get('/api/get-available-jabatan', [AbkController::class, 'getAvailableJabatan']);
 Route::get('/api/get-available-jabatan-edit', [AbkController::class, 'getAvailableJabatanEdit']);
-Route::get('/api/predikats',[PredikatController::class,'fetch']);
-Route::get('/api/pegawais',[PegawaiController::class,'fetch']);
+Route::get('/api/predikats', [PredikatController::class, 'fetch']);
+Route::get('/api/pegawais', [PegawaiController::class, 'fetch']);
 
 Route::get('/api/abk-summary', [AbkController::class, 'getAbkSummary']);
 

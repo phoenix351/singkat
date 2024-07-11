@@ -22,7 +22,8 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             PegawaiSeeder::class,
             PredikatSeeder::class,
-            CapaianSeeder::class
+            CapaianSeeder::class,
+            HistorySeeder::class
         ]);
     }
 }

@@ -11,7 +11,7 @@ class UpdateCapaianRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,10 @@ class UpdateCapaianRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'pegawai_id'=>'required',
+            'predikat_id'=>'required',
+            'tahun'=>'required',
+            'periode'=>'required'
         ];
     }
 }

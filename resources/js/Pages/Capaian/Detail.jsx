@@ -1,18 +1,21 @@
 import React from "react";
-import { usePage, Link } from "@inertiajs/react";
+import { Head, usePage, Link } from "@inertiajs/react";
 import { Row, Col, List } from "antd";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
-const DetailPak = ({ auth, histories }) => {
-    const { pegawai } = usePage().props;
-
+const Detail = ({ auth, capaian, pegawai }) => {
+    // const { pegawai } = usePage().props;
+    // console.log({ pegawai, capaian });
     return (
         <AuthenticatedLayout user={auth.user}>
+            <Head title="Detail CKP" />
+
+
             <div className="flex justify-start gap-4.5">
                 <Link
-                    href="/kelola-pak"
+                    href="/kelola-ckp"
                     className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90"
                 >
                     Kembali
@@ -80,72 +83,33 @@ const DetailPak = ({ auth, histories }) => {
                     <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
                         <div className="border-b border-stroke py-4 px-7 dark:border-strokedark">
                             <h3 className="font-lg font-bold text-black dark:text-white">
-                                Angka Kredit Pegawai
+                                Capaian Kinerja Pegawai
                             </h3>
                         </div>
                         <div className="p-7 text-2lg">
                             <Row className="mb-5">
                                 <Col className="" span={2}></Col>
-                                <Col className="font-bold" span={4}>
-                                    Angka Kredit Konvesional
-                                </Col>
-                                <Col span={4}>
-                                    : {pegawai.angka_kredit_konvesional}
-                                </Col>
-                                <Col className="font-bold" span={4}>
-                                    Predikat
-                                </Col>
-                                <Col span={4}>: {pegawai.predikat}</Col>
+                                <Col className="font-bold" span={2}>Tahun</Col>
+                                <Col span={4}>{capaian.tahun}</Col>
+                                <Col className="font-bold" span={2}>Periode </Col>
+                                <Col span={4}>{capaian.periode.charAt(0).toUpperCase() + capaian.periode.slice(1)}</Col>
                             </Row>
                             <Row className="mb-5">
                                 <Col className="" span={2}></Col>
-                                <Col className="font-bold" span={4}>
-                                    Angka Kredit Integrasi
-                                </Col>
-                                <Col span={4}>
-                                    : {pegawai.angka_kredit_integrasi}
-                                </Col>
-                                <Col span={4} className="font-bold">
-                                    25% Tambahan Ijazah
-                                </Col>
-                                <Col span={6}>: {pegawai.tambahan_ijazah}</Col>
+                                <Col className="font-bold" span={2}>Predikat Kinerja</Col>
+                                <Col span={4}>{capaian.predikat.nama}</Col>
+                                <Col className="font-bold" span={2}>Angka Kredit</Col>
+                                <Col span={4}>{capaian.angka_kredit}</Col>
                             </Row>
-                            <Row className="mb-5">
-                                <Col className="" span={2}></Col>
-                                <Col className="font-bold" span={4}>
-                                    Akumulasi Angka Kredit
-                                </Col>
-                                <Col span={4}>: {pegawai.akumulasi_ak}</Col>
-                                <Col span={4} className="font-bold">
-                                    Ijazah Terakhir
-                                </Col>
-                                <Col span={6}>: {pegawai.ijazah_terakhir}</Col>
-                            </Row>
+
                         </div>
                     </div>
                 </div>
 
-                <List
-                    header={
-                        <h3 className="font-lg font-bold text-black dark:text-white">
-                            Histori Akumulasi Angka Kredit
-                        </h3>
-                    }
-                    className="mt-5"
-                    bordered
-                    dataSource={histories}
-                    renderItem={(item) => (
-                        <List.Item>
-                            {format(new Date(item.created_at), "d MMMM yyyy", {
-                                locale: id,
-                            })}{" "}
-                            - Akumulasi Angka Kredit : {item.akumulasi_ak}
-                        </List.Item>
-                    )}
-                />
+
             </div>
         </AuthenticatedLayout>
     );
 };
 
-export default DetailPak;
+export default Detail;

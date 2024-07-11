@@ -10,29 +10,44 @@ const TablePak = ({ pegawai, onEdit, onDelete, role }) => {
                 <table className="w-full table-auto">
                     <thead>
                         <tr className="bg-gray-2 text-left dark:bg-meta-4">
-                            <th className="min-w-[50px] py-4 px-4 font-medium text-black dark:text-white xl:pl-11">
+                            <th rowSpan={2} className="min-w-[50px] py-4 px-4 font-medium text-black dark:text-white xl:pl-11">
                                 No
                             </th>
-                            <th className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white xl:pl-11">
+                            <th rowSpan={2} className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white xl:pl-11">
                                 NIP
                             </th>
-                            <th className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white">
+                            <th rowSpan={2} className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white">
                                 Nama
                             </th>
-                            <th className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white">
+                            <th rowSpan={2} className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white">
                                 Jabatan
                             </th>
-                            <th className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white">
+                            <th rowSpan={2} className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white">
                                 Satuan Kerja
                             </th>
-                            <th className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white">
+                            <th rowSpan={2} className="min-w-[120px] py-4 px-4 font-medium text-black dark:text-white">
                                 Pangkat / Golongan Ruang
                             </th>
+                            <th  colSpan={3} className="min-w-[120px] py-4 px-4 font-medium text-black text-center dark:text-white">
+                                Angka Kredit
+                            </th>
 
-                            <th className="py-4 px-4 font-medium text-black dark:text-white">
+
+                            <th rowSpan={2} className="py-4 px-4 font-medium text-black dark:text-white">
                                 {role !== "viewer"
                                     ? "Aksi"
                                     : "Akumulasi Angka Kredit"}
+                            </th>
+                        </tr>
+                        <tr className="bg-gray-2 text-left dark:bg-meta-4">
+                            <th className="min-w-[40px] py-4 px-4 font-medium text-black dark:text-white">
+                                Konvensional
+                            </th>
+                            <th className="min-w-[40px] py-4 px-4 font-medium text-black dark:text-white">
+                                Integrasi
+                            </th>
+                            <th className="min-w-[40px] py-4 px-4 font-medium text-black dark:text-white">
+                                Akumulasi
                             </th>
                         </tr>
                     </thead>
@@ -58,7 +73,7 @@ const TablePak = ({ pegawai, onEdit, onDelete, role }) => {
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
-                                                {data.jabatan}
+                                                {data.nama_jabatan}
                                             </p>
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
@@ -69,6 +84,21 @@ const TablePak = ({ pegawai, onEdit, onDelete, role }) => {
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
                                                 {data.pangkat_golongan_ruang}
+                                            </p>
+                                        </td>
+                                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                                            <p className="text-black dark:text-white">
+                                                {data.angka_kredit_konvensional ?? "-"}
+                                            </p>
+                                        </td>
+                                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                                            <p className="text-black dark:text-white">
+                                                {data.angka_kredit_integrasi ?? "-"}
+                                            </p>
+                                        </td>
+                                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                                            <p className="text-black dark:text-white">
+                                                {data.angka_kredit_akumulasi>0 ? Number(data.angka_kredit_akumulasi).toFixed(2):"-"}
                                             </p>
                                         </td>
 

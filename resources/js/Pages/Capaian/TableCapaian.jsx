@@ -64,7 +64,8 @@ const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
-                                                {dayjs(data.tahun_bulan, 'YYYYMM').format('MMMM, YYYY')}
+                                                {`${data.tahun} ${data.periode}`}
+                                                {/* {dayjs(data.tahun_bulan, 'YYYYMM').format('MMMM, YYYY')} */}
                                             </p>
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
@@ -74,9 +75,10 @@ const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
-                                                {Number(data.angka_kredit * data.nilai_predikat / 12).toFixed(2)}
+                                                {Number(data.angka_kredit).toFixed(2)}
                                             </p>
                                         </td>
+                                        
 
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <div className="flex items-center space-x-3.5">
@@ -84,7 +86,7 @@ const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
                                                     <>
                                                         <Tooltip title="Detail">
                                                             <Link
-                                                                href={`/kelola-pak/${data.id}`}
+                                                                href={`/kelola-ckp/${data.id}`}
                                                                 className="hover:text-primary"
                                                             >
                                                                 <svg

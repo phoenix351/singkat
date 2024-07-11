@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('jabatan', function (Blueprint $table) {
             $table->id();
             $table->string('nama');
-            $table->integer('angka_kredit')->nullable();
+            $table->float('angka_kredit')->nullable();
             $table->timestamps();
         });
     }

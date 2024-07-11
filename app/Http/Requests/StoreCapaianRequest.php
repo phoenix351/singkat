@@ -22,9 +22,11 @@ class StoreCapaianRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'pegawai_id'=>'required',
-            'tahun_bulan'=>'required',
-            'predikat'=>'required'
+            'pegawai_id' => 'required',
+            'periode' => 'required',
+            'tahun' => 'required',
+            'predikat' => 'required',
+            // 'angka_kredit' => 'required'
         ];
     }
 }

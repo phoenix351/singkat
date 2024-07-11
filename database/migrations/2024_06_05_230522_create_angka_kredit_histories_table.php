@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('angka_kredit_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('pegawai_id')->constrained('pegawai')->onDelete('cascade');
-            $table->string('akumulasi_ak');
+            $table->float('akumulasi_ak');
+            $table->integer('capaian_id')->nullable();
             $table->timestamps();
         });
     }

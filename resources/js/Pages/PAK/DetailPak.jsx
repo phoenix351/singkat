@@ -5,9 +5,9 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
-const DetailPak = ({ auth, histories }) => {
-    const { pegawai } = usePage().props;
-
+const DetailPak = ({ auth, histories, pegawai }) => {
+    // const { pegawai } = usePage().props;
+    // console.log({ pegawai});
     return (
         <AuthenticatedLayout user={auth.user}>
             <div className="flex justify-start gap-4.5">
@@ -115,7 +115,7 @@ const DetailPak = ({ auth, histories }) => {
                                 <Col className="font-bold" span={4}>
                                     Akumulasi Angka Kredit
                                 </Col>
-                                <Col span={4}>: {pegawai.akumulasi_ak}</Col>
+                                <Col span={4}>: {Number(pegawai.akumulasi_ak).toFixed(2)}</Col>
                                 <Col span={4} className="font-bold">
                                     Ijazah Terakhir
                                 </Col>
@@ -136,10 +136,12 @@ const DetailPak = ({ auth, histories }) => {
                     dataSource={histories}
                     renderItem={(item) => (
                         <List.Item>
-                            {format(new Date(item.created_at), "d MMMM yyyy", {
+                            {format(new Date(item.created_at), "d MMMM yyyy HH:mm:ss", {
                                 locale: id,
                             })}{" "}
-                            - Akumulasi Angka Kredit : {item.akumulasi_ak}
+                            | Periode : {item.periode}
+                            - Akumulasi Angka Kredit : {item.akumulasi_ak.toFixed(2)} <span className="text-success">
+                                (+ {item.angka_kredit}) </span>
                         </List.Item>
                     )}
                 />
