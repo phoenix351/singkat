@@ -11,14 +11,22 @@ import AddPegawaiForm from "@/Pages/PAK/AddPegawaiForm";
 import EditPegawaiForm from "@/Pages/PAK/EditPegawaiForm";
 import ExportModal from "@/Pages/PAK/ExportModal";
 import Alert from "@/Components/Alert";
+import { Form, message } from "antd";
+import axios from "axios";
+import PegawaiForm from "./PegawaiForm";
 
 const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
+
+    const [editForm] = Form.useForm();
+    const [createForm] = Form.useForm();
+
+    const [messageApi, contextHolder] = message.useMessage();
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentPegawai, setCurrentPegawai] = useState(null);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
-    const { errors, flash } = usePage().props;
 
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
@@ -42,17 +50,66 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
     const handleSearch = (query) => {
         router.get("/kelola-pak", { search: query }, { replace: true });
     };
+    const handleSave = async (values) => {
+        // console.log({values});
+        // return;
+        try {
+            messageApi.open({
+                type: "loading",
+                content: "Menyimpan perubahan",
+                key: "handle-save"
+            })
+            const response = axios.patch(`/kelola-pak/${values.id}`, values, { headers: { "Content-Type": "application/json" } })
+
+            messageApi.open({
+                type: "success",
+                content: "Berhasil menyimpan perubahan",
+                key: "handle-save"
+            })
+
+        } catch (error) {
+
+            messageApi.open({
+                type: "error",
+                content: "Gagal menyimpan, hubungi pengembang web!",
+                key: "handle-save"
+            })
+        } finally {
+            setIsEditModalOpen(false)
+            router.reload({ preserveState: true, preserveScroll: true, method: 'get' })
+        }
+    };
+    const handleCreate = (values) => {
+        try {
+            messageApi.open({
+                type: "loading",
+                content: "Menambahkan pegawai",
+                key: "handle-create"
+            })
+            const response = axios.post(`/kelola-pak`, values, { headers: { "Content-Type": "application/json" } })
+
+            messageApi.open({
+                type: "success",
+                content: "Berhasil menambahkan pegawai",
+                key: "handle-create"
+            })
+
+        } catch (error) {
+
+            messageApi.open({
+                type: "error",
+                content: "Gagal menambahkan, hubungi pengembang web!",
+                key: "handle-create"
+            })
+        } finally {
+            setIsModalOpen(false)
+            router.reload({ preserveState: true, preserveScroll: true })
+        }
+    };
 
     return (
         <AuthenticatedLayout user={auth.user}>
-            {flash.success && <Alert tipe="success" pesan={flash.success} />}
-
-            {errors && Object.keys(errors).length > 0 && (
-                <Alert
-                    tipe="error"
-                    pesan="Terjadi kesalahan! Silahkan cek form."
-                />
-            )}
+            {contextHolder}
 
             <Head title={auth.user.role == "viewer" ? "PAK" : "Kelola PAK"} />
 
@@ -93,13 +150,16 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
 
                     {(auth.user.role === "admin" ||
                         auth.user.role === "super admin") && (
-                        <button
-                            onClick={openModal}
-                            className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
-                        >
-                            Tambah Pegawai
-                        </button>
-                    )}
+                            <button
+                                onClick={() => {
+                                    createForm.resetFields();
+                                    openModal();
+                                }}
+                                className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
+                            >
+                                Tambah Pegawai
+                            </button>
+                        )}
                 </div>
             </div>
 
@@ -122,20 +182,43 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
             </div>
 
             {/* Modal Form */}
-            <AddPegawaiForm
+            {/* <AddPegawaiForm
                 jabatan={jabatan}
                 unitKerja={unitKerja}
                 visible={isModalOpen}
                 onCancel={closeModal}
                 role={auth.user.role}
+            /> */}
+            <PegawaiForm
+                key="create-form"
+                jabatan={jabatan}
+                unitKerja={unitKerja}
+                visible={isModalOpen}
+                onCancel={closeModal}
+                role={auth.user.role}
+                onFinish={handleCreate}
+                type="create"
+                form={createForm}
             />
-            <EditPegawaiForm
+            {/* <EditPegawaiForm
                 jabatan={jabatan}
                 unitKerja={unitKerja}
                 visible={isEditModalOpen}
                 onCancel={closeEditModal}
                 pegawai={currentPegawai}
                 role={auth.user.role}
+            /> */}
+            <PegawaiForm
+                key="edit-form"
+                jabatan={jabatan}
+                unitKerja={unitKerja}
+                visible={isEditModalOpen}
+                onCancel={closeEditModal}
+                pegawai={currentPegawai}
+                role={auth.user.role}
+                onFinish={handleSave}
+                type="edit"
+                form={editForm}
             />
 
             {/* Export Modal */}

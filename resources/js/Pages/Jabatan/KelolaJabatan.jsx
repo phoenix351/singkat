@@ -6,8 +6,10 @@ import SearchInput from "@/Components/SearchInput";
 import Pagination from "@/Components/Pagination";
 import TableJabatan from "@/Pages/Jabatan/TableJabatan";
 import AddJabatanForm from "../Jabatan/AddJabatanForm";
-import EditJabatanForm from "../Jabatan/EditJabatanForm";
+import JabatanForm from "../Jabatan/JabatanForm";
 import Alert from "@/Components/Alert";
+import axios from "axios";
+import { message } from "antd";
 
 const KelolaJabatan = ({ auth, jabatan, search }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,6 +17,8 @@ const KelolaJabatan = ({ auth, jabatan, search }) => {
     const [currentJabatan, setCurrentJabatan] = useState(null);
 
     const { flash, errors } = usePage().props;
+
+    const [messageApi, contextHolder] = message.useMessage();
 
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
@@ -35,16 +39,44 @@ const KelolaJabatan = ({ auth, jabatan, search }) => {
     const handleSearch = (query) => {
         router.get("/jabatan", { search: query }, { replace: true });
     };
+    const handleSave = async (values) => {
+        try {
+            messageApi.open(
+                {
+                    type: 'loading',
+                    key: 'handle-save',
+                    content: 'Menyimpan perubahan...'
+                }
+            )
+
+            const response = await axios.patch(`/jabatan/${values.id}`, values, { headers: { "Content-Type": "application/json" } });
+            messageApi.open(
+                {
+                    type: 'success',
+                    key: 'handle-save',
+                    content: 'Berhasil menyimpan perubahan'
+                }
+            )
+        } catch (error) {
+            messageApi.open(
+                {
+                    type: 'error',
+                    key: 'handle-save',
+                    content: 'Terjadi kesalahan'
+                }
+            )
+
+        } finally {
+            setIsEditModalOpen(false);
+            router.reload({preserveState:true})
+
+        }
+
+    };
     return (
         <Authenticated title="Jabatan" user={auth.user}>
-            {flash.success && <Alert tipe="success" pesan={flash.success} />}
+            {contextHolder}
 
-            {errors && Object.keys(errors).length > 0 && (
-                <Alert
-                    tipe="error"
-                    pesan="Terjadi kesalahan! Silahkan cek form."
-                />
-            )}
 
             <Head title="Kelola Jabatan" />
 
@@ -85,10 +117,11 @@ const KelolaJabatan = ({ auth, jabatan, search }) => {
 
             {/* Modal Form */}
             <AddJabatanForm visible={isModalOpen} onCancel={closeModal} />
-            <EditJabatanForm
+            <JabatanForm
                 visible={isEditModalOpen}
                 onCancel={closeEditModal}
                 jabatan={currentJabatan}
+                onFinish={handleSave}
             />
         </Authenticated>
     );

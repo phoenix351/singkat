@@ -23,34 +23,27 @@ const validateNipBps = (_, value) => {
     return Promise.reject(new Error("NIP BPS harus angka."));
 };
 
-const EditPegawaiForm = ({
+const PegawaiForm = ({
     visible,
     onCancel,
     pegawai,
     jabatan,
     unitKerja,
     role,
+    onFinish,
+    type,
+    form
 }) => {
-    const [form] = Form.useForm();
-    
+
 
     useEffect(() => {
         if (pegawai) {
-            console.log({pegawai});
+
             form.setFieldsValue(pegawai);
         }
-    }, [pegawai, form]);
+    }, [pegawai]);
 
-    const handleValuesChange = (changedValues, allValues) => {
-        const akumulasi_ak = calculateAkumulasiAk(allValues);
-        form.setFieldsValue({ akumulasi_ak });
-    };
 
-    const handleSubmit = (values) => {
-        router.put(`/kelola-pak/${pegawai.id}`, values);
-        onCancel();
-        form.resetFields();
-    };
 
     return (
         <Modal
@@ -65,19 +58,23 @@ const EditPegawaiForm = ({
         >
             <Form
                 form={form}
-                onFinish={handleSubmit}
-                onValuesChange={handleValuesChange}
+                onFinish={onFinish}
+                // onValuesChange={handleValuesChange}
                 layout="vertical"
                 wrapperCol={{ span: 24 }}
                 autoComplete="off"
                 size="large"
             >
+                <Form.Item name="id" hidden>
+                    <Input />
+                </Form.Item>
                 <Form.Item
                     name="nip_bps"
                     label="NIP BPS"
                     rules={[{ required: true, validator: validateNipBps }]}
                 >
                     <Input
+                        placeholder="Masukkan NIP lama contoh : 32002098"
                         className="border border-slate-400 rounded-md"
                         {...(role === "admin" ? {} : { disabled: true })}
                     />
@@ -88,44 +85,49 @@ const EditPegawaiForm = ({
                     rules={[{ required: true, validator: validateNip }]}
                 >
                     <Input
+                        placeholder="Masukkan NIP baru contoh : 198810232001041002"
                         {...(role === "admin" ? {} : { disabled: true })}
                         className="border border-slate-400 rounded-md"
-                    />
+                        />
                 </Form.Item>
                 <Form.Item
                     name="nama"
                     label="Nama Pegawai"
                     rules={[{ required: true }]}
-                >
+                    >
                     <Input
+                        placeholder="Nama Lengkap Tanpa Singkatan"
                         {...(role === "admin" ? {} : { disabled: true })}
                         className="border border-slate-400 rounded-md"
-                    />
+                        />
                 </Form.Item>
                 <Form.Item
                     name="jabatan_id"
                     label="Jabatan"
                     rules={[{ required: true }]}
                     className="focus:border-none"
-                >
+                    >
                     <Select
                         allowClear
                         showSearch
+                        placeholder="Pilih Jabatan Pegawai"
+                        optionFilterProp="label"
                         {...(role === "admin" ? {} : { disabled: true })}
-                        optionFilterProp=""
+                        
                         options={jabatan.map((item) => ({
                             label: item.nama,
                             value: String(item.id),
                         }))}
-                    />
+                        />
                 </Form.Item>
                 <Form.Item
                     name="unit_kerja"
                     label="Satuan Kerja"
                     rules={[{ required: true }]}
                     className="focus:border-none"
-                >
+                    >
                     <Select
+                        placeholder="Pilih Satuan Kerja"
                         allowClear
                         showSearch
                         optionFilterProp="label"
@@ -133,20 +135,20 @@ const EditPegawaiForm = ({
                             label: unit.nama,
                             value: unit.nama,
                         }))}
-                    />
+                        />
                 </Form.Item>
                 <Form.Item
                     name="pangkat_golongan_ruang"
                     label="Pangkat / Golongan Ruang"
                     rules={[{ required: true }]}
-                >
-                    <Input className="border border-slate-400 rounded-md" />
+                    >
+                    <Input placeholder="Penata Muda/IIIa" className="border border-slate-400 rounded-md" />
+                
                 </Form.Item>
                 <Form.Item
                     name="angka_kredit_konvensional"
                     label="Angka Kredit Konvensional"
                 >
-                    {" "}
                     <InputNumber
                         {...(role === "admin" ? {} : { disabled: true })}
                         className="border w-[30%] border-slate-400 rounded-md"
@@ -161,7 +163,7 @@ const EditPegawaiForm = ({
                         className="border w-[30%] border-slate-400 rounded-md"
                     />
                 </Form.Item>
-                
+
                 <Form.Item
                     name="tambahan_ijazah"
                     label="25% Tambahan Ijazah"
@@ -185,7 +187,19 @@ const EditPegawaiForm = ({
                 </Form.Item>
 
                 <Form.Item name="ijazah_terakhir" label="Ijazah Terakhir">
-                    <Input className="border border-slate-400 rounded-md" />
+                    <Select
+                    placeholder="Pilih Ijazah yang Ditamatkan"
+                    options={[
+                        {label:'SD/sederajat',value:'SD/sederajat'},
+                        {label:'SLTP/sederajat',value:'SLTP/sederajat'},
+                        {label:'SLTA/sederajat',value:'SLTA/sederajat'},
+                        {label:'DI',value:'DI'},
+                        {label:'DII',value:'DII'},
+                        {label:'DIII',value:'DIII'},
+                        {label:'S1/DIV',value:'S1/DIV/sederajat'},
+                        {label:'S2',value:'S2'},
+                        {label:'S3',value:'S3'},
+                    ]}/>
                 </Form.Item>
                 <Form.Item name="angka_kredit_akumulasi" label="Akumulasi Angka Kredit">
                     <Input
@@ -198,4 +212,4 @@ const EditPegawaiForm = ({
     );
 };
 
-export default EditPegawaiForm;
+export default PegawaiForm;

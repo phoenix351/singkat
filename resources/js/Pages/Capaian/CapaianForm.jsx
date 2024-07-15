@@ -9,7 +9,7 @@ const disabledStyle = {
 };
 
 
-const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText }) => {
+const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText,type }) => {
     
     const [predikats, setPredikats] = useState([]);
     const [pegawais, setPegawais] = useState([]);
@@ -43,7 +43,7 @@ const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText }) => {
         fetchPredikats();
         fetchPegawais();
         // form.setFieldsValue(capaian);
-        // console.log({capaian});
+        console.log({type});
     }, [])
 
 
@@ -79,11 +79,12 @@ const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText }) => {
                         name="pegawai_id"
                         label="Pegawai"
                         className="focus:border-none"
-                    >
+                        >
                         <Select
                             placeholder="Pilih Pegawai"
                             allowClear
                             showSearch
+                            disabled={type==='edit'}
                             optionFilterProp="label"
                             options={pegawais.map(pegawai => ({ label: pegawai.nama, value: pegawai.id }))}
                         />

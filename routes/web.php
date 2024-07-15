@@ -41,14 +41,18 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::patch('/kelola-pak/{pegawai}', [PegawaiController::class, 'update']);
+
     // CKP
     Route::get("kelola-ckp", [CapaianController::class, "index"])->name("kelola-ckp");
     Route::get('/kelola-ckp/{capaian}', [CapaianController::class, 'show']);
-    Route::post('/capaian', [CapaianController::class, 'store'])->name('capaian.store');
     Route::put('/kelola-ckp/{ckp}', [CapaianController::class, 'update']);
     Route::delete('/kelola-ckp/{ckp}', [CapaianController::class, 'destroy']);
-
+    
+    Route::post('/capaian', [CapaianController::class, 'store'])->name('capaian.store');
     Route::patch('/capaian/{capaian}', [CapaianController::class, 'update'])->name('capaian.update');
+    
+    Route::patch('/jabatan/{jabatan}', [JabatanController::class, 'update'])->name('jabatan.update');
 });
 
 Route::get('/export-pegawai', [PegawaiController::class, 'export'])->middleware(['auth'])->name('pegawai.export');
@@ -86,7 +90,6 @@ Route::delete('/users/{user}', [UserController::class, 'destroy'])->middleware([
 // Jabatan
 Route::get('/jabatan', [JabatanController::class, 'index'])->middleware(['auth'])->name('jabatan.index');
 Route::post('/jabatan', [JabatanController::class, 'store'])->middleware(['auth'])->name('jabatan.store');
-Route::put('/jabatan/{jabatan}', [JabatanController::class, 'update'])->middleware(['auth'])->name('jabatan.update');
 Route::delete('/jabatan/{jabatan}', [JabatanController::class, 'destroy'])->middleware(['auth'])->name('jabatan.destroy');
 
 // Unit Kerja

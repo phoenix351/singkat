@@ -62,23 +62,24 @@ class CapaianController extends Controller
             //code...
             DB::beginTransaction();
             $capaian = Capaian::create($validatedData);
-            $pegawai = Pegawai::find($validatedData['pegawai_id']);
+            $capaian->save();
+            // $pegawai = Pegawai::find($validatedData['pegawai_id']);
             // $current_ak = Pegawai::find($validatedData['pegawai_id'])->value('akumulasi_ak');
-            $addition_ak = $this->calculate_addition_ak($capaian);
-            $akumulasi_ak = (float) $pegawai->akumulasi_ak + (float) $addition_ak;
+            // $addition_ak = $this->calculate_addition_ak($capaian);
+            // $akumulasi_ak = (float) $pegawai->akumulasi_ak + (float) $addition_ak;
             // return response()->json($, 201);
-            $capaian->update(['angka_kredit' => $addition_ak]);
+            // $capaian->update(['angka_kredit' => $addition_ak]);
 
-            $history = [
-                'pegawai_id' => $validatedData['pegawai_id'],
-                'akumulasi_ak' => $akumulasi_ak,
-                'capaian_id' => $capaian->id
-            ];
+            // $history = [
+            //     'pegawai_id' => $validatedData['pegawai_id'],
+            //     'akumulasi_ak' => $akumulasi_ak,
+            //     'capaian_id' => $capaian->id
+            // ];
 
-            $ak_history = AngkaKreditHistory::create($history);
+            // $ak_history = AngkaKreditHistory::create($history);
             // $updatePegawai = $pegawai->update(['akumulasi_ak' => $akumulasi_ak]);
             DB::commit();
-            return response()->json($ak_history, 201);
+            return response()->json($capaian, 201);
         } catch (Throwable $th) {
             // } catch (QueryException $exp) {
             DB::rollBack();
@@ -97,7 +98,7 @@ class CapaianController extends Controller
     {
         $pegawai = Pegawai::join('jabatan', 'jabatan.id', 'pegawai.jabatan_id')->where('pegawai.id', $capaian->pegawai_id)->select('pegawai.*', 'jabatan.nama as jabatan')->first();
 
-        $capaian = $capaian::where('id',$capaian->id)->with('predikat')->first();
+        $capaian = $capaian::where('id', $capaian->id)->with('predikat')->first();
         return inertia('Capaian/Detail', [
             'pegawai' => $pegawai,
             'capaian' => $capaian,

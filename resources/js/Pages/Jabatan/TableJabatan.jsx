@@ -2,6 +2,7 @@ import React from "react";
 import { Tooltip, Popconfirm, Empty } from "antd";
 
 const TableJabatan = ({ jabatan, onEdit, onDelete }) => {
+    console.log({jabatan});
     return (
         <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
             <div className="max-w-full overflow-x-auto">
@@ -14,6 +15,9 @@ const TableJabatan = ({ jabatan, onEdit, onDelete }) => {
 
                             <th className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white">
                                 Nama Jabatan
+                            </th>
+                            <th className="min-w-[100px] py-4 px-4 font-medium text-black dark:text-white">
+                                Angka Kredit Tahunan (100%)
                             </th>
                             <th className="py-4 px-4 font-medium text-black dark:text-white">
                                 Aksi
@@ -33,6 +37,11 @@ const TableJabatan = ({ jabatan, onEdit, onDelete }) => {
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
                                                 {data.nama}
+                                            </p>
+                                        </td>
+                                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                                            <p className="text-black dark:text-white">
+                                                {data.angka_kredit}
                                             </p>
                                         </td>
 

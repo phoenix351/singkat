@@ -16,6 +16,7 @@ import { Form, message } from "antd";
 
 const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     const [editForm] = Form.useForm();
+    const [addForm] = Form.useForm();
     const [messageApi, contextHolder] = message.useMessage();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -82,6 +83,42 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             )
         } finally {
             router.get('/kelola-ckp', {}, { preserveState: true })
+        }
+
+
+    };
+    const handleAdd = async (values) => {
+        try {
+            messageApi.open({
+                key: 'add-form',
+                type: 'loading',
+                content: 'menambahkan capaian pegawai'
+            })
+            let tahun_bulan = new Date(values.tahun);
+            let preparedTahun = `${tahun_bulan.getFullYear()}`;
+            const data = { ...values };
+            data.tahun = preparedTahun;
+            // return 
+            const response = await axios.post(`/capaian`, data, { headers: { "Content-Type": "application/json" } })
+            messageApi.open({
+                key: 'add-form',
+                type: 'success',
+                content: 'perubahan telah disimpan'
+            })
+            router.get('/kelola-ckp', {}, { preserveState: true });
+            
+        } catch (error) {
+            // console.log({ error });
+            messageApi.open(
+                {
+                    key: 'add-form',
+                    type: 'error',
+                    content: error.response.data.error
+                }
+            )
+        } finally {
+            router.get('/kelola-ckp', {}, { preserveState: true })
+            setIsModalOpen(false)
         }
 
 
@@ -176,7 +213,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             </div>
 
             {/* Modal Form */}
-            <AddCapaianForm
+            {/* <AddCapaianForm
                 jabatan={jabatan}
                 // capaian={capaian}
                 unitKerja={unitKerja}
@@ -184,15 +221,19 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 onCancel={closeModal}
                 role={auth.user.role}
             />
-            {/* <EditCapaianForm
+           */}
+            <CapaianForm
                 jabatan={jabatan}
-                // capaian
+                // capaian={capaian}
+                onFinish={handleAdd}
+                form={addForm}
                 unitKerja={unitKerja}
-                visible={isEditModalOpen}
-                onCancel={closeEditModal}
-                capaian={currentcapaian}
+                visible={isModalOpen}
+                onCancel={closeModal}
                 role={auth.user.role}
-            /> */}
+                type="daftar"
+            />
+          
 
             <CapaianForm
                 visible={isEditModalOpen}
@@ -202,6 +243,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 form={editForm}
                 title="Ubah CKP"
                 okText="Simpan"
+                type="edit"
             />
             {/* Export Modal */}
             <ExportModal

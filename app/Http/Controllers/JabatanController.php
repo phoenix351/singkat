@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateJabatanRequest;
 use Inertia\Inertia;
 use App\Models\Jabatan;
 use Illuminate\Http\Request;
@@ -43,15 +44,15 @@ class JabatanController extends Controller
 
 
 
-    public function update(Request $request, Jabatan $jabatan)
+    public function update(UpdateJabatanRequest $request, Jabatan $jabatan)
     {
-        $request->validate([
-            'nama' => 'required|string|max:255',
-        ]);
+        
 
-        $jabatan->update($request->all());
-
-        return redirect()->route('jabatan.index')->with('success', 'Jabatan berhasil diupdate');
+        $newJabatan = $request->validated();
+        
+        $updatedJabatan = $jabatan->update($newJabatan);
+        
+        return response()->json($jabatan,201);
     }
 
     /**
