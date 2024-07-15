@@ -47,7 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::get("kelola-ckp", [CapaianController::class, "index"])->name("kelola-ckp");
     Route::get('/kelola-ckp/{capaian}', [CapaianController::class, 'show']);
     Route::put('/kelola-ckp/{ckp}', [CapaianController::class, 'update']);
-    Route::delete('/kelola-ckp/{ckp}', [CapaianController::class, 'destroy']);
+    Route::delete('/capaian/{capaian}', [CapaianController::class, 'destroy']);
     
     Route::post('/capaian', [CapaianController::class, 'store'])->name('capaian.store');
     Route::patch('/capaian/{capaian}', [CapaianController::class, 'update'])->name('capaian.update');

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->float('angka_kredit')->default(0);
             $table->unique(['pegawai_id','tahun','periode']);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

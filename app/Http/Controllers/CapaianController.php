@@ -138,7 +138,16 @@ class CapaianController extends Controller
      */
     public function destroy(Capaian $capaian)
     {
-        //
+        try {
+            //code...
+            DB::beginTransaction();
+            $capaian->delete();
+            DB::commit();
+            return response()->json(['message' => 'capaian berhasil dihapus'], 204);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            throw $th;
+        }
     }
 
 

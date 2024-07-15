@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 
 const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
     let count = 1;
-    console.log({ capaian });
+
 
     return (
         <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -78,7 +78,7 @@ const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
                                                 {Number(data.angka_kredit).toFixed(2)}
                                             </p>
                                         </td>
-                                        
+
 
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <div className="flex items-center space-x-3.5">
@@ -139,12 +139,13 @@ const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
                                                             <>
                                                                 <Tooltip title="Hapus">
                                                                     <Popconfirm
-                                                                        title="Menghapus data PAK pegawai"
+                                                                        title="Menghapus data CKP pegawai"
                                                                         description="Apakah anda yakin ingin menghapusnya ?"
-                                                                        onConfirm={() =>
+                                                                        onConfirm={() => {
                                                                             onDelete(
                                                                                 data.id
                                                                             )
+                                                                        }
                                                                         }
                                                                         okText="Ya"
                                                                         cancelText="Tidak"

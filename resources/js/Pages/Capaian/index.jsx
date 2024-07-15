@@ -12,6 +12,7 @@ import Table from "./TableCapaian";
 import CapaianForm from "./CapaianForm";
 import dayjs from "dayjs";
 import { Form, message } from "antd";
+import axios from "axios";
 // import Alert from "@/Components/Alert";
 
 const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
@@ -38,10 +39,37 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
 
     const closeEditModal = () => setIsEditModalOpen(false);
 
-    const handleDelete = (id) => {
-        router.delete(`/kelola-ckp/${id}`).then(() => {
-            // Refresh the page or handle post-delete actions here
-        });
+
+    const handleDelete = async (id) => {
+        try {
+            messageApi.open({
+                key: 'submit-form',
+                type: 'loading',
+                content: 'menghapus 1 capaian...'
+            })
+            // return 
+            const response = await axios.delete(`/capaian/${id}`);
+            messageApi.open({
+                key: 'submit-form',
+                type: 'success',
+                content: '1 capaian berhasil terhapus'
+            })
+            setIsEditModalOpen(false)
+
+        } catch (error) {
+            // console.log({ error });
+            messageApi.open(
+                {
+                    key: 'submit-form',
+                    type: 'error',
+                    content: 'terjadi kesalahan server'
+                }
+            )
+        } finally {
+            router.get('/kelola-ckp', {}, { preserveState: true })
+        }
+
+
     };
 
     const handleSearch = (query) => {
@@ -106,7 +134,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 content: 'perubahan telah disimpan'
             })
             router.get('/kelola-ckp', {}, { preserveState: true });
-            
+
         } catch (error) {
             // console.log({ error });
             messageApi.open(
@@ -127,7 +155,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
         // console.log({currentCapaian});
         if (!currentCapaian) return
         let capaian = { ...currentCapaian };
-        console.log({ capaian });
+        // console.log({ capaian });
         capaian.tahun = dayjs(new Date(`${currentCapaian.tahun}-01-01`));
         editForm.setFieldsValue(capaian);
         // editForm.setFieldValue('id', currentCapaian.id);
@@ -233,7 +261,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 role={auth.user.role}
                 type="daftar"
             />
-          
+
 
             <CapaianForm
                 visible={isEditModalOpen}

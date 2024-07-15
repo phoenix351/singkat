@@ -22,7 +22,7 @@ const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText,type }) => 
     const fetchPredikats = async () => {
         try {
             const { data } = await axios.get('/api/predikats');
-            console.log({ data });
+            // console.log({ data });
             setPredikats(data);
         } catch (error) {
             console.error('Error when get predikat data');
@@ -43,7 +43,7 @@ const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText,type }) => 
         fetchPredikats();
         fetchPegawais();
         // form.setFieldsValue(capaian);
-        console.log({type});
+        
     }, [])
 
 
