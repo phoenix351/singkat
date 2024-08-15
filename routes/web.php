@@ -16,8 +16,14 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UnitKerjaController;
 
 Route::get('/', function () {
+    $user = Auth::user();
+    // dd($user);
     if (Auth::check()) {
-        return redirect('/dashboard');
+        if ($user->role === 'viewer') {
+            return redirect('/kelola-pak/' . $user->pegawai_id);
+        } else {
+            return redirect('/dashboard');
+        }
     } else {
         return redirect('/login');
     }
@@ -25,6 +31,10 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     // Jumlah pegawai
+    $user = Auth::user();
+    if ($user->role === 'viewer') {
+        return redirect('/kelola-pak/' . $user->pegawai_id);
+    }
     $jumlahPegawai = Pegawai::count();
     $totalUsers = User::count();
     $unitKerja = UnitKerja::count();
@@ -48,10 +58,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/kelola-ckp/{capaian}', [CapaianController::class, 'show']);
     Route::put('/kelola-ckp/{ckp}', [CapaianController::class, 'update']);
     Route::delete('/capaian/{capaian}', [CapaianController::class, 'destroy']);
-    
+
     Route::post('/capaian', [CapaianController::class, 'store'])->name('capaian.store');
     Route::patch('/capaian/{capaian}', [CapaianController::class, 'update'])->name('capaian.update');
-    
+
     Route::patch('/jabatan/{jabatan}', [JabatanController::class, 'update'])->name('jabatan.update');
 });
 
@@ -98,6 +108,9 @@ Route::post('/unit-kerja', [UnitKerjaController::class, 'store'])->middleware(['
 Route::put('/unit-kerja/{unitKerja}', [UnitKerjaController::class, 'update'])->middleware(['auth'])->name('unit-kerja.update');
 Route::delete('/unit-kerja/{unitKerja}', [UnitKerjaController::class, 'destroy'])->middleware(['auth'])->name('unit-kerja.destroy');
 
-//Capaian
+//user area 
+// capaianku
+Route::get('/capaian-ku', [PegawaiController::class, 'capaian_ku'])->middleware(['auth'])->name('user-area.capaian-ku');
+
 
 require __DIR__ . '/auth.php';

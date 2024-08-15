@@ -18,9 +18,7 @@ class PegawaiImport implements ToModel, ToCollection
 
     private $currentRow = 0;
 
-    public function collection(Collection $collection)
-    {
-    }
+    public function collection(Collection $collection) {}
     public function model(array $row)
     {
 
@@ -31,6 +29,7 @@ class PegawaiImport implements ToModel, ToCollection
             // dd($row);
 
             return new Pegawai([
+                'id'           => $row[1],
                 'nip_bps'           => $row[1],
                 'nip'           => $row[2],
                 'nama'          => $row[3],

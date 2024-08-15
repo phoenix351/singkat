@@ -16,7 +16,6 @@ import axios from "axios";
 import PegawaiForm from "./PegawaiForm";
 
 const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
-
     const [editForm] = Form.useForm();
     const [createForm] = Form.useForm();
 
@@ -26,7 +25,6 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentPegawai, setCurrentPegawai] = useState(null);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-
 
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
@@ -57,26 +55,30 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
             messageApi.open({
                 type: "loading",
                 content: "Menyimpan perubahan",
-                key: "handle-save"
-            })
-            const response = axios.patch(`/kelola-pak/${values.id}`, values, { headers: { "Content-Type": "application/json" } })
+                key: "handle-save",
+            });
+            const response = axios.patch(`/kelola-pak/${values.id}`, values, {
+                headers: { "Content-Type": "application/json" },
+            });
 
             messageApi.open({
                 type: "success",
                 content: "Berhasil menyimpan perubahan",
-                key: "handle-save"
-            })
-
+                key: "handle-save",
+            });
         } catch (error) {
-
             messageApi.open({
                 type: "error",
                 content: "Gagal menyimpan, hubungi pengembang web!",
-                key: "handle-save"
-            })
+                key: "handle-save",
+            });
         } finally {
-            setIsEditModalOpen(false)
-            router.reload({ preserveState: true, preserveScroll: true, method: 'get' })
+            setIsEditModalOpen(false);
+            router.reload({
+                preserveState: true,
+                preserveScroll: true,
+                method: "get",
+            });
         }
     };
     const handleCreate = (values) => {
@@ -84,26 +86,26 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
             messageApi.open({
                 type: "loading",
                 content: "Menambahkan pegawai",
-                key: "handle-create"
-            })
-            const response = axios.post(`/kelola-pak`, values, { headers: { "Content-Type": "application/json" } })
+                key: "handle-create",
+            });
+            const response = axios.post(`/kelola-pak`, values, {
+                headers: { "Content-Type": "application/json" },
+            });
 
             messageApi.open({
                 type: "success",
                 content: "Berhasil menambahkan pegawai",
-                key: "handle-create"
-            })
-
+                key: "handle-create",
+            });
         } catch (error) {
-
             messageApi.open({
                 type: "error",
                 content: "Gagal menambahkan, hubungi pengembang web!",
-                key: "handle-create"
-            })
+                key: "handle-create",
+            });
         } finally {
-            setIsModalOpen(false)
-            router.reload({ preserveState: true, preserveScroll: true })
+            setIsModalOpen(false);
+            router.reload({ preserveState: true, preserveScroll: true });
         }
     };
 
@@ -148,18 +150,17 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                         Unduh Data
                     </button>
 
-                    {(auth.user.role === "admin" ||
-                        auth.user.role === "super admin") && (
-                            <button
-                                onClick={() => {
-                                    createForm.resetFields();
-                                    openModal();
-                                }}
-                                className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
-                            >
-                                Tambah Pegawai
-                            </button>
-                        )}
+                    {["operator"].includes(auth.user.role) && (
+                        <button
+                            onClick={() => {
+                                createForm.resetFields();
+                                openModal();
+                            }}
+                            className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
+                        >
+                            Tambah Pegawai
+                        </button>
+                    )}
                 </div>
             </div>
 

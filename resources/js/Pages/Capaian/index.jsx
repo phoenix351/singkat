@@ -39,127 +39,114 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
 
     const closeEditModal = () => setIsEditModalOpen(false);
 
-
     const handleDelete = async (id) => {
         try {
             messageApi.open({
-                key: 'submit-form',
-                type: 'loading',
-                content: 'menghapus 1 capaian...'
-            })
-            // return 
+                key: "submit-form",
+                type: "loading",
+                content: "menghapus 1 capaian...",
+            });
+            // return
             const response = await axios.delete(`/capaian/${id}`);
             messageApi.open({
-                key: 'submit-form',
-                type: 'success',
-                content: '1 capaian berhasil terhapus'
-            })
-            setIsEditModalOpen(false)
-
+                key: "submit-form",
+                type: "success",
+                content: "1 capaian berhasil terhapus",
+            });
+            setIsEditModalOpen(false);
         } catch (error) {
             // console.log({ error });
-            messageApi.open(
-                {
-                    key: 'submit-form',
-                    type: 'error',
-                    content: 'terjadi kesalahan server'
-                }
-            )
+            messageApi.open({
+                key: "submit-form",
+                type: "error",
+                content: "terjadi kesalahan server",
+            });
         } finally {
-            router.get('/kelola-ckp', {}, { preserveState: true })
+            router.get("/kelola-ckp", {}, { preserveState: true });
         }
-
-
     };
 
     const handleSearch = (query) => {
         const url = new URL(`http://localhost:8000/kelola-ckp`);
 
-
-        url.searchParams.set('search', query);
+        url.searchParams.set("search", query);
         router.get(url, { replace: true });
     };
     const handleSave = async (values) => {
         try {
             messageApi.open({
-                key: 'submit-form',
-                type: 'loading',
-                content: 'menyimpan capaian pegawai'
-            })
+                key: "submit-form",
+                type: "loading",
+                content: "menyimpan capaian pegawai",
+            });
             let tahun_bulan = new Date(values.tahun);
             let preparedTahun = `${tahun_bulan.getFullYear()}`;
             const data = { ...values };
             data.tahun = preparedTahun;
-            // return 
-            const response = await axios.patch(`/capaian/${values.id}`, data, { headers: { "Content-Type": "application/json" } })
+            // return
+            const response = await axios.patch(`/capaian/${values.id}`, data, {
+                headers: { "Content-Type": "application/json" },
+            });
             messageApi.open({
-                key: 'submit-form',
-                type: 'success',
-                content: 'perubahan telah disimpan'
-            })
-            router.get('/kelola-ckp', {}, { preserveState: true });
-            setIsEditModalOpen(false)
-
+                key: "submit-form",
+                type: "success",
+                content: "perubahan telah disimpan",
+            });
+            router.get("/kelola-ckp", {}, { preserveState: true });
+            setIsEditModalOpen(false);
         } catch (error) {
             // console.log({ error });
-            messageApi.open(
-                {
-                    key: 'submit-form',
-                    type: 'error',
-                    content: error.response.data.error
-                }
-            )
+            messageApi.open({
+                key: "submit-form",
+                type: "error",
+                content: error.response.data.error,
+            });
         } finally {
-            router.get('/kelola-ckp', {}, { preserveState: true })
+            router.get("/kelola-ckp", {}, { preserveState: true });
         }
-
-
     };
     const handleAdd = async (values) => {
         try {
             messageApi.open({
-                key: 'add-form',
-                type: 'loading',
-                content: 'menambahkan capaian pegawai'
-            })
+                key: "add-form",
+                type: "loading",
+                content: "menambahkan capaian pegawai",
+            });
             let tahun_bulan = new Date(values.tahun);
             let preparedTahun = `${tahun_bulan.getFullYear()}`;
             const data = { ...values };
             data.tahun = preparedTahun;
-            // return 
-            const response = await axios.post(`/capaian`, data, { headers: { "Content-Type": "application/json" } })
+            // return
+            const response = await axios.post(`/capaian`, data, {
+                headers: { "Content-Type": "application/json" },
+            });
             messageApi.open({
-                key: 'add-form',
-                type: 'success',
-                content: 'perubahan telah disimpan'
-            })
-            router.get('/kelola-ckp', {}, { preserveState: true });
-
+                key: "add-form",
+                type: "success",
+                content: "perubahan telah disimpan",
+            });
+            router.get("/kelola-ckp", {}, { preserveState: true });
         } catch (error) {
             // console.log({ error });
-            messageApi.open(
-                {
-                    key: 'add-form',
-                    type: 'error',
-                    content: error.response.data.error
-                }
-            )
+            messageApi.open({
+                key: "add-form",
+                type: "error",
+                content: error.response.data.error,
+            });
         } finally {
-            router.get('/kelola-ckp', {}, { preserveState: true })
-            setIsModalOpen(false)
+            router.get("/kelola-ckp", {}, { preserveState: true });
+            setIsModalOpen(false);
         }
-
-
     };
     useEffect(() => {
         // console.log({currentCapaian});
-        if (!currentCapaian) return
+        if (!currentCapaian) return;
         let capaian = { ...currentCapaian };
         // console.log({ capaian });
         capaian.tahun = dayjs(new Date(`${currentCapaian.tahun}-01-01`));
         editForm.setFieldsValue(capaian);
         // editForm.setFieldValue('id', currentCapaian.id);
-    }, [currentCapaian])
+    }, [currentCapaian]);
 
     return (
         <AuthenticatedLayout user={auth.user}>
@@ -210,15 +197,14 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                         Unduh Data
                     </button>
 
-                    {(auth.user.role === "admin" ||
-                        auth.user.role === "super admin") && (
-                            <button
-                                onClick={openModal}
-                                className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
-                            >
-                                Tambah capaian
-                            </button>
-                        )}
+                    {["operator"].includes(auth.user.role) && (
+                        <button
+                            onClick={openModal}
+                            className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
+                        >
+                            Tambah capaian
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -261,7 +247,6 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 role={auth.user.role}
                 type="daftar"
             />
-
 
             <CapaianForm
                 visible={isEditModalOpen}

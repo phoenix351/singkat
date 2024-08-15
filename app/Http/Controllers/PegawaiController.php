@@ -17,21 +17,21 @@ use Illuminate\Support\Facades\DB;
 
 class PegawaiController extends Controller
 {
-  
-    
+
+
     public function kelola_pak(Request $request)
     {
         $search = $request->input('search');
         $keyword = "%$search%";
-    
+
         // Subquery to calculate the total angka_kredit for each pegawai
         $subQuery = DB::table('capaians')
             ->select('pegawai_id', DB::raw('SUM(angka_kredit) as total_angka_kredit'))
             ->groupBy('pegawai_id');
-    
+
         // Main query with subquery join
         $pegawais = Pegawai::join('jabatan', 'jabatan.id', '=', 'pegawai.jabatan_id')
-            ->leftJoinSub($subQuery, 'capaian_sum', function($join) {
+            ->leftJoinSub($subQuery, 'capaian_sum', function ($join) {
                 $join->on('pegawai.id', '=', 'capaian_sum.pegawai_id');
             })
             ->select(
@@ -39,13 +39,13 @@ class PegawaiController extends Controller
                 'jabatan.nama as nama_jabatan',
                 DB::raw('COALESCE(capaian_sum.total_angka_kredit, 0) + pegawai.akumulasi_ak as angka_kredit_akumulasi')
             )
-            ->where(function($query) use ($keyword) {
+            ->where(function ($query) use ($keyword) {
                 $query->where('pegawai.nama', 'like', $keyword)
-                      ->orWhere('jabatan.nama', 'like', $keyword)
-                      ->orWhere('pegawai.unit_kerja', 'like', $keyword);
+                    ->orWhere('jabatan.nama', 'like', $keyword)
+                    ->orWhere('pegawai.unit_kerja', 'like', $keyword);
             })
             ->paginate(20);
-    
+
         return Inertia::render('PAK/KelolaPak', [
             'pegawai' => $pegawais,
             'search' => $search,
@@ -53,9 +53,44 @@ class PegawaiController extends Controller
             'unitKerja' => UnitKerja::all(),
         ]);
     }
-    
+
     public function show(Pegawai $pegawai)
     {
+        $user = Auth::user();
+        // dd([$user->pegawai_id, $pegawai->id]);
+        if ($user->pegawai_id != $pegawai->id) {
+            return redirect('/kelola-pak/' . $user->pegawai_id);
+        }
+        $pegawai = $pegawai->join('jabatan', 'jabatan.id', 'pegawai.jabatan_id')->where('pegawai.id', $pegawai->id)->select('pegawai.*', 'jabatan.nama as jabatan')->first()->toArray();
+        // $histories = AngkaKreditHistory::where('pegawai_id', $pegawai->id)->with(['capaian' => function ($query) {
+        //     $query->with('tambahan');
+        // }])->get();
+        $histories = Capaian::where('pegawai_id', $pegawai["id"])
+            ->orderBy('tahun',)
+            ->orderBy('periode')
+            ->get()->toArray();
+        $akumulasi_ak = $pegawai["akumulasi_ak"];
+        foreach ($histories as $key => $history) {
+            # code...
+            $akumulasi_ak = $akumulasi_ak + $history["angka_kredit"];
+
+            $histories[$key]["akumulasi_ak"] = $akumulasi_ak;
+        }
+        $pegawai["akumulasi_ak"] = $akumulasi_ak;
+        // $histories->created_at = Carbon::parse($histories->created_at)->translatedFormat('j F Y');
+
+
+        return inertia('PAK/DetailPak', [
+            'pegawai' => $pegawai,
+            'histories' => $histories,
+
+        ]);
+    }
+    public function capaian_ku()
+    {
+        $user = Auth::user();
+        // dd([$user->pegawai_id, $pegawai->id]);
+        $pegawai = Pegawai::find($user->pegawai_id);
         $pegawai = $pegawai->join('jabatan', 'jabatan.id', 'pegawai.jabatan_id')->where('pegawai.id', $pegawai->id)->select('pegawai.*', 'jabatan.nama as jabatan')->first()->toArray();
         // $histories = AngkaKreditHistory::where('pegawai_id', $pegawai->id)->with(['capaian' => function ($query) {
         //     $query->with('tambahan');

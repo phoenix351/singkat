@@ -89,7 +89,7 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
                         </span>
                         Unduh Data
                     </button>
-                    {auth.user.role === "admin" && (
+                    {["operator"].includes(auth.user.role) && (
                         <button
                             onClick={openModal}
                             className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"

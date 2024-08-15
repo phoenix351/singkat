@@ -10,14 +10,16 @@ const DetailPak = ({ auth, histories, pegawai }) => {
     // console.log({ pegawai});
     return (
         <AuthenticatedLayout user={auth.user}>
-            <div className="flex justify-start gap-4.5">
-                <Link
-                    href="/kelola-pak"
-                    className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90"
-                >
-                    Kembali
-                </Link>
-            </div>
+            {["admin", "operator", "super admin"].includes(auth.user.role) && (
+                <div className="flex justify-start gap-4.5">
+                    <Link
+                        href="/kelola-pak"
+                        className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90"
+                    >
+                        Kembali
+                    </Link>
+                </div>
+            )}
             <div className="container mx-auto mt-8">
                 <div className="col-span-5 xl:col-span-3 mb-10">
                     <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -115,7 +117,9 @@ const DetailPak = ({ auth, histories, pegawai }) => {
                                 <Col className="font-bold" span={4}>
                                     Akumulasi Angka Kredit
                                 </Col>
-                                <Col span={4}>: {Number(pegawai.akumulasi_ak).toFixed(2)}</Col>
+                                <Col span={4}>
+                                    : {Number(pegawai.akumulasi_ak).toFixed(2)}
+                                </Col>
                                 <Col span={4} className="font-bold">
                                     Ijazah Terakhir
                                 </Col>
@@ -136,12 +140,18 @@ const DetailPak = ({ auth, histories, pegawai }) => {
                     dataSource={histories}
                     renderItem={(item) => (
                         <List.Item>
-                            {format(new Date(item.created_at), "d MMMM yyyy HH:mm:ss", {
-                                locale: id,
-                            })}{" "}
-                            | Periode : {item.periode}
-                            - Akumulasi Angka Kredit : {item.akumulasi_ak.toFixed(2)} <span className="text-success">
-                                (+ {item.angka_kredit}) </span>
+                            {format(
+                                new Date(item.created_at),
+                                "d MMMM yyyy HH:mm:ss",
+                                {
+                                    locale: id,
+                                }
+                            )}{" "}
+                            | Periode : {item.periode}- Akumulasi Angka Kredit :{" "}
+                            {item.akumulasi_ak.toFixed(2)}{" "}
+                            <span className="text-success">
+                                (+ {item.angka_kredit}){" "}
+                            </span>
                         </List.Item>
                     )}
                 />

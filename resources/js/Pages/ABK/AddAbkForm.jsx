@@ -32,9 +32,12 @@ const AddAbkForm = ({ visible, onCancel, jabatan, unitKerja }) => {
     //     return Promise.reject(new Error("Price must be greater than zero!"));
     // };
 
-    const checkEksisting = (_, value) => {
+    const checkEksisting = (field, value) => {
         const abk = form.getFieldValue("abk");
+        const jabatan_id = form.getFieldValue("jabatan_id");
+        console.log({ jabatan_id });
 
+        if (jabatan_id === 55) return Promise.resolve();
         if (value >= 0 && value <= abk) {
             return Promise.resolve();
         }
@@ -63,6 +66,7 @@ const AddAbkForm = ({ visible, onCancel, jabatan, unitKerja }) => {
                 form={form}
                 name="control-hooks"
                 onFinish={handleSubmit}
+                onValuesChange={() => form.validateFields()}
                 style={{ maxWidth: 600 }}
                 layout="vertical"
                 wrapperCol={{ span: 24 }}
