@@ -13,10 +13,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pegawai', function (Blueprint $table) {
-            $table->dropIfExists('usia');
-            $table->dropIfExists('tmt_pensiun');
-            $table->dropIfExists('tanggal_lahir');
+        try {
+            //code...
+            Schema::table('pegawai', function (Blueprint $table) {
+                $table->dropColumn('usia');
+                $table->dropColumn('tmt_pensiun');
+                $table->dropColumn('tanggal_lahir');
+            });
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+        Schema::table('users', function (Blueprint $table) {
             $table->date('tanggal_lahir')->default(Date::now());
         });
         $pegawais = Pegawai::get();
