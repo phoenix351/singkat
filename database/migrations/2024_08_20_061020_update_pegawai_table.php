@@ -29,12 +29,14 @@ return new class extends Migration
             });
         } catch (\Throwable $th) {
             //throw $th;
-        }
-        $pegawais = Pegawai::get();
-        foreach ($pegawais as $pegawai) {
-            # code...
-            $pegawai->tanggal_lahir = $this->calculateTanggalLahir($pegawai->nip);
-            $pegawai->save();
+        } finally{
+            $pegawais = Pegawai::get();
+            foreach ($pegawais as $pegawai) {
+                # code...
+                $pegawai->tanggal_lahir = $this->calculateTanggalLahir($pegawai->nip);
+                $pegawai->save();
+            }
+
         }
     }
 
