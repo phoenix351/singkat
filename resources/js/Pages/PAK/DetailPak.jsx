@@ -7,7 +7,27 @@ import { id } from "date-fns/locale";
 
 const DetailPak = ({ auth, histories, pegawai }) => {
     // const { pegawai } = usePage().props;
-    // console.log({ pegawai});
+    const getUsia = (tanggal_lahir) => {
+        // Hitung selisih dalam milidetik
+        const selisihMilidetik = new Date() - new Date(tanggal_lahir);
+
+        // Konversi selisih ke milidetik menjadi hari
+        const selisihHari = Math.floor(
+            selisihMilidetik / (1000 * 60 * 60 * 24)
+        );
+
+        // Hitung tahun
+        const tahun = Math.floor(selisihHari / 365.25); // Asumsikan rata-rata tahun 365.25 hari
+
+        // Hitung sisa hari setelah dikurangi tahun
+        const sisaHari = selisihHari % 365.25;
+
+        // Hitung bulan (asumsikan rata-rata bulan 30.44 hari)
+        const bulan = Math.floor(sisaHari / 30.44);
+
+        return `${tahun} tahun ${bulan} bulan`;
+    };
+
     return (
         <AuthenticatedLayout user={auth.user}>
             {["admin", "operator", "super admin"].includes(auth.user.role) && (
@@ -38,7 +58,7 @@ const DetailPak = ({ auth, histories, pegawai }) => {
                                 <Col span={4} className="font-bold">
                                     Jabatan
                                 </Col>
-                                <Col span={6}>: {pegawai.jabatan}</Col>
+                                <Col span={6}>: {pegawai.jabatan.nama}</Col>
                             </Row>
                             <Row className="mb-5">
                                 <Col className="" span={2}></Col>
@@ -66,14 +86,13 @@ const DetailPak = ({ auth, histories, pegawai }) => {
                             </Row>
                             <Row className="mb-5">
                                 <Col className="" span={2}></Col>
-                                <Col className="font-bold" span={2}>
-                                    TMT Pensiun
-                                </Col>
-                                <Col span={8}>: {pegawai.tmt_pensiun}</Col>
-                                <Col span={4} className="font-bold">
+
+                                <Col span={2} className="font-bold">
                                     Usia
                                 </Col>
-                                <Col span={6}>: {pegawai.usia}</Col>
+                                <Col span={6}>
+                                    : {getUsia(pegawai.tanggal_lahir)}
+                                </Col>
                             </Row>
                         </div>
                     </div>

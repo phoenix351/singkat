@@ -17,10 +17,13 @@ const validateNipBps = (_, value) => {
     if (!value) {
         return Promise.reject(new Error("NIP BPS tidak boleh kosong."));
     }
-    if (/^\d+$/.test(value)) {
+
+    if (/^\d{9}$/.test(value)) {
         return Promise.resolve();
     }
-    return Promise.reject(new Error("NIP BPS harus angka."));
+    return Promise.reject(
+        new Error("NIP BPS harus tediri dari 9 digit angka.")
+    );
 };
 
 const PegawaiForm = ({
@@ -32,22 +35,79 @@ const PegawaiForm = ({
     role,
     onFinish,
     type,
-    form
+    title,
+    form,
 }) => {
-
-
     useEffect(() => {
         if (pegawai) {
-
             form.setFieldsValue(pegawai);
+            console.log({ pegawai });
         }
     }, [pegawai]);
+    const daftarPangkat = [
+        {
+            label: "Juru Muda/Ia",
+            value: "Juru Muda/Ia",
+        },
+        { label: "Juru Muda Tingkat I/Ib", value: "Juru Muda Tingkat I/Ib" },
 
+        { label: "Juru/Ic", value: "Juru/Ic" },
 
+        { label: "Juru Tingkat I/Id", value: "Juru Tingkat I/Id" },
+
+        { label: "Juru Pengatur Muda/IIa", value: "Juru Pengatur Muda/IIa" },
+
+        {
+            label: "Juru Pengatur Muda Tingkat I/IIb",
+            value: "Juru Pengatur Muda Tingkat I/IIb",
+        },
+
+        { label: "Juru Pengatur/IIc", value: "Juru Pengatur/IIc" },
+
+        {
+            label: "Juru Pengatur Tingkat I/IId",
+            value: "Juru Pengatur Tingkat I/IId",
+        },
+        { label: "Juru Penata Muda/IIIa", value: "Juru Penata Muda/IIIa" },
+
+        {
+            label: "Juru Penata Muda Tingkat I/IIIb",
+            value: "Juru Penata Muda Tingkat I/IIIb",
+        },
+
+        { label: "Juru Penata/IIIc", value: "Juru Penata/IIIc" },
+
+        {
+            label: "Juru Penata Tingkat I/IIId",
+            value: "Juru Penata Tingkat I/IIId",
+        },
+
+        { label: "Juru Pembina/IVa", value: "Juru Pembina/IVa" },
+
+        {
+            label: "Juru Pembina Tingkat I/IVb",
+            value: "Juru Pembina Tingkat I/IVb",
+        },
+
+        {
+            label: "Juru Pembina Tingkat Utama Muda/IVc",
+            value: "Juru Pembina Tingkat Utama Muda/IVc",
+        },
+
+        {
+            label: "Juru Pembina Tingkat Utama Madya/IVd",
+            value: "Juru Pembina Tingkat Utama Madya/IVd",
+        },
+
+        {
+            label: "Juru Pembina Tingkat Utama/IVe",
+            value: "Juru Pembina Tingkat Utama/IVe",
+        },
+    ];
 
     return (
         <Modal
-            title="Edit Pegawai"
+            title={title}
             open={visible}
             style={{ top: 20 }}
             onCancel={onCancel}
@@ -76,7 +136,7 @@ const PegawaiForm = ({
                     <Input
                         placeholder="Masukkan NIP lama contoh : 32002098"
                         className="border border-slate-400 rounded-md"
-                        {...(role === "admin" ? {} : { disabled: true })}
+                        // {...(type === "edit" ? {} : { disabled: true })}
                     />
                 </Form.Item>
                 <Form.Item
@@ -86,46 +146,45 @@ const PegawaiForm = ({
                 >
                     <Input
                         placeholder="Masukkan NIP baru contoh : 198810232001041002"
-                        {...(role === "admin" ? {} : { disabled: true })}
+                        // {...(role === "admin" ? {} : { disabled: true })}
                         className="border border-slate-400 rounded-md"
-                        />
+                    />
                 </Form.Item>
                 <Form.Item
                     name="nama"
                     label="Nama Pegawai"
                     rules={[{ required: true }]}
-                    >
+                >
                     <Input
                         placeholder="Nama Lengkap Tanpa Singkatan"
-                        {...(role === "admin" ? {} : { disabled: true })}
+                        // {...(role === "admin" ? {} : { disabled: true })}
                         className="border border-slate-400 rounded-md"
-                        />
+                    />
                 </Form.Item>
                 <Form.Item
                     name="jabatan_id"
                     label="Jabatan"
                     rules={[{ required: true }]}
                     className="focus:border-none"
-                    >
+                >
                     <Select
                         allowClear
                         showSearch
                         placeholder="Pilih Jabatan Pegawai"
                         optionFilterProp="label"
-                        {...(role === "admin" ? {} : { disabled: true })}
-                        
+                        // {...(role === "admin" ? {} : { disabled: true })}
                         options={jabatan.map((item) => ({
                             label: item.nama,
                             value: String(item.id),
                         }))}
-                        />
+                    />
                 </Form.Item>
                 <Form.Item
                     name="unit_kerja"
                     label="Satuan Kerja"
                     rules={[{ required: true }]}
                     className="focus:border-none"
-                    >
+                >
                     <Select
                         placeholder="Pilih Satuan Kerja"
                         allowClear
@@ -135,33 +194,32 @@ const PegawaiForm = ({
                             label: unit.nama,
                             value: unit.nama,
                         }))}
-                        />
+                    />
                 </Form.Item>
                 <Form.Item
                     name="pangkat_golongan_ruang"
                     label="Pangkat / Golongan Ruang"
                     rules={[{ required: true }]}
-                    >
-                    <Input placeholder="Penata Muda/IIIa" className="border border-slate-400 rounded-md" />
-                
+                >
+                    <Select
+                        allowClear
+                        showSearch
+                        placeholder="Penata Muda/IIIa"
+                        className="border border-slate-400 rounded-md"
+                        options={daftarPangkat}
+                    />
                 </Form.Item>
                 <Form.Item
                     name="angka_kredit_konvensional"
                     label="Angka Kredit Konvensional"
                 >
-                    <InputNumber
-                        {...(role === "admin" ? {} : { disabled: true })}
-                        className="border w-[30%] border-slate-400 rounded-md"
-                    />
+                    <InputNumber className="border w-[30%] border-slate-400 rounded-md" />
                 </Form.Item>
                 <Form.Item
                     name="angka_kredit_integrasi"
                     label="Angka Kredit Integrasi"
                 >
-                    <InputNumber
-                        {...(role === "admin" ? {} : { disabled: true })}
-                        className="border w-[30%] border-slate-400 rounded-md"
-                    />
+                    <InputNumber className="border w-[30%] border-slate-400 rounded-md" />
                 </Form.Item>
 
                 <Form.Item
@@ -188,24 +246,28 @@ const PegawaiForm = ({
 
                 <Form.Item name="ijazah_terakhir" label="Ijazah Terakhir">
                     <Select
-                    placeholder="Pilih Ijazah yang Ditamatkan"
-                    options={[
-                        {label:'SD/sederajat',value:'SD/sederajat'},
-                        {label:'SLTP/sederajat',value:'SLTP/sederajat'},
-                        {label:'SLTA/sederajat',value:'SLTA/sederajat'},
-                        {label:'DI',value:'DI'},
-                        {label:'DII',value:'DII'},
-                        {label:'DIII',value:'DIII'},
-                        {label:'S1/DIV',value:'S1/DIV/sederajat'},
-                        {label:'S2',value:'S2'},
-                        {label:'S3',value:'S3'},
-                    ]}/>
-                </Form.Item>
-                <Form.Item name="angka_kredit_akumulasi" label="Akumulasi Angka Kredit">
-                    <Input
-                        className="border border-slate-400 rounded-md"
-                        disabled
+                        placeholder="Pilih Ijazah yang Ditamatkan"
+                        options={[
+                            { label: "SD/sederajat", value: "SD/sederajat" },
+                            {
+                                label: "SLTP/sederajat",
+                                value: "SLTP/sederajat",
+                            },
+                            {
+                                label: "SLTA/sederajat",
+                                value: "SLTA/sederajat",
+                            },
+                            { label: "DI", value: "DI" },
+                            { label: "DII", value: "DII" },
+                            { label: "DIII", value: "DIII" },
+                            { label: "S1/DIV", value: "S1/DIV/sederajat" },
+                            { label: "S2", value: "S2" },
+                            { label: "S3", value: "S3" },
+                        ]}
                     />
+                </Form.Item>
+                <Form.Item name="akumulasi_ak" label="Akumulasi Angka Kredit">
+                    <Input className="border border-slate-400 rounded-md" />
                 </Form.Item>
             </Form>
         </Modal>

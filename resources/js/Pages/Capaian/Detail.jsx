@@ -12,7 +12,6 @@ const Detail = ({ auth, capaian, pegawai }) => {
         <AuthenticatedLayout user={auth.user}>
             <Head title="Detail CKP" />
 
-
             <div className="flex justify-start gap-4.5">
                 <Link
                     href="/kelola-ckp"
@@ -74,7 +73,7 @@ const Detail = ({ auth, capaian, pegawai }) => {
                                 <Col span={4} className="font-bold">
                                     Usia
                                 </Col>
-                                <Col span={6}>: {pegawai.usia}</Col>
+                                <Col span={6}>: {pegawai.tanggal_lahir}</Col>
                             </Row>
                         </div>
                     </div>
@@ -89,24 +88,32 @@ const Detail = ({ auth, capaian, pegawai }) => {
                         <div className="p-7 text-2lg">
                             <Row className="mb-5">
                                 <Col className="" span={2}></Col>
-                                <Col className="font-bold" span={2}>Tahun</Col>
+                                <Col className="font-bold" span={2}>
+                                    Tahun
+                                </Col>
                                 <Col span={4}>{capaian.tahun}</Col>
-                                <Col className="font-bold" span={2}>Periode </Col>
-                                <Col span={4}>{capaian.periode.charAt(0).toUpperCase() + capaian.periode.slice(1)}</Col>
+                                <Col className="font-bold" span={2}>
+                                    Periode{" "}
+                                </Col>
+                                <Col span={4}>
+                                    {capaian.periode.charAt(0).toUpperCase() +
+                                        capaian.periode.slice(1)}
+                                </Col>
                             </Row>
                             <Row className="mb-5">
                                 <Col className="" span={2}></Col>
-                                <Col className="font-bold" span={2}>Predikat Kinerja</Col>
+                                <Col className="font-bold" span={2}>
+                                    Predikat Kinerja
+                                </Col>
                                 <Col span={4}>{capaian.predikat.nama}</Col>
-                                <Col className="font-bold" span={2}>Angka Kredit</Col>
+                                <Col className="font-bold" span={2}>
+                                    Angka Kredit
+                                </Col>
                                 <Col span={4}>{capaian.angka_kredit}</Col>
                             </Row>
-
                         </div>
                     </div>
                 </div>
-
-
             </div>
         </AuthenticatedLayout>
     );

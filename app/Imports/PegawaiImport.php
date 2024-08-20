@@ -43,7 +43,7 @@ class PegawaiImport implements ToModel, ToCollection
                 "akumulasi_ak" => $row[11],
                 'ijazah_terakhir' => $row[12],
                 'tmt_pensiun' => $row[13],
-                'usia' => $row[14],
+                'tanggal_lahir' => $row[16] . '-' . $row[15] . '-' . $row[14]
             ]);
         } else {
             return null;

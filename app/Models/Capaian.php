@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Capaian extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = ['pegawai_id', 'predikat_id', 'periode', 'tahun', 'angka_kredit'];
 

@@ -30,21 +30,32 @@ class PegawaiController extends Controller
             ->groupBy('pegawai_id');
 
         // Main query with subquery join
-        $pegawais = Pegawai::join('jabatan', 'jabatan.id', '=', 'pegawai.jabatan_id')
-            ->leftJoinSub($subQuery, 'capaian_sum', function ($join) {
-                $join->on('pegawai.id', '=', 'capaian_sum.pegawai_id');
-            })
-            ->select(
-                'pegawai.*',
-                'jabatan.nama as nama_jabatan',
-                DB::raw('COALESCE(capaian_sum.total_angka_kredit, 0) + pegawai.akumulasi_ak as angka_kredit_akumulasi')
-            )
+        // $pegawais = Pegawai::join('jabatan', 'jabatan.id', '=', 'pegawai.jabatan_id')
+        //     ->leftJoinSub($subQuery, 'capaian_sum', function ($join) {
+        //         $join->on('pegawai.id', '=', 'capaian_sum.pegawai_id');
+        //     })
+        //     ->select(
+        //         'pegawai.*',
+        //         'jabatan.nama as nama_jabatan',
+        //         DB::raw('COALESCE(capaian_sum.total_angka_kredit, 0) + pegawai.akumulasi_ak as angka_kredit_akumulasi')
+        //     )
+        //     ->where(function ($query) use ($keyword) {
+        //         $query->where('pegawai.nama', 'like', $keyword)
+        //             ->orWhere('jabatan.nama', 'like', $keyword)
+        //             ->orWhere('pegawai.unit_kerja', 'like', $keyword);
+        //     })
+        //     ->paginate(20);
+        // dd($pegawais);
+        $pegawais = Pegawai::with(['jabatan', 'capaian'])
             ->where(function ($query) use ($keyword) {
-                $query->where('pegawai.nama', 'like', $keyword)
-                    ->orWhere('jabatan.nama', 'like', $keyword)
-                    ->orWhere('pegawai.unit_kerja', 'like', $keyword);
+                $query->where('pegawai.nama', 'like', '%' . $keyword . '%')
+                    ->orWhereHas('jabatan', function ($query) use ($keyword) {
+                        $query->where('nama', 'like', '%' . $keyword . '%');
+                    })
+                    ->orWhere('pegawai.unit_kerja', 'like', '%' . $keyword . '%');
             })
             ->paginate(20);
+        // dd([$pegawais, $pegawais2]);
 
         return Inertia::render('PAK/KelolaPak', [
             'pegawai' => $pegawais,
@@ -59,12 +70,16 @@ class PegawaiController extends Controller
         $user = Auth::user();
         // dd([$user->pegawai_id, $pegawai->id]);
         if ($user->pegawai_id != $pegawai->id) {
-            return redirect('/kelola-pak/' . $user->pegawai_id);
+            if ($user->role != 'admin' && $user->role != 'operator') {
+
+                return redirect('/kelola-pak/' . $user->pegawai_id);
+            }
         }
-        $pegawai = $pegawai->join('jabatan', 'jabatan.id', 'pegawai.jabatan_id')->where('pegawai.id', $pegawai->id)->select('pegawai.*', 'jabatan.nama as jabatan')->first()->toArray();
+        $pegawai = $pegawai->with(['jabatan', 'capaian'])->find($pegawai->id);
         // $histories = AngkaKreditHistory::where('pegawai_id', $pegawai->id)->with(['capaian' => function ($query) {
         //     $query->with('tambahan');
         // }])->get();
+        // dd($pegawai);
         $histories = Capaian::where('pegawai_id', $pegawai["id"])
             ->orderBy('tahun',)
             ->orderBy('periode')
@@ -137,16 +152,15 @@ class PegawaiController extends Controller
         $validatedData["angka_kredit_konvensional"] = (string)$request->angka_kredit_konvensional;
         $validatedData["angka_kredit_integrasi"] = (string)$request->angka_kredit_integrasi;
 
-        $usia_per_3_januari = $this->calculateAgeFromNIP($request->nip);
-        $tmt_pensiun = $this->calculateTmtPensiun($request->nip, $request->jabatan);
 
-        $validatedData["usia"] = floor($usia_per_3_januari);
-        $validatedData["tmt_pensiun"] = $tmt_pensiun;
+        $validatedData["tanggal_lahir"] = $this->calculateTanggalLahir($validatedData['nip']);
+        $validatedData['id'] = $validatedData['nip_bps'];
 
 
         Pegawai::create($validatedData);
+        return response()->json($validatedData);
 
-        return redirect()->route('kelola-pak')->with('success', 'Pegawai berhasil ditambahkan.');
+        // return redirect()->route('kelola-pak')->with('success', 'Pegawai berhasil ditambahkan.');
     }
 
     public function update(Request $request, Pegawai $pegawai)
@@ -167,31 +181,25 @@ class PegawaiController extends Controller
             'angka_kredit_integrasi' => 'nullable',
             'predikat_kinerja' => 'nullable|string|max:255',
             'tambahan_ijazah' => 'nullable|string|max:255',
-            'akumulasi_ak' => 'nullable|string|max:255',
+            'akumulasi_ak' => 'nullable',
             'ijazah_terakhir' => 'nullable|string|max:255',
 
         ]);
 
 
-        $usia_per_3_januari = $this->calculateAgeFromNIP($request->nip);
-        $tmt_pensiun = $this->calculateTmtPensiun($request->nip, $request->jabatan);
-
-
-        $validatedData["usia"] = floor($usia_per_3_januari);
-        $validatedData["tmt_pensiun"] = $tmt_pensiun;
+        // $tanggal_lahir = $this->calculateTanggalLahir($request->nip);
+        $validatedData["tanggal_lahir"] = $this->calculateTanggalLahir($validatedData['nip']);
 
         // Cek apakah akumulasi ak berubah
-        if ($pegawai->akumulasi_ak !== $request->akumuasi_ak) {
-            // Simpan history perubahan
-            AngkaKreditHistory::create([
-                'pegawai_id' => $pegawai->id,
-                'akumulasi_ak' => $pegawai->akumulasi_ak,
-            ]);
-        }
-
+        // if ($pegawai->akumulasi_ak !== $request->akumuasi_ak) {
+        //     // Simpan history perubahan
+        //     AngkaKreditHistory::create([
+        //         'pegawai_id' => $pegawai->id,
+        //         'akumulasi_ak' => $pegawai->akumulasi_ak,
+        //     ]);
+        // }
         $pegawai->update($validatedData);
-
-        return redirect()->route('kelola-pak')->with('success', 'Pegawai berhasil diupdate.');
+        return response()->json($validatedData);
     }
 
     public function destroy(Pegawai $pegawai)
@@ -209,32 +217,17 @@ class PegawaiController extends Controller
         return Excel::download(new PegawaiExport($columns), 'pegawai.xlsx');
     }
 
-    private function calculateAgeFromNIP($nip)
-    {
-        $year = substr($nip, 0, 4);
-        $month = substr($nip, 4, 2);
-        $day = substr($nip, 6, 2);
-        $birthDate = Carbon::createFromDate($year, $month, $day);
-        $date = Carbon::createFromDate(date('Y'), 1, 3);  // 3 Januari tahun ini
-        return $birthDate->diffInYears($date);
-    }
 
-    private function calculateTmtPensiun($nip, $jabatan)
+
+    private function calculateTanggalLahir($nip)
     {
         $year = substr($nip, 0, 4);
         $month = substr($nip, 4, 2);
         $day = substr($nip, 6, 2);
         $birthDate = Carbon::createFromDate($year, $month, $day);
 
-        // Menentukan usia pensiun berdasarkan jabatan
-        $retirementAge = (stripos($jabatan, 'madya') !== false) ? 60 : 58;
-        $pensiunDate = $birthDate->addYears($retirementAge);
 
-        // Tambahkan satu bulan dan set tanggal ke hari pertama bulan tersebut
-        $pensiunDate = $pensiunDate->addMonth()->startOfMonth();
-
-        // Format tanggal ke format "01 Oktober 2034"
-        return $pensiunDate->translatedFormat('d F Y');
+        return $birthDate;
     }
     public function fetch()
     {
