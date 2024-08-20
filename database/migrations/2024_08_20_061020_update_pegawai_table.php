@@ -17,26 +17,10 @@ return new class extends Migration
         try {
             //code...
             Schema::table('pegawai', function (Blueprint $table) {
-                $table->dropColumn('usia');
-                $table->dropColumn('tmt_pensiun');
-                $table->dropColumn('tanggal_lahir');
-            });
-            Schema::table('pegawai', function (Blueprint $table) {
                 $table->date('tanggal_lahir')->default(Date::now());
-            });
-            Schema::table('users', function (Blueprint $table) {
-                $table->dropColumn('tanggal)lahir');
             });
         } catch (\Throwable $th) {
             //throw $th;
-        } finally{
-            $pegawais = Pegawai::get();
-            foreach ($pegawais as $pegawai) {
-                # code...
-                $pegawai->tanggal_lahir = $this->calculateTanggalLahir($pegawai->nip);
-                $pegawai->save();
-            }
-
         }
     }
 
@@ -46,15 +30,5 @@ return new class extends Migration
     public function down(): void
     {
         //
-    }
-    private function calculateTanggalLahir($nip)
-    {
-        $year = substr($nip, 0, 4);
-        $month = substr($nip, 4, 2);
-        $day = substr($nip, 6, 2);
-        $birthDate = Carbon::createFromDate($year, $month, $day);
-
-
-        return $birthDate;
     }
 };
