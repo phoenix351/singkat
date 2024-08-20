@@ -21,8 +21,11 @@ return new class extends Migration
                 $table->dropColumn('tmt_pensiun');
                 $table->dropColumn('tanggal_lahir');
             });
-            Schema::table('users', function (Blueprint $table) {
+            Schema::table('pegawai', function (Blueprint $table) {
                 $table->date('tanggal_lahir')->default(Date::now());
+            });
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropColumn('tanggal)lahir');
             });
         } catch (\Throwable $th) {
             //throw $th;
