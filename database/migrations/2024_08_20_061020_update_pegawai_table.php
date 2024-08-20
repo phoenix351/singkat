@@ -14,8 +14,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('pegawai', function (Blueprint $table) {
-            $table->dropColumn('usia');
-            $table->dropColumn('tmt_pensiun');
+            $table->dropIfExists('usia');
+            $table->dropIfExists('tmt_pensiun');
+            $table->dropIfExists('tanggal_lahir');
             $table->date('tanggal_lahir')->default(Date::now());
         });
         $pegawais = Pegawai::get();
