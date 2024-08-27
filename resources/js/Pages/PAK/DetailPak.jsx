@@ -137,7 +137,7 @@ const DetailPak = ({ auth, histories, pegawai }) => {
                                     Akumulasi Angka Kredit
                                 </Col>
                                 <Col span={4}>
-                                    : {Number(pegawai.akumulasi_ak).toFixed(2)}
+                                    : {Number(pegawai.akumulasi_ak).toFixed(3)}
                                 </Col>
                                 <Col span={4} className="font-bold">
                                     Ijazah Terakhir
