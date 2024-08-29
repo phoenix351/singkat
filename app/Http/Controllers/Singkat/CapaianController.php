@@ -41,7 +41,7 @@ class CapaianController extends Controller
             ->get();
 
 
-        return Inertia::render('Capaian/index', ['capaian' => $capaian, 'search' => $search]);
+        return Inertia::render('Singkat/Capaian/index', ['capaian' => $capaian, 'search' => $search]);
     }
 
     /**mys

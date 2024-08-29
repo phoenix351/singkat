@@ -45,7 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/singkat/kelola-pak/{pegawai}', [PegawaiController::class, 'update']);
 
     // CKP
-    Route::get("kelola-ckp", [CapaianController::class, "index"])->name("kelola-ckp");
+    Route::get("/singkat/kelola-ckp", [CapaianController::class, "index"])->name("kelola-ckp");
     Route::get('/kelola-ckp/{capaian}', [CapaianController::class, 'show']);
     Route::put('/kelola-ckp/{ckp}', [CapaianController::class, 'update']);
     Route::delete('/capaian/{capaian}', [CapaianController::class, 'destroy']);
@@ -66,7 +66,7 @@ Route::delete('/kelola-pak/{pegawai}', [PegawaiController::class, 'destroy']);
 
 
 // ABK
-Route::get('/kelola-abk', [AbkController::class, 'index'])->middleware(['auth'])->name('abk.index');
+Route::get('/singkat/kelola-abk', [AbkController::class, 'index'])->middleware(['auth'])->name('abk.index');
 Route::post('/kelola-abk', [AbkController::class, 'store'])->middleware(['auth'])->name('abk.store');
 Route::put('/kelola-abk/{abk}', [AbkController::class, 'update'])->middleware(['auth'])->name('abk.update');
 Route::delete('/kelola-abk/{abk}', [AbkController::class, 'destroy'])->middleware(['auth'])->name('abk.destroy');

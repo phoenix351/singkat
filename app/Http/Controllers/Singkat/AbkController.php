@@ -30,7 +30,7 @@ class AbkController extends Controller
             ->orderByRaw("CASE WHEN unit_kerja.nama = 'BPS Prov. Sulawesi Utara' THEN 0 ELSE 1 END, unit_kerja.nama")
             ->paginate(20);
 
-        return Inertia::render('ABK/KelolaABK', [
+        return Inertia::render('Singkat/ABK/KelolaABK', [
             'abk' => $abk,
             'search' => $search,
             "jabatan" => Jabatan::all(),

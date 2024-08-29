@@ -6,8 +6,7 @@ import SearchInput from "@/Components/SearchInput";
 
 import Pagination from "@/Components/Pagination";
 
-import AddCapaianForm from "@/Pages/Capaian/AddCapaianForm";
-import ExportModal from "@/Pages/Capaian/ExportModal";
+import ExportModal from "./ExportModal";
 import Table from "./TableCapaian";
 import CapaianForm from "./CapaianForm";
 import dayjs from "dayjs";
