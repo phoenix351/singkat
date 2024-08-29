@@ -37,7 +37,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/', [LandingController::class, 'index'])->name('index');
 
-    Route::get('/singkat', [DashboardController::class, 'index'])->name('singkat.dashboard');
+    Route::get('/singkat/dashboard', [DashboardController::class, 'index'])->name('singkat.dashboard');
+    Route::get('/singkat', [DashboardController::class, 'index'])->name('singkat.index');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

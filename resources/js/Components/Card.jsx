@@ -3,7 +3,7 @@ import { router } from "@inertiajs/react";
 const Card = ({ imagePath, name, description, link }) => {
     return (
         <div
-            className="w-full flex flex-col hover:bg-slate-100 cursor-pointer  shadow-slate-400 items-center rounded-xl p-2 md:hover:scale-110  transition ease-in-out delay-150"
+            className="w-full flex flex-col cursor-pointer bg-slate-100  shadow-slate-400 items-center dark:hover:text-slate-900 dark:bg-boxdark hover:bg-slate-100 dark:hover:bg-slate-100   rounded-xl p-2 py-4 md:hover:scale-110  transition ease-in-out delay-150"
             onClick={() =>
                 router.get(
                     link,

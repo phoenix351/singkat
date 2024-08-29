@@ -5,7 +5,7 @@ const Content = () => {
         {
             imagePath: "images/fordone.webp",
             name: <span className="text-nowrap">SINGKAT</span>,
-            description: "Sistem Informasi Angka Kredit",
+            description: "Pengelolaan Angka Kredit dan Analisis Beban Kerja",
             link: "/singkat",
         },
     ];

@@ -5,7 +5,7 @@ import { Image } from "antd";
 
 const Header = ({ setSidebarOpen, sidebarOpen, user }) => {
     return (
-        <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-boxdark dark:drop-shadow-none">
+        <header className="sticky top-0 z-999 flex w-full bg-slate-100 drop-shadow-1 dark:bg-boxdark dark:drop-shadow-none">
             <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
                 <div className="flex items-center gap-2 sm:gap-4 lg:hidden">
                     {/* <!-- Hamburger Toggle BTN --> */}
@@ -73,6 +73,7 @@ const Header = ({ setSidebarOpen, sidebarOpen, user }) => {
                         }
                     >
                         <svg
+                            className="dark:fill-slate-50"
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 576 512"
                             width={24}

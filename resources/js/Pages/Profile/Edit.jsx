@@ -2,7 +2,8 @@ import LandingLayout from "@/Layouts/LandingLayout";
 import DeleteUserForm from "./Partials/DeleteUserForm";
 import UpdatePasswordForm from "./Partials/UpdatePasswordForm";
 import UpdateProfileInformationForm from "./Partials/UpdateProfileInformationForm";
-import { Head } from "@inertiajs/react";
+import { Head, router } from "@inertiajs/react";
+import { Button } from "antd";
 
 export default function Edit({ auth, mustVerifyEmail, status }) {
     return (
@@ -18,6 +19,20 @@ export default function Edit({ auth, mustVerifyEmail, status }) {
 
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                    <Button
+                        size="large"
+                        onClick={() => {
+                            router.get(window.history.back());
+                        }}
+                    >
+                        <img
+                            src="/images/logo/chevron-left-solid.svg"
+                            width={12}
+                            // height={24}
+                        />
+                        Kembali
+                    </Button>
+
                     <div className="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
