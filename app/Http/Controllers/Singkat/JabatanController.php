@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Singkat;
 
 use App\Http\Requests\UpdateJabatanRequest;
 use Inertia\Inertia;
@@ -46,13 +46,13 @@ class JabatanController extends Controller
 
     public function update(UpdateJabatanRequest $request, Jabatan $jabatan)
     {
-        
+
 
         $newJabatan = $request->validated();
-        
+
         $updatedJabatan = $jabatan->update($newJabatan);
-        
-        return response()->json($jabatan,201);
+
+        return response()->json($jabatan, 201);
     }
 
     /**

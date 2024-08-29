@@ -48,6 +48,7 @@ export default function UpdateProfileInformation({
                         required
                         isFocused
                         autoComplete="name"
+                        disabled
                     />
 
                     <InputError className="mt-2" message={errors.name} />

@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { Modal, Form, Input, Select, InputNumber } from "antd";
 import { router } from "@inertiajs/react";
-import calculateAkumulasiAk from "../../Utils/calculateAkumulasiAk";
 
 const validateNip = (_, value) => {
     if (!value) {

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Singkat;
 
 use Carbon\Carbon;
 use Inertia\Inertia;
@@ -57,7 +57,7 @@ class PegawaiController extends Controller
             ->paginate(20);
         // dd([$pegawais, $pegawais2]);
 
-        return Inertia::render('PAK/KelolaPak', [
+        return Inertia::render('Singkat/PAK/KelolaPak', [
             'pegawai' => $pegawais,
             'search' => $search,
             'jabatan' => Jabatan::all(),

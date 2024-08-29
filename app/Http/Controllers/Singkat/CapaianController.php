@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Singkat;
 
 use App\Http\Requests\StoreCapaianRequest;
 use App\Http\Requests\UpdateCapaianRequest;

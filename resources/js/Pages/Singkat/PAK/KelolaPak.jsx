@@ -7,10 +7,10 @@ import SearchInput from "@/Components/SearchInput";
 
 import Pagination from "@/Components/Pagination";
 
-import AddPegawaiForm from "@/Pages/PAK/AddPegawaiForm";
-import EditPegawaiForm from "@/Pages/PAK/EditPegawaiForm";
-import ExportModal from "@/Pages/PAK/ExportModal";
-import Alert from "@/Components/Alert";
+// import AddPegawaiForm from "@/Pages/PAK/AddPegawaiForm";
+// import EditPegawaiForm from "@/Pages/PAK/EditPegawaiForm";
+import ExportModal from "@/Pages/Singkat/PAK/ExportModal";
+// import Alert from "@/Components/Alert";
 import { Form, message } from "antd";
 import axios from "axios";
 import PegawaiForm from "./PegawaiForm";

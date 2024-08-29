@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\AbkController;
+use App\Http\Controllers\Singkat\AbkController;
 use App\Models\User;
 use Inertia\Inertia;
 use App\Models\Pegawai;
@@ -8,10 +8,12 @@ use App\Models\UnitKerja;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\JabatanController;
-use App\Http\Controllers\PegawaiController;
-use App\Http\Controllers\CapaianController;
-use App\Http\Controllers\PredikatController;
+use App\Http\Controllers\Singkat\JabatanController;
+use App\Http\Controllers\Singkat\PegawaiController;
+use App\Http\Controllers\Singkat\CapaianController;
+use App\Http\Controllers\Singkat\DashboardController;
+use App\Http\Controllers\LandingController;
+use App\Http\Controllers\Singkat\PredikatController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UnitKerjaController;
 
@@ -29,29 +31,18 @@ Route::get('/', function () {
     }
 });
 
-Route::get('/dashboard', function () {
-    // Jumlah pegawai
-    $user = Auth::user();
-    if ($user->role === 'viewer') {
-        return redirect('/kelola-pak/' . $user->pegawai_id);
-    }
-    $jumlahPegawai = Pegawai::count();
-    $totalUsers = User::count();
-    $unitKerja = UnitKerja::count();
-
-    return Inertia::render('Dashboard/Dashboard', [
-        "jumlahPegawai" => $jumlahPegawai,
-        "users" => $totalUsers,
-        "unitKerja" => $unitKerja,
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+// ROUTE APLIKASI SINGKAT 
 
 Route::middleware('auth')->group(function () {
+
+    Route::get('/', [LandingController::class, 'index'])->name('index');
+
+    Route::get('/singkat', [DashboardController::class, 'index'])->name('singkat.dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::patch('/kelola-pak/{pegawai}', [PegawaiController::class, 'update']);
+    Route::patch('/singkat/kelola-pak/{pegawai}', [PegawaiController::class, 'update']);
 
     // CKP
     Route::get("kelola-ckp", [CapaianController::class, "index"])->name("kelola-ckp");
@@ -67,7 +58,7 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/export-pegawai', [PegawaiController::class, 'export'])->middleware(['auth'])->name('pegawai.export');
 
-Route::get("kelola-pak", [PegawaiController::class, "kelola_pak"])->middleware(['auth'])->name("kelola-pak");
+Route::get("singkat/kelola-pak", [PegawaiController::class, "kelola_pak"])->middleware(['auth'])->name("kelola-pak");
 Route::get('/kelola-pak/{pegawai}', [PegawaiController::class, 'show']);
 Route::post('/kelola-pak', [PegawaiController::class, 'store'])->name('kelola-pak.store');
 Route::put('/kelola-pak/{pegawai}', [PegawaiController::class, 'update']);

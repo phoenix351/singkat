@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Singkat;
 
 use App\Models\Abk;
 use Inertia\Inertia;

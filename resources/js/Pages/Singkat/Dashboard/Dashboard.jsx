@@ -4,8 +4,7 @@ import { Head } from "@inertiajs/react";
 
 import React, { useEffect } from "react";
 import axios from "axios";
-
-import TableDashboard from "@/Pages/Dashboard/TableDashboard";
+import TableDashboard from "./TableDashboard";
 
 export default function Dashboard({ auth, jumlahPegawai, users, unitKerja }) {
     useEffect(() => {
