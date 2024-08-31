@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Singkat\AbkController;
 use App\Models\User;
 use Inertia\Inertia;
@@ -22,70 +23,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 // ROute SSO 
-Route::get('/redirect', function (Request $request) {
-    $request->session()->put('state', $state = Str::random(40));
-    $query = http_build_query([
-        'client_id' => '17100-sipeta-ng5',
-        'client_secret' => '012eac02-3374-451b-864e-703ffd8dec67',
-        // 'realm' => 'pegawai-bps',
-        'scope' => 'profile-pegawai email',
-        'redirect_uri' => 'http://localhost:8000/sso-callback',
-        'response_type' => 'code',
-        'state' => $state,
-        'approval_prompt' => 'auto',
-
-        // 'prompt' => '', // "none", "consent", or "login"
-    ]);
-
-
-    return redirect('https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/auth?' . $query);
-});
-Route::get('/sso-callback', function (Request $request) {
-    $state = $request->session()->pull('state');
-
-    $codeVerifier = $request->session()->pull('code_verifier');
-
-    throw_unless(
-        strlen($state) > 0 && $state === $request->state,
-        InvalidArgumentException::class
-    );
-
-    $response = Http::asForm()->post('https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/token', [
-        'grant_type' => 'authorization_code',
-        'client_id' => '17100-sipeta-ng5',
-        'client_secret' => '012eac02-3374-451b-864e-703ffd8dec67',
-        'redirect_uri' => 'http://localhost:8000/sso-callback',
-        'code_verifier' => $codeVerifier,
-        'code' => $request->code,
-    ]);
-    $tokens = $response->json();
-
-    // Store the tokens in the session or database
-    session(['access_token' => $tokens['access_token']]);
-    if (isset($tokens['refresh_token'])) {
-        session(['refresh_token' => $tokens['refresh_token']]);
-    }
-    $accessToken = session('access_token');
-
-    $userInfoResponse = Http::withToken($accessToken)->get('https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/userinfo');
-
-    $userInfo = $userInfoResponse->json();
-    // dd($userInfo);
-
-    $user = User::firstOrCreate([
-        'email' => $userInfo['email']
-    ], [
-        'name' => $userInfo['name'],
-        'username' => $userInfo['username'],
-        'pegawai_id' => 'nip_lama',
-        'role' => 'Viewer',
-        'password' => bcrypt(Str::random(16)),
-    ]);
-
-    Auth::login($user);
-
-    return redirect('/');
-});
+Route::get('/sso-login', [LoginController::class, 'sso_redirect'])->name('sso-login');
+Route::get('/sso-callback', [LoginController::class, 'sso_callback'])->name('sso-callback');
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/test', function () {

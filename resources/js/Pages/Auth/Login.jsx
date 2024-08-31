@@ -186,7 +186,7 @@ export default function Login({ status, canResetPassword }) {
                                 <div
                                     className="mb-5"
                                     onClick={() => {
-                                        window.location.href = "/redirect";
+                                        window.location.href = "/sso-login";
                                     }}
                                 >
                                     <input
