@@ -27,6 +27,7 @@ class CapaianController extends Controller
             ->join('jabatan', 'jabatan.id', 'pegawai.jabatan_id')
             ->join('predikats', 'capaians.predikat_id', 'predikats.id')
             ->where(DB::raw('CONCAT(capaians.periode, " ", capaians.tahun)'), 'like', $preparedSearch)
+            ->orWhere('pegawai.nama', 'like', $preparedSearch)
             // ->where('capaians.periode','like',$preparedSearch)
             // ->orWhere('capaians.tahun','like',$preparedSearch)
             ->select(
@@ -38,7 +39,7 @@ class CapaianController extends Controller
             )
             ->orderBy('tahun')
             ->orderBy('periode')
-            ->get();
+            ->paginate(10);
 
 
         return Inertia::render('Singkat/Capaian/index', ['capaian' => $capaian, 'search' => $search]);
@@ -162,5 +163,28 @@ class CapaianController extends Controller
             $addition_ak = $addition_ak / 2;
         }
         return $addition_ak;
+    }
+    public function fetch(Request $request)
+    {
+        $search = $request->input('search');
+        $preparedSearch = "%$search%";
+        $capaian = Capaian::join('pegawai', 'pegawai.id', 'capaians.pegawai_id')
+            ->join('jabatan', 'jabatan.id', 'pegawai.jabatan_id')
+            ->join('predikats', 'capaians.predikat_id', 'predikats.id')
+            ->where(DB::raw('CONCAT(capaians.periode, " ", capaians.tahun)'), 'like', $preparedSearch)
+            ->orWhere('pegawai.nama', 'like', $preparedSearch)
+            // ->where('capaians.periode','like',$preparedSearch)
+            // ->orWhere('capaians.tahun','like',$preparedSearch)
+            ->select(
+                'pegawai.nama',
+                'pegawai.nip',
+                'jabatan.nama as jabatan',
+                'capaians.*',
+                'predikats.nama as nama_predikat',
+            )
+            ->orderBy('tahun')
+            ->orderBy('periode')
+            ->get();
+        return response()->json($capaian, 200);
     }
 }

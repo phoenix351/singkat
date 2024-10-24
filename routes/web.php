@@ -50,7 +50,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/kelola-ckp/{capaian}', [CapaianController::class, 'show']);
     Route::put('/kelola-ckp/{ckp}', [CapaianController::class, 'update']);
     Route::delete('/capaian/{capaian}', [CapaianController::class, 'destroy']);
-
+    Route::get('/singkat/kelola-ckp/fetch', [CapaianController::class, 'fetch'])->name('kelola-ckp.fetch');
+    
     Route::post('/capaian', [CapaianController::class, 'store'])->name('capaian.store');
     Route::patch('/capaian/{capaian}', [CapaianController::class, 'update'])->name('capaian.update');
 

@@ -32,21 +32,34 @@ class PegawaiExport  implements FromCollection, WithHeadings, WithStyles, WithCo
             return collect([array_fill_keys($this->columns, null)]);
         }
 
-        return Pegawai::select($this->columns)
-            ->orderByRaw('CASE 
-                        WHEN unit_kerja = "BPS Prov. Sulawesi Utara" THEN 1 
-                        ELSE 2 
-                      END')
-            ->orderBy('unit_kerja', 'asc')
-            ->orderByRaw('CASE 
-                        WHEN unit_kerja = "BPS Prov. Sulawesi Utara" AND jabatan = "Kepala BPS Provinsi" THEN 1
-                        WHEN unit_kerja = "BPS Prov. Sulawesi Utara" AND jabatan = "Kepala Bagian Umum" THEN 2
-                        WHEN jabatan = "Kepala BPS Kabupaten/Kota" THEN 3
-                        WHEN jabatan = "Kepala Subbagian Umum" THEN 4
-                        ELSE 5
-                      END')
-            // ->orderBy('jabatan', 'asc')
-            ->get();
+        // return Pegawai::select($this->columns)
+        //     ->orderByRaw('CASE 
+        //                 WHEN unit_kerja = "BPS Prov. Sulawesi Utara" THEN 1 
+        //                 ELSE 2 
+        //               END')
+        //     ->orderBy('unit_kerja', 'asc')
+        //     ->orderByRaw('CASE 
+        //                 WHEN unit_kerja = "BPS Prov. Sulawesi Utara" AND jabatan = "Kepala BPS Provinsi" THEN 1
+        //                 WHEN unit_kerja = "BPS Prov. Sulawesi Utara" AND jabatan = "Kepala Bagian Umum" THEN 2
+        //                 WHEN jabatan = "Kepala BPS Kabupaten/Kota" THEN 3
+        //                 WHEN jabatan = "Kepala Subbagian Umum" THEN 4
+        //                 ELSE 5
+        //               END')
+        //     // ->orderBy('jabatan', 'asc')
+        //     ->get();
+        // dd($this->columns);
+        $data = Pegawai::select($this->columns)
+        ->leftJoin('jabatan','pegawai.jabatan_id','jabatan.id')
+        ->orderByRaw('CASE 
+                    WHEN unit_kerja = "BPS Prov. Sulawesi Utara" THEN 1 
+                    ELSE 2 
+                  END')
+        ->orderBy('unit_kerja', 'asc')
+
+        // ->orderBy('jabatan', 'asc')
+        ->get();
+        // dd($data[0]);
+        return  $data;
     }
 
     /**
@@ -88,7 +101,9 @@ class PegawaiExport  implements FromCollection, WithHeadings, WithStyles, WithCo
     public function headings(): array
     {
         return array_merge(['No'], array_map(function ($column) {
-            return ucfirst(str_replace('_', ' ', $column));
+            $column = explode(" ",$column);
+
+            return ucfirst(str_replace('_', ' ', $column[count($column)-1]));
         }, $this->columns));
     }
 
@@ -96,9 +111,10 @@ class PegawaiExport  implements FromCollection, WithHeadings, WithStyles, WithCo
     {
         static $number = 0;
         $number++;
-
+        // dd($pegawai);
         return array_merge([$number], array_map(function ($column) use ($pegawai) {
-            return $pegawai->{$column};
+            $column = explode(" ",$column);
+            return $pegawai->{$column[count($column)-1]};
         }, $this->columns));
     }
 

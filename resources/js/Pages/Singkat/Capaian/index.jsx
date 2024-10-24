@@ -1,18 +1,19 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import React, { useEffect, useState } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
-import Breadcrumb from "@/Components/Breadcrumb";
-import SearchInput from "@/Components/SearchInput";
 
 import Pagination from "@/Components/Pagination";
-
-import ExportModal from "./ExportModal";
-import Table from "./TableCapaian";
 import CapaianForm from "./CapaianForm";
 import dayjs from "dayjs";
 import { Form, message } from "antd";
 import axios from "axios";
+import * as XLSX from "xlsx";
 // import Alert from "@/Components/Alert";
+
+import Breadcrumb from "@/Components/Breadcrumb";
+import SearchInput from "@/Components/SearchInput";
+import ExportModal from "./ExportModal";
+import Table from "./TableCapaian";
 
 const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     const [editForm] = Form.useForm();
@@ -66,7 +67,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     };
 
     const handleSearch = (query) => {
-        const url = new URL(`http://localhost:8000/kelola-ckp`);
+        const url = new URL(`http://localhost:8000/singkat/kelola-ckp`);
 
         url.searchParams.set("search", query);
         router.get(url, { replace: true });
@@ -137,6 +138,41 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             setIsModalOpen(false);
         }
     };
+    const handleDownload = async (values) => {
+        const {data} = await axios.get(route("kelola-ckp.fetch",{search:values}));
+           
+        
+        // return
+        
+
+
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(data);
+
+        XLSX.utils.book_append_sheet(workbook, worksheet, "capaian");
+
+        // XLSX.writeFile(workbook, "template_import.xlsx");
+        const excelBuffer = XLSX.write(workbook, {
+            bookType: "xlsx",
+            type: "array",
+        });
+
+        const blob = new Blob([excelBuffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        // Create a URL for the Blob
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "data_capaian.xlsx"; // Use the filename from state
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        setOpenUnduhModal(false);
+    };
     useEffect(() => {
         // console.log({currentCapaian});
         if (!currentCapaian) return;
@@ -173,7 +209,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
 
                 <div>
                     <button
-                        onClick={openExportModal}
+                        onClick={()=>handleDownload(search)}
                         type="button"
                         className="inline-flex items-center justify-center gap-2.5 rounded-md bg-primary py-2 px-5 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
                     >

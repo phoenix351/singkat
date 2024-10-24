@@ -4,8 +4,8 @@ import { Modal, Checkbox, Row, Col, Switch } from "antd";
 const columns = [
     { label: "NIP BPS", value: "nip_bps" },
     { label: "NIP", value: "nip" },
-    { label: "Nama", value: "nama" },
-    { label: "Jabatan", value: "jabatan" },
+    { label: "Nama", value: "pegawai.nama as nama" },
+    { label: "Jabatan", value: "jabatan.nama as jabatan" },
     { label: "Unit Kerja", value: "unit_kerja" },
     { label: "Pangkat/Golongan/Ruang", value: "pangkat_golongan_ruang" },
     { label: "Angka Kredit Konvensional", value: "angka_kredit_konvensional" },
@@ -14,8 +14,8 @@ const columns = [
     { label: "Tambahan Ijazah", value: "tambahan_ijazah" },
     { label: "Akumulasi AK", value: "akumulasi_ak" },
     { label: "Ijazah Terakhir", value: "ijazah_terakhir" },
-    { label: "TMT Pensiun", value: "tmt_pensiun" },
-    { label: "Usia", value: "usia" },
+    // { label: "TMT Pensiun", value: "tmt_pensiun" },
+    // { label: "Usia", value: "usia" },
 ];
 
 const ExportModal = ({ visible, onCancel }) => {

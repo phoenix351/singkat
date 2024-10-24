@@ -2,8 +2,10 @@ import { Link } from "@inertiajs/react";
 import { Empty, Popconfirm, Tooltip } from "antd";
 import dayjs from "dayjs";
 
+
 const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
     let count = 1;
+    
 
     return (
         <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -38,9 +40,9 @@ const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {capaian.length > 0 ? (
+                        {capaian.data.length > 0 ? (
                             <>
-                                {capaian.map((data, key) => (
+                                {capaian.data.map((data, key) => (
                                     <tr key={data.id}>
                                         <td className="border-b text-center border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white text-center">
