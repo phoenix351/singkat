@@ -49,6 +49,7 @@ class PegawaiController extends Controller
         $pegawais = Pegawai::with(['jabatan', 'capaian'])
             ->where(function ($query) use ($keyword) {
                 $query->where('pegawai.nama', 'like', '%' . $keyword . '%')
+                    ->orWhere('pegawai.nip', 'like', '%' . $keyword . '%')
                     ->orWhereHas('jabatan', function ($query) use ($keyword) {
                         $query->where('nama', 'like', '%' . $keyword . '%');
                     })

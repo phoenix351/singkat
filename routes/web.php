@@ -72,6 +72,7 @@ Route::get('/singkat/kelola-abk', [AbkController::class, 'index'])->middleware([
 Route::post('/kelola-abk', [AbkController::class, 'store'])->middleware(['auth'])->name('abk.store');
 Route::put('/kelola-abk/{abk}', [AbkController::class, 'update'])->middleware(['auth'])->name('abk.update');
 Route::delete('/kelola-abk/{abk}', [AbkController::class, 'destroy'])->middleware(['auth'])->name('abk.destroy');
+Route::get('/kelola-abk/fetch', [AbkController::class, 'fetch'])->middleware(['auth'])->name('abk.fetch');
 
 // Get Api Available Jabatan
 Route::get('/api/get-available-jabatan', [AbkController::class, 'getAvailableJabatan']);

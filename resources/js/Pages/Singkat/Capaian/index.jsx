@@ -22,15 +22,11 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentCapaian, setCurrentCapaian] = useState(null);
-    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     const { errors, flash } = usePage().props;
 
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
-
-    const openExportModal = () => setIsExportModalOpen(true);
-    const closeExportModal = () => setIsExportModalOpen(false);
 
     const openEditModal = (capaian) => {
         setCurrentCapaian(capaian);
@@ -294,10 +290,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 type="edit"
             />
             {/* Export Modal */}
-            <ExportModal
-                visible={isExportModalOpen}
-                onCancel={closeExportModal}
-            />
+           
         </AuthenticatedLayout>
     );
 };
