@@ -12,7 +12,7 @@ class Capaian extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['pegawai_id', 'predikat_id', 'periode', 'tahun', 'angka_kredit'];
+    protected $fillable = ['pegawai_id', 'predikat_id', 'periode', 'tahun','bulan', 'angka_kredit'];
 
     public static function boot()
     {
@@ -45,6 +45,8 @@ class Capaian extends Model
 
         if (strlen($this->periode) > 7) {
             $nilai_ak = $nilai_ak / 2;
+        } elseif ($this->periode=="Bulanan") {
+            $nilai_ak = $nilai_ak / 12;
         }
 
         $this->angka_kredit = $nilai_ak * $angka_kredit_dasar;

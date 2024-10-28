@@ -2,10 +2,8 @@ import { Link } from "@inertiajs/react";
 import { Empty, Popconfirm, Tooltip } from "antd";
 import dayjs from "dayjs";
 
-
 const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
     let count = 1;
-    
 
     return (
         <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -66,7 +64,13 @@ const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
-                                                {`${data.tahun} ${data.periode}`}
+                                                {/* {`${data.tahun} ${data.periode}`} */}
+                                                {data.bulan
+                                                    ? dayjs(
+                                                          `${data.tahun}-${data.bulan}`,
+                                                          "YYYY-M"
+                                                      ).format("MMM, YYYY")
+                                                    : `${data.tahun} ${data.periode}`}
                                                 {/* {dayjs(data.tahun_bulan, 'YYYYMM').format('MMMM, YYYY')} */}
                                             </p>
                                         </td>

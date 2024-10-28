@@ -1,51 +1,67 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, Select, InputNumber, DatePicker, message } from "antd";
-import { router } from "@inertiajs/react";
-
+import {
+    Modal,
+    Form,
+    Input,
+    Select,
+    InputNumber,
+    DatePicker,
+    message,
+} from "antd";
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 import axios from "axios";
-
 const disabledStyle = {
     color: "#000",
 };
 
+const dateFormat = 'YYYY-MM-DD';
 
-const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText,type }) => {
+const CapaianForm = ({
+    visible,
+    onCancel,
+    onFinish,
+    form,
+    title,
+    okText,
+    type,
+    initPeriod
+}) => {
     
     const [predikats, setPredikats] = useState([]);
+    const [periode, setPeriode] = useState("");
     const [pegawais, setPegawais] = useState([]);
 
     // define message
     const [messageApi, contextHolder] = message.useMessage();
 
-   
-
     const fetchPredikats = async () => {
         try {
-            const { data } = await axios.get('/api/predikats');
+            const { data } = await axios.get("/api/predikats");
             // console.log({ data });
             setPredikats(data);
         } catch (error) {
-            console.error('Error when get predikat data');
+            console.error("Error when get predikat data");
         }
-
-    }
+    };
     const fetchPegawais = async () => {
         try {
-            const { data } = await axios.get('/api/pegawais');
+            const { data } = await axios.get("/api/pegawais");
             setPegawais(data);
         } catch (error) {
-            console.error('Error when get predikat data');
+            console.error("Error when get predikat data");
         }
-
-    }
+    };
 
     useEffect(() => {
         fetchPredikats();
         fetchPegawais();
         // form.setFieldsValue(capaian);
-        
-    }, [])
-
+    }, []);
+   useEffect(() => {
+     setPeriode(initPeriod)
+   }, [initPeriod])
+   
 
     return (
         <>
@@ -71,7 +87,12 @@ const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText,type }) => 
                     autoComplete="off"
                     size="large"
                 >
-                    <Form.Item name="id" label="ID" className="focus:border-none" hidden>
+                    <Form.Item
+                        name="id"
+                        label="ID"
+                        className="focus:border-none"
+                        hidden
+                    >
                         <Input />
                     </Form.Item>
 
@@ -79,14 +100,17 @@ const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText,type }) => 
                         name="pegawai_id"
                         label="Pegawai"
                         className="focus:border-none"
-                        >
+                    >
                         <Select
                             placeholder="Pilih Pegawai"
                             allowClear
                             showSearch
-                            disabled={type==='edit'}
+                            disabled={type === "edit"}
                             optionFilterProp="label"
-                            options={pegawais.map(pegawai => ({ label: pegawai.nama, value: pegawai.id }))}
+                            options={pegawais.map((pegawai) => ({
+                                label: pegawai.nama,
+                                value: pegawai.id,
+                            }))}
                         />
                     </Form.Item>
                     <Form.Item
@@ -99,20 +123,37 @@ const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText,type }) => 
                             allowClear
                             showSearch
                             optionFilterProp="label"
-                            options={predikats.map(predikat => ({ label: predikat.nama, value: predikat.id }))}
+                            options={predikats.map((predikat) => ({
+                                label: predikat.nama,
+                                value: predikat.id,
+                            }))}
                         />
                     </Form.Item>
-                    <Form.Item name={"tahun"} label="Tahun Penilaian">
-                        <DatePicker picker="year" />
-                    </Form.Item>
                     <Form.Item name={"periode"} label="Periode Penilaian">
-                        <Select placeholder="Pilih Periode" allowClear showSearch options={[
-                            { label: 'Tahunan', value: 'Tahunan' },
-                            { label: 'Semester 1', value: 'Semester 1' },
-                            { label: 'Semester 2', value: 'Semester 2' },
-                        ]} />
+                        <Select
+                            placeholder="Pilih Periode"
+                            allowClear
+                            showSearch
+                            onChange={setPeriode}
+                            options={[
+                                { label: "Tahunan", value: "Tahunan" },
+                                { label: "Bulanan", value: "Bulanan" },
+                                { label: "Semester 1", value: "Semester 1" },
+                                { label: "Semester 2", value: "Semester 2" },
+                            ]}
+                        />
                     </Form.Item>
-
+                    {periode === "Bulanan" ? (
+                        <Form.Item name={"bulan"} label="Bulan Penilaian">
+                            <DatePicker picker="month" minDate={dayjs('2019-01-01',dateFormat)} format={"MMM YYYY"}
+                            maxDate={dayjs()} />
+                        </Form.Item>
+                    ) : (
+                        <Form.Item name={"tahun"} label="Tahun Penilaian">
+                            <DatePicker picker="year" minDate={dayjs('2019-01-01',dateFormat)}
+                            maxDate={dayjs()} />
+                        </Form.Item>
+                    )}
                 </Form>
             </Modal>
         </>

@@ -12,7 +12,6 @@ import * as XLSX from "xlsx";
 
 import Breadcrumb from "@/Components/Breadcrumb";
 import SearchInput from "@/Components/SearchInput";
-import ExportModal from "./ExportModal";
 import Table from "./TableCapaian";
 
 const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
@@ -75,12 +74,11 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 type: "loading",
                 content: "menyimpan capaian pegawai",
             });
-            let tahun_bulan = new Date(values.tahun);
-            let preparedTahun = `${tahun_bulan.getFullYear()}`;
-            const data = { ...values };
-            data.tahun = preparedTahun;
+            let copyBulan = values.bulan;
+            values["bulan"] = new Date(copyBulan).getMonth()+1;
+            values["tahun"] = new Date(copyBulan).getFullYear();
             // return
-            const response = await axios.patch(`/capaian/${values.id}`, data, {
+            const response = await axios.patch(`/capaian/${values.id}`, values, {
                 headers: { "Content-Type": "application/json" },
             });
             messageApi.open({
@@ -88,7 +86,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 type: "success",
                 content: "perubahan telah disimpan",
             });
-            router.get("/kelola-ckp", {}, { preserveState: true });
+            router.get("/singkat/kelola-ckp", {}, { preserveState: true });
             setIsEditModalOpen(false);
         } catch (error) {
             // console.log({ error });
@@ -98,22 +96,29 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 content: error.response.data.error,
             });
         } finally {
-            router.get("/kelola-ckp", {}, { preserveState: true });
+            router.get("/singkat/kelola-ckp", {search:search}, { preserveState: true });
         }
     };
     const handleAdd = async (values) => {
+        let copyBulan = values.bulan;
+        values["bulan"] = new Date(copyBulan).getMonth()+1;
+        values["tahun"] = new Date(copyBulan).getFullYear();
+        // delete values.bulan
+        // console.log({values});
+        // return
+        
         try {
             messageApi.open({
                 key: "add-form",
                 type: "loading",
                 content: "menambahkan capaian pegawai",
             });
-            let tahun_bulan = new Date(values.tahun);
-            let preparedTahun = `${tahun_bulan.getFullYear()}`;
-            const data = { ...values };
-            data.tahun = preparedTahun;
+            // let tahun_bulan = new Date(values.tahun);
+            // let preparedTahun = `${tahun_bulan.getFullYear()}`;
+            // const data = { ...values };
+            // data.tahun = preparedTahun;
             // return
-            const response = await axios.post(`/capaian`, data, {
+            const response = await axios.post(`/capaian`, values, {
                 headers: { "Content-Type": "application/json" },
             });
             messageApi.open({
@@ -121,16 +126,16 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 type: "success",
                 content: "perubahan telah disimpan",
             });
-            router.get("/kelola-ckp", {}, { preserveState: true });
+            router.get("/singkat/kelola-ckp", {}, { preserveState: true });
         } catch (error) {
-            // console.log({ error });
+            console.log({ error });
             messageApi.open({
                 key: "add-form",
                 type: "error",
-                content: error.response.data.error,
+                content: "disaster occured",
             });
         } finally {
-            router.get("/kelola-ckp", {}, { preserveState: true });
+            router.get("/singkat/kelola-ckp", {}, { preserveState: true });
             setIsModalOpen(false);
         }
     };
@@ -174,7 +179,13 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
         if (!currentCapaian) return;
         let capaian = { ...currentCapaian };
         // console.log({ capaian });
+        console.log({capaian});
+        
         capaian.tahun = dayjs(new Date(`${currentCapaian.tahun}-01-01`));
+        if(capaian.bulan){
+            capaian.bulan=dayjs(`${currentCapaian.tahun}-${currentCapaian.bulan}`,"YYYY-M"
+            )
+        }
         editForm.setFieldsValue(capaian);
         // editForm.setFieldValue('id', currentCapaian.id);
     }, [currentCapaian]);
@@ -288,6 +299,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 title="Ubah CKP"
                 okText="Simpan"
                 type="edit"
+                initPeriod={currentCapaian? currentCapaian.periode:""}
             />
             {/* Export Modal */}
            

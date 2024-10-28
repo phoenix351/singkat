@@ -29,27 +29,12 @@ class PegawaiController extends Controller
             ->select('pegawai_id', DB::raw('SUM(angka_kredit) as total_angka_kredit'))
             ->groupBy('pegawai_id');
 
-        // Main query with subquery join
-        // $pegawais = Pegawai::join('jabatan', 'jabatan.id', '=', 'pegawai.jabatan_id')
-        //     ->leftJoinSub($subQuery, 'capaian_sum', function ($join) {
-        //         $join->on('pegawai.id', '=', 'capaian_sum.pegawai_id');
-        //     })
-        //     ->select(
-        //         'pegawai.*',
-        //         'jabatan.nama as nama_jabatan',
-        //         DB::raw('COALESCE(capaian_sum.total_angka_kredit, 0) + pegawai.akumulasi_ak as angka_kredit_akumulasi')
-        //     )
-        //     ->where(function ($query) use ($keyword) {
-        //         $query->where('pegawai.nama', 'like', $keyword)
-        //             ->orWhere('jabatan.nama', 'like', $keyword)
-        //             ->orWhere('pegawai.unit_kerja', 'like', $keyword);
-        //     })
-        //     ->paginate(20);
-        // dd($pegawais);
+       
         $pegawais = Pegawai::with(['jabatan', 'capaian'])
             ->where(function ($query) use ($keyword) {
                 $query->where('pegawai.nama', 'like', '%' . $keyword . '%')
                     ->orWhere('pegawai.nip', 'like', '%' . $keyword . '%')
+                    ->orWhere('pegawai.pangkat_golongan_ruang', 'like', '%' . $keyword . '%')
                     ->orWhereHas('jabatan', function ($query) use ($keyword) {
                         $query->where('nama', 'like', '%' . $keyword . '%');
                     })
@@ -230,7 +215,7 @@ class PegawaiController extends Controller
 
         return $birthDate;
     }
-    public function fetch()
+    public function fetch(Request $request)
     {
         $pegawais = Pegawai::select('pegawai.id', 'pegawai.nama')->get();
         return response()->json($pegawais);

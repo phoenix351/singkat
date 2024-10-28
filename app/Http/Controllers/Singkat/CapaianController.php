@@ -28,6 +28,9 @@ class CapaianController extends Controller
             ->join('predikats', 'capaians.predikat_id', 'predikats.id')
             ->where(DB::raw('CONCAT(capaians.periode, " ", capaians.tahun)'), 'like', $preparedSearch)
             ->orWhere('pegawai.nama', 'like', $preparedSearch)
+            ->orWhere('pegawai.nip', 'like', $preparedSearch)
+            ->orWhere('jabatan.nama', 'like', $preparedSearch)
+            ->orWhere('predikats.nama', 'like', $preparedSearch)
             // ->where('capaians.periode','like',$preparedSearch)
             // ->orWhere('capaians.tahun','like',$preparedSearch)
             ->select(
@@ -64,21 +67,7 @@ class CapaianController extends Controller
             DB::beginTransaction();
             $capaian = Capaian::create($validatedData);
             $capaian->save();
-            // $pegawai = Pegawai::find($validatedData['pegawai_id']);
-            // $current_ak = Pegawai::find($validatedData['pegawai_id'])->value('akumulasi_ak');
-            // $addition_ak = $this->calculate_addition_ak($capaian);
-            // $akumulasi_ak = (float) $pegawai->akumulasi_ak + (float) $addition_ak;
-            // return response()->json($, 201);
-            // $capaian->update(['angka_kredit' => $addition_ak]);
-
-            // $history = [
-            //     'pegawai_id' => $validatedData['pegawai_id'],
-            //     'akumulasi_ak' => $akumulasi_ak,
-            //     'capaian_id' => $capaian->id
-            // ];
-
-            // $ak_history = AngkaKreditHistory::create($history);
-            // $updatePegawai = $pegawai->update(['akumulasi_ak' => $akumulasi_ak]);
+          
             DB::commit();
             return response()->json($capaian, 201);
         } catch (Throwable $th) {
@@ -124,8 +113,25 @@ class CapaianController extends Controller
             //code...
             DB::beginTransaction();
             $validatedData = $request->validated();
+            // cek untuk data tahunan
+            if($validatedData["periode"]=="Tahunan")
+            {
+                $duplikat = Capaian::where('pegawai_id',$validatedData["pegawai_id"])
+                ->where('tahun',$validatedData["tahun"])->first();
+            }
+            // cek untuk data semester
+            if(str_contains($validatedData["periode"],"semester"))
+            {
+
+            }
+            // cek untuk data bulanan
+            if($validatedData["periode"]=="Bulanan")
+            {
+
+            }
             $capaian->update($validatedData);
             $capaian->save();
+            // dd($validatedData);
             DB::commit();
             return response()->json(['message' => 'data berhasil diupdate'], 200);
         } catch (\Throwable $th) {
@@ -173,8 +179,9 @@ class CapaianController extends Controller
             ->join('predikats', 'capaians.predikat_id', 'predikats.id')
             ->where(DB::raw('CONCAT(capaians.periode, " ", capaians.tahun)'), 'like', $preparedSearch)
             ->orWhere('pegawai.nama', 'like', $preparedSearch)
-            // ->where('capaians.periode','like',$preparedSearch)
-            // ->orWhere('capaians.tahun','like',$preparedSearch)
+            ->orWhere('pegawai.nip', 'like', $preparedSearch)
+            ->orWhere('jabatan.nama', 'like', $preparedSearch)
+            ->orWhere('predikats.nama', 'like', $preparedSearch)
             ->select(
                 'pegawai.nama',
                 'pegawai.nip',
