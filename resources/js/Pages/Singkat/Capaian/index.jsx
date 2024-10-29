@@ -5,7 +5,7 @@ import { Head, router, usePage } from "@inertiajs/react";
 import Pagination from "@/Components/Pagination";
 import CapaianForm from "./CapaianForm";
 import dayjs from "dayjs";
-import { Form, message } from "antd";
+import { Button, Form, message } from "antd";
 import axios from "axios";
 import * as XLSX from "xlsx";
 // import Alert from "@/Components/Alert";
@@ -57,7 +57,11 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 content: "terjadi kesalahan server",
             });
         } finally {
-            router.get("/kelola-ckp", {}, { preserveState: true });
+            router.get(
+                "/singkat/kelola-ckp",
+                { search: search },
+                { preserveState: true }
+            );
         }
     };
 
@@ -68,25 +72,37 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
         router.get(url, { replace: true });
     };
     const handleSave = async (values) => {
+        console.log({values});
+        
         try {
             messageApi.open({
                 key: "submit-form",
                 type: "loading",
                 content: "menyimpan capaian pegawai",
             });
-            let copyBulan = values.bulan;
-            values["bulan"] = new Date(copyBulan).getMonth()+1;
-            values["tahun"] = new Date(copyBulan).getFullYear();
+            if (values.periode == "Bulanan") {
+                let copyBulan = values.bulan;
+                values["bulan"] = new Date(copyBulan).getMonth() + 1;
+                values["tahun"] = new Date(copyBulan).getFullYear();
+            } else if (values.periode == "Tahunan") {
+                values["tahun"] = values.tahun.getFullYear();
+            }
+            // console.log({values});
+
             // return
-            const response = await axios.patch(`/capaian/${values.id}`, values, {
-                headers: { "Content-Type": "application/json" },
-            });
+            const response = await axios.patch(
+                `/capaian/${values.id}`,
+                values,
+                {
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
             messageApi.open({
                 key: "submit-form",
                 type: "success",
                 content: "perubahan telah disimpan",
             });
-            router.get("/singkat/kelola-ckp", {}, { preserveState: true });
+            // router.get("/singkat/kelola-ckp", {}, { preserveState: true });
             setIsEditModalOpen(false);
         } catch (error) {
             // console.log({ error });
@@ -96,17 +112,25 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 content: error.response.data.error,
             });
         } finally {
-            router.get("/singkat/kelola-ckp", {search:search}, { preserveState: true });
+            router.get(
+                "/singkat/kelola-ckp",
+                { search: search },
+                { preserveState: true }
+            );
         }
     };
     const handleAdd = async (values) => {
-        let copyBulan = values.bulan;
-        values["bulan"] = new Date(copyBulan).getMonth()+1;
-        values["tahun"] = new Date(copyBulan).getFullYear();
-        // delete values.bulan
-        // console.log({values});
-        // return
-        
+        // console.log({ values });
+
+        // return;
+        if (values.periode == "Bulanan") {
+            let copyBulan = values.bulan;
+            values["bulan"] = new Date(copyBulan).getMonth() + 1;
+            values["tahun"] = new Date(copyBulan).getFullYear();
+        } else {
+            values["tahun"] = new Date(values.tahun).getFullYear();
+        }
+
         try {
             messageApi.open({
                 key: "add-form",
@@ -126,26 +150,29 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 type: "success",
                 content: "perubahan telah disimpan",
             });
-            router.get("/singkat/kelola-ckp", {}, { preserveState: true });
+            // router.get("/singkat/kelola-ckp", {}, { preserveState: true });
         } catch (error) {
             console.log({ error });
             messageApi.open({
                 key: "add-form",
                 type: "error",
-                content: "disaster occured",
+                content: error.response.data.message,
             });
         } finally {
-            router.get("/singkat/kelola-ckp", {}, { preserveState: true });
+            router.get(
+                "/singkat/kelola-ckp",
+                { search: search },
+                { preserveState: true }
+            );
             setIsModalOpen(false);
         }
     };
     const handleDownload = async (values) => {
-        const {data} = await axios.get(route("kelola-ckp.fetch",{search:values}));
-           
-        
-        // return
-        
+        const { data } = await axios.get(
+            route("kelola-ckp.fetch", { search: values })
+        );
 
+        // return
 
         const workbook = XLSX.utils.book_new();
         const worksheet = XLSX.utils.json_to_sheet(data);
@@ -179,12 +206,14 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
         if (!currentCapaian) return;
         let capaian = { ...currentCapaian };
         // console.log({ capaian });
-        console.log({capaian});
-        
+        console.log({ capaian });
+
         capaian.tahun = dayjs(new Date(`${currentCapaian.tahun}-01-01`));
-        if(capaian.bulan){
-            capaian.bulan=dayjs(`${currentCapaian.tahun}-${currentCapaian.bulan}`,"YYYY-M"
-            )
+        if (capaian.bulan) {
+            capaian.bulan = dayjs(
+                `${currentCapaian.tahun}-${currentCapaian.bulan}`,
+                "YYYY-M"
+            );
         }
         editForm.setFieldsValue(capaian);
         // editForm.setFieldValue('id', currentCapaian.id);
@@ -216,7 +245,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
 
                 <div>
                     <button
-                        onClick={()=>handleDownload(search)}
+                        onClick={() => handleDownload(search)}
                         type="button"
                         className="inline-flex items-center justify-center gap-2.5 rounded-md bg-primary py-2 px-5 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
                     >
@@ -244,6 +273,17 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                             onClick={openModal}
                             className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
                         >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="1em"
+                                height="1em"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    fill="currentColor"
+                                    d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"
+                                ></path>
+                            </svg>
                             Tambah capaian
                         </button>
                     )}
@@ -288,6 +328,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 onCancel={closeModal}
                 role={auth.user.role}
                 type="daftar"
+                title={"Tambah Capaian Pegawai"}
             />
 
             <CapaianForm
@@ -296,13 +337,12 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 capaian={currentCapaian}
                 onFinish={handleSave}
                 form={editForm}
-                title="Ubah CKP"
+                title="Ubah Capaian Pegawai"
                 okText="Simpan"
                 type="edit"
-                initPeriod={currentCapaian? currentCapaian.periode:""}
+                initPeriod={currentCapaian ? currentCapaian.periode : ""}
             />
             {/* Export Modal */}
-           
         </AuthenticatedLayout>
     );
 };

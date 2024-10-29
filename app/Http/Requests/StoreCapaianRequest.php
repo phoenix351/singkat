@@ -26,7 +26,7 @@ class StoreCapaianRequest extends FormRequest
             'periode' => 'required',
             'tahun' => 'required',
             'predikat_id' => 'required',
-            // 'angka_kredit' => 'required'
+            'bulan' => 'nullable',
         ];
     }
 }

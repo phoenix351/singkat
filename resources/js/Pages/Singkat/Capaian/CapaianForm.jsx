@@ -7,15 +7,18 @@ import {
     InputNumber,
     DatePicker,
     message,
+    Upload,
 } from "antd";
-import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import axios from "axios";
+import UploadPAK from "@/Components/UploadPAK";
 const disabledStyle = {
     color: "#000",
 };
 
-const dateFormat = 'YYYY-MM-DD';
+const dateFormat = "YYYY-MM-DD";
+const {RangePicker} = DatePicker;
 
 const CapaianForm = ({
     visible,
@@ -25,9 +28,8 @@ const CapaianForm = ({
     title,
     okText,
     type,
-    initPeriod
+    initPeriod,
 }) => {
-    
     const [predikats, setPredikats] = useState([]);
     const [periode, setPeriode] = useState("");
     const [pegawais, setPegawais] = useState([]);
@@ -58,10 +60,9 @@ const CapaianForm = ({
         fetchPegawais();
         // form.setFieldsValue(capaian);
     }, []);
-   useEffect(() => {
-     setPeriode(initPeriod)
-   }, [initPeriod])
-   
+    useEffect(() => {
+        setPeriode(initPeriod);
+    }, [initPeriod]);
 
     return (
         <>
@@ -113,6 +114,45 @@ const CapaianForm = ({
                             }))}
                         />
                     </Form.Item>
+
+                    <Form.Item name={"periode"} label="Periode Penilaian">
+                        <Select
+                            placeholder="Pilih Periode"
+                            allowClear
+                            showSearch
+                            onChange={setPeriode}
+                            disabled={type === "edit"}
+                            options={[
+                                { label: "Tahunan", value: "Tahunan" },
+                                { label: "Bulanan", value: "Bulanan" },
+                                { label: "Semester 1", value: "Semester 1" },
+                                { label: "Semester 2", value: "Semester 2" },
+                            ]}
+                        />
+                    </Form.Item>
+                    {periode === "Bulanan" ? (
+                        <Form.Item name={"bulan"} label="Bulan Penilaian">
+                            {/* <DatePicker
+                                picker="month"
+                                disabled={type === "edit"}
+                                /> */}
+                            <RangePicker
+                                picker="month"
+                                minDate={dayjs("2019-01-01", dateFormat)}
+                                format={"MMMM YYYY"}
+                                maxDate={dayjs()}
+                            />
+                        </Form.Item>
+                    ) : (
+                        <Form.Item name={"tahun"} label="Tahun Penilaian">
+                            <DatePicker
+                                picker="year"
+                                minDate={dayjs("2019-01-01", dateFormat)}
+                                disabled={type === "edit"}
+                                maxDate={dayjs()}
+                            />
+                        </Form.Item>
+                    )}
                     <Form.Item
                         name="predikat_id"
                         label="Predikat Kinerja"
@@ -129,31 +169,11 @@ const CapaianForm = ({
                             }))}
                         />
                     </Form.Item>
-                    <Form.Item name={"periode"} label="Periode Penilaian">
-                        <Select
-                            placeholder="Pilih Periode"
-                            allowClear
-                            showSearch
-                            onChange={setPeriode}
-                            options={[
-                                { label: "Tahunan", value: "Tahunan" },
-                                { label: "Bulanan", value: "Bulanan" },
-                                { label: "Semester 1", value: "Semester 1" },
-                                { label: "Semester 2", value: "Semester 2" },
-                            ]}
-                        />
+                    {type==="edit"&&
+                    <Form.Item name={"file"} label="Dokumen PAK">
+                        <UploadPAK/>
                     </Form.Item>
-                    {periode === "Bulanan" ? (
-                        <Form.Item name={"bulan"} label="Bulan Penilaian">
-                            <DatePicker picker="month" minDate={dayjs('2019-01-01',dateFormat)} format={"MMM YYYY"}
-                            maxDate={dayjs()} />
-                        </Form.Item>
-                    ) : (
-                        <Form.Item name={"tahun"} label="Tahun Penilaian">
-                            <DatePicker picker="year" minDate={dayjs('2019-01-01',dateFormat)}
-                            maxDate={dayjs()} />
-                        </Form.Item>
-                    )}
+                    }
                 </Form>
             </Modal>
         </>

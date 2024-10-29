@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('capaians', function (Blueprint $table) {
-            $table->string('bulan',2)->nullable();
+            $table->integer('bulan',2)->nullable();
+            $table->dropUnique(['pegawai_id','tahun','periode']);
+
         });
     }
     
@@ -23,6 +25,8 @@ return new class extends Migration
     {
         Schema::table('capaians', function (Blueprint $table) {
             $table->dropColumn('bulan');
+            $table->unique(['pegawai_id','tahun','periode']);
+
         });
         
     }
