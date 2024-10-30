@@ -12,22 +12,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('capaians', function (Blueprint $table) {
-            $table->integer('bulan',2)->nullable();
-            $table->dropUnique(['pegawai_id','tahun','periode']);
-
+            $table->integer('bulan_mulai', false)->nullable();
+            $table->integer('bulan_akhir', false)->nullable();
+            $table->string('path', 255)->nullable();
+            $table->dropUnique(['pegawai_id', 'tahun', 'periode']);
         });
     }
-    
+
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
         Schema::table('capaians', function (Blueprint $table) {
-            $table->dropColumn('bulan');
-            $table->unique(['pegawai_id','tahun','periode']);
-
+            $table->dropColumn('bulan_mulai');
+            $table->dropColumn('bulan_akhir');
+            $table->dropColumn('path');
+            $table->unique(['pegawai_id', 'tahun', 'periode']);
         });
-        
     }
 };

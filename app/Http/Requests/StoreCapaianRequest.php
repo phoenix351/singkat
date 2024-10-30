@@ -26,7 +26,9 @@ class StoreCapaianRequest extends FormRequest
             'periode' => 'required',
             'tahun' => 'required',
             'predikat_id' => 'required',
-            'bulan' => 'nullable',
+            'bulan_mulai' => 'required',
+            'bulan_akhir' => 'required',
+            'file' => 'nullable',
         ];
     }
 }

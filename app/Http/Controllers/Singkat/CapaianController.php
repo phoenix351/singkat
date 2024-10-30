@@ -10,8 +10,10 @@ use App\Models\Pegawai;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 // use Illuminate\Support\Facades\Request;
 use Inertia\Inertia;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class CapaianController extends Controller
@@ -63,97 +65,47 @@ class CapaianController extends Controller
     {
         $validatedData = $request->validated();
         try {
-            //code...
-
-            $duplikat_tahun = Capaian::where('pegawai_id', $validatedData["pegawai_id"])
-                ->where('periode','Tahunan')
-                ->where('tahun', $validatedData["tahun"])->first();
-            if ($duplikat_tahun) {
-
-                return response()->json(['message' => 'Capaian dengan tahun yang sama sudah ada'], 422);
-            }
-            if(str_contains($validatedData['periode'],"Tahunan")){
-                // any in year
-                $duplikat = Capaian::where('pegawai_id',$validatedData['pegawai_id'])
-                ->where('tahun',$validatedData['tahun'])
-                ->first();
-
-                if($duplikat)
-                {
-                    return response()->json(['message'=>"Capaian dengan tahun yang sama sudah ada"], 422);
+          
+            $current_year_data = Capaian::where('tahun', $validatedData['tahun'])
+                ->where('pegawai_id', $validatedData['pegawai_id'])
+                ->get();
+            $existing_months = [];
+            foreach ($current_year_data as  $capaian) {
+                // dd($capaian);
+                if (is_null($capaian->bulan_mulai) || is_null($capaian->bulan_akhir)) {
+                    continue;
                 }
-
-            }
-            // cek untuk data semester
-            if (str_contains($validatedData["periode"], "Semester")) {
-                $duplikat = Capaian::where('pegawai_id', $validatedData["pegawai_id"])
-                    ->where('tahun', $validatedData["tahun"])
-                    ->where('periode', $validatedData["periode"])
-                    ->first();
-                if ($duplikat) {
-
-                    return response()->json(['message' => 'Capaian dengan tahun dan semester yang sama sudah ada'], 422);
+                for ($i = $capaian->bulan_mulai; $i <= $capaian->bulan_akhir; $i++) {
+                    array_push($existing_months, $i);
                 }
             }
-            // cek duplikasi untuk bulanan
-            if (str_contains($validatedData["periode"], "Semester 1")) {
-                $duplikat = Capaian::where('pegawai_id', $validatedData["pegawai_id"])
-                    ->where('tahun', $validatedData["tahun"])
-                    ->where('periode', "Bulanan")
-                    ->where('bulan','<=',6)
-                    ->first();
-                if ($duplikat) {
+            $added_months = [];
 
-                    return response()->json(['message' => 'Capaian Bulanan untuk '.$validatedData["periode"].' sudah ada'], 422);
+            for ($i = $validatedData['bulan_mulai']; $i <= $validatedData['bulan_akhir']; $i++) {
+                array_push($added_months, $i);
+            }
+            // check is any added months in existing
+            $isAny = false;
+            foreach ($added_months as $month) {
+                if(in_array($month,$existing_months)){
+                    $isAny=true;
+                    break;
                 }
             }
-            if (str_contains($validatedData["periode"], "Semester 2")) {
-                $duplikat = Capaian::where('pegawai_id', $validatedData["pegawai_id"])
-                    ->where('tahun', $validatedData["tahun"])
-                    ->where('periode', "Bulanan")
-                    ->where('bulan','>',6)
-                    ->first();
-                if ($duplikat) {
-
-                    return response()->json(['message' => 'Capaian Bulanan untuk '.$validatedData["periode"].' sudah ada'], 422);
-                }
+            if($isAny){
+                return response()->json(['message'=>'Maaf bulan dari rentang sudah ada di database'],422);
             }
-            // cek untuk data bulanan
-            if ($validatedData["periode"] == "Bulanan") {
-                if (is_null($validatedData["bulan"])) {
-                    return response()->json(['message' => 'Isian Bulan Kosong'], 422);
-                }
-                // duplikat tahun
-                $duplikat = Capaian::where('pegawai_id', $validatedData["pegawai_id"])
-                    ->where('periode','Tahunan')
-                    ->where('tahun', $validatedData["tahun"])
-                    ->first();
-                if ($duplikat) {
 
-                    return response()->json(['message' => 'Capaian Tahunan sudah ada, tidak bisa menambahkan Capaian Bulanan'], 422);
-                }
-                // duplikat semester
-                if ($validatedData["bulan"] > 6) {
-                    $duplikat = Capaian::where('pegawai_id', $validatedData["pegawai_id"])
-                        ->where('tahun', $validatedData["tahun"])
-                        ->where('periode', "Semester 2")
-                        ->first();
-                    if ($duplikat) {
-                        return response()->json(['message' => 'Capaian Semester 2 sudah ada, tidak bisa menambahkan Capaian Bulanan' . $validatedData["bulan"]], 422);
-                    }
-                }
-                if ($validatedData["bulan"] <= 6) {
-                    $duplikat = Capaian::where('pegawai_id', $validatedData["pegawai_id"])
-                        ->where('tahun', $validatedData["tahun"])
-                        ->where('periode', "Semester 1")
-                        ->first();
-                    if ($duplikat) {
-                        return response()->json(['message' => 'Capaian Semester 1 sudah ada, tidak bisa menambahkan Capaian Bulanan' . $validatedData["bulan"]], 422);
-                    }
-                }
-            }
             DB::beginTransaction();
             $capaian = Capaian::create($validatedData);
+            if ($request->file('file')->isValid()) {
+                // ...
+                $path = $request->file('file')->storeAs('filePak', $validatedData['pegawai_id'] . $capaian->id . ".pdf");
+                $validatedData['path'] = $path;
+                unset($validatedData['file']);
+                $capaian->path = $path;
+            }
+            // dd($capaian);
             $capaian->save();
 
             DB::commit();
@@ -199,10 +151,18 @@ class CapaianController extends Controller
     {
         try {
             //code...
+
             DB::beginTransaction();
-            $validatedData = $request->validated();
+            $validatedData = $request->all();
+            // dd($validatedData);
+            if ($request->file('file')) {
+                // ...
+                $path = $request->file('file')->storeAs('filePak', $validatedData['pegawai_id'] . $validatedData['id'] . ".pdf");
+                $validatedData['path'] = $path;
+                unset($validatedData['file']);
+            }
             // cek untuk data tahunan
-            
+
             $capaian->update($validatedData);
             $capaian->save();
             // dd($validatedData);
@@ -268,8 +228,16 @@ class CapaianController extends Controller
             ->get();
         return response()->json($capaian, 200);
     }
-    public function upload(Request $request)
+    public function read_pak(Capaian $capaian)
     {
-        dd($request->all());
+        if ($capaian->path) {
+
+            $is_file_exists = Storage::exists($capaian->path);
+            if ($is_file_exists) {
+                return response()->file(Storage::path($capaian->path));
+            }
+        }
+
+        throw new NotFoundHttpException("Dokumen Tidak ditemukan");
     }
 }

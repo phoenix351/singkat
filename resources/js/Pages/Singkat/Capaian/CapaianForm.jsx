@@ -8,6 +8,7 @@ import {
     DatePicker,
     message,
     Upload,
+    Radio,
 } from "antd";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
@@ -18,7 +19,7 @@ const disabledStyle = {
 };
 
 const dateFormat = "YYYY-MM-DD";
-const {RangePicker} = DatePicker;
+const { RangePicker } = DatePicker;
 
 const CapaianForm = ({
     visible,
@@ -33,6 +34,8 @@ const CapaianForm = ({
     const [predikats, setPredikats] = useState([]);
     const [periode, setPeriode] = useState("");
     const [pegawais, setPegawais] = useState([]);
+    const [file, setFile] = useState(null);
+    const [tahun, setTahun] = useState(null);
 
     // define message
     const [messageApi, contextHolder] = message.useMessage();
@@ -63,6 +66,45 @@ const CapaianForm = ({
     useEffect(() => {
         setPeriode(initPeriod);
     }, [initPeriod]);
+    useEffect(() => {
+        form.setFieldValue("periode", periode);
+    }, [periode]);
+
+    const handlePeriodeChange = (event) => {
+        let currentPeriode = event.target.value;
+        setPeriode(currentPeriode);
+        const tahun = new Date(form.getFieldValue("tahun")).getFullYear();
+        setTahun(tahun);
+        if (currentPeriode === "Tahunan") {
+            const dates = [
+                dayjs(`${tahun}-01`, "YYYY-MM"),
+                dayjs(`${tahun}-12`, "YYYY-MM"),
+            ];
+            form.setFieldValue("bulan", dates);
+        }
+        if (currentPeriode === "Semester 1") {
+            const dates = [
+                dayjs(`${tahun}-01`, "YYYY-MM"),
+                dayjs(`${tahun}-06`, "YYYY-MM"),
+            ];
+            form.setFieldValue("bulan", dates);
+        }
+        if (currentPeriode === "Semester 2") {
+            const dates = [
+                dayjs(`${tahun}-07`, "YYYY-MM"),
+                dayjs(`${tahun}-12`, "YYYY-MM"),
+            ];
+            form.setFieldValue("bulan", dates);
+        }
+        if (currentPeriode === "Bulanan") {
+            const dates = [dayjs(`${tahun}-01`, "YYYY-MM"), null];
+            form.setFieldValue("bulan", dates);
+        }
+    };
+    useEffect(() => {
+        form.setFieldValue("file", file);
+        // console.log({file});
+    }, [file]);
 
     return (
         <>
@@ -115,44 +157,47 @@ const CapaianForm = ({
                         />
                     </Form.Item>
 
+                    <Form.Item name={"tahun"} label="Tahun Penilaian">
+                        <DatePicker
+                            picker="year"
+                            minDate={dayjs("2019-01-01", dateFormat)}
+                            disabled={type === "edit"}
+                            maxDate={dayjs()}
+                        />
+                    </Form.Item>
                     <Form.Item name={"periode"} label="Periode Penilaian">
-                        <Select
+                        <Radio.Group
                             placeholder="Pilih Periode"
                             allowClear
-                            showSearch
-                            onChange={setPeriode}
+                            optionType="button"
+                            buttonStyle="solid"
+                            defaultValue={"Bulanan"}
+                            onChange={handlePeriodeChange}
                             disabled={type === "edit"}
                             options={[
-                                { label: "Tahunan", value: "Tahunan" },
                                 { label: "Bulanan", value: "Bulanan" },
                                 { label: "Semester 1", value: "Semester 1" },
                                 { label: "Semester 2", value: "Semester 2" },
+                                { label: "Tahunan", value: "Tahunan" },
                             ]}
                         />
                     </Form.Item>
-                    {periode === "Bulanan" ? (
-                        <Form.Item name={"bulan"} label="Bulan Penilaian">
-                            {/* <DatePicker
-                                picker="month"
-                                disabled={type === "edit"}
-                                /> */}
-                            <RangePicker
-                                picker="month"
-                                minDate={dayjs("2019-01-01", dateFormat)}
-                                format={"MMMM YYYY"}
-                                maxDate={dayjs()}
-                            />
-                        </Form.Item>
-                    ) : (
-                        <Form.Item name={"tahun"} label="Tahun Penilaian">
-                            <DatePicker
-                                picker="year"
-                                minDate={dayjs("2019-01-01", dateFormat)}
-                                disabled={type === "edit"}
-                                maxDate={dayjs()}
-                            />
-                        </Form.Item>
-                    )}
+                    <Form.Item name={"bulan"} label="Bulan Penilaian">
+                                              <RangePicker
+                            picker="month"
+                            minDate={
+                                tahun
+                                    ? dayjs(`${tahun}-01-01`, dateFormat)
+                                    : dayjs("2019-01-01", dateFormat)
+                            }
+                            format={"MMMM YYYY"}
+                            maxDate={tahun ? dayjs(`${tahun}-12-31`) : dayjs()}
+                            onChange={() => setPeriode("Bulanan")}
+                            disabled={type === "edit"}
+
+                        />
+                    </Form.Item>
+
                     <Form.Item
                         name="predikat_id"
                         label="Predikat Kinerja"
@@ -169,11 +214,10 @@ const CapaianForm = ({
                             }))}
                         />
                     </Form.Item>
-                    {type==="edit"&&
-                    <Form.Item name={"file"} label="Dokumen PAK">
-                        <UploadPAK/>
+
+                    <Form.Item name={"file"} label="Dokumen PAK" required>
+                        <UploadPAK setFile={setFile} />
                     </Form.Item>
-                    }
                 </Form>
             </Modal>
         </>

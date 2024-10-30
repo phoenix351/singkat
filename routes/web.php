@@ -52,9 +52,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/capaian/{capaian}', [CapaianController::class, 'destroy']);
     Route::get('/singkat/kelola-ckp/fetch', [CapaianController::class, 'fetch'])->name('kelola-ckp.fetch');
     
-    Route::post('/capaian-upload', [CapaianController::class, 'upload'])->name('capaian.upload');
+    Route::get('/capaian/pak/{capaian}', [CapaianController::class, 'read_pak'])->name('capaian.read_pak');
     Route::post('/capaian', [CapaianController::class, 'store'])->name('capaian.store');
-    Route::patch('/capaian/{capaian}', [CapaianController::class, 'update'])->name('capaian.update');
+    Route::post('/capaian/{capaian}', [CapaianController::class, 'update'])->name('capaian.update');
 
     Route::patch('/jabatan/{jabatan}', [JabatanController::class, 'update'])->name('jabatan.update');
 });
