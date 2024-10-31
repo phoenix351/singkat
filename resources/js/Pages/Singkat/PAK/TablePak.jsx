@@ -124,7 +124,7 @@ console.log({pegawai});
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
                                                 {Number(data.akumulasi_ak) +
-                                                    data.capaian.reduce(
+                                                    data.capaian.filter(capaian=>capaian.jabatan_id==data.jabatan_id).reduce(
                                                         (add, cap) =>
                                                             add +
                                                             cap.angka_kredit,

@@ -26,7 +26,7 @@ class CapaianController extends Controller
         $search = $request->input('search');
         $preparedSearch = "%$search%";
         $capaian = Capaian::join('pegawai', 'pegawai.id', 'capaians.pegawai_id')
-            ->join('jabatan', 'jabatan.id', 'pegawai.jabatan_id')
+            ->join('jabatan', 'jabatan.id', 'capaians.jabatan_id')
             ->join('predikats', 'capaians.predikat_id', 'predikats.id')
             ->where(DB::raw('CONCAT(capaians.periode, " ", capaians.tahun)'), 'like', $preparedSearch)
             ->orWhere('pegawai.nama', 'like', $preparedSearch)
@@ -106,6 +106,7 @@ class CapaianController extends Controller
                 $capaian->path = $path;
             }
             // dd($capaian);
+            $capaian->jabatan_id = Pegawai::find($validatedData['pegawai_id'])->jabatan_id;
             $capaian->save();
 
             DB::commit();

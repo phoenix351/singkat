@@ -25,12 +25,9 @@ class PegawaiController extends Controller
         $keyword = "%$search%";
 
         // Subquery to calculate the total angka_kredit for each pegawai
-        $subQuery = DB::table('capaians')
-            ->select('pegawai_id', DB::raw('SUM(angka_kredit) as total_angka_kredit'))
-            ->groupBy('pegawai_id');
-
-       
+        
         $pegawais = Pegawai::with(['jabatan', 'capaian'])
+            
             ->where(function ($query) use ($keyword) {
                 $query->where('pegawai.nama', 'like', '%' . $keyword . '%')
                     ->orWhere('pegawai.nip', 'like', '%' . $keyword . '%')
@@ -41,7 +38,7 @@ class PegawaiController extends Controller
                     ->orWhere('pegawai.unit_kerja', 'like', '%' . $keyword . '%');
             })
             ->paginate(20);
-        // dd([$pegawais, $pegawais2]);
+        // dd([$pegawais]);
 
         return Inertia::render('Singkat/PAK/KelolaPak', [
             'pegawai' => $pegawais,
@@ -67,6 +64,7 @@ class PegawaiController extends Controller
         // }])->get();
         // dd($pegawai);
         $histories = Capaian::where('pegawai_id', $pegawai["id"])
+            ->where('jabatan_id', $pegawai['jabatan_id'])
             ->orderBy('tahun',)
             ->orderBy('periode')
             ->get()->toArray();
@@ -78,10 +76,10 @@ class PegawaiController extends Controller
             $histories[$key]["akumulasi_ak"] = $akumulasi_ak;
         }
         $pegawai["akumulasi_ak"] = $akumulasi_ak;
-        // $histories->created_at = Carbon::parse($histories->created_at)->translatedFormat('j F Y');
+        $pegawai['daftar_jabatan'] = $this->get_riwayat_jabatan($pegawai);
 
 
-        return inertia('PAK/DetailPak', [
+        return inertia('Singkat/PAK/DetailPak', [
             'pegawai' => $pegawai,
             'histories' => $histories,
 
@@ -111,7 +109,7 @@ class PegawaiController extends Controller
         // $histories->created_at = Carbon::parse($histories->created_at)->translatedFormat('j F Y');
 
 
-        return inertia('PAK/DetailPak', [
+        return inertia('Singkat/PAK/DetailPak', [
             'pegawai' => $pegawai,
             'histories' => $histories,
 
@@ -176,14 +174,9 @@ class PegawaiController extends Controller
         // $tanggal_lahir = $this->calculateTanggalLahir($request->nip);
         $validatedData["tanggal_lahir"] = $this->calculateTanggalLahir($validatedData['nip']);
 
-        // Cek apakah akumulasi ak berubah
-        // if ($pegawai->akumulasi_ak !== $request->akumuasi_ak) {
-        //     // Simpan history perubahan
-        //     AngkaKreditHistory::create([
-        //         'pegawai_id' => $pegawai->id,
-        //         'akumulasi_ak' => $pegawai->akumulasi_ak,
-        //     ]);
-        // }
+        if ($validatedData['jabatan_id'] != $pegawai->jabatan_id) {
+            $validatedData['akumulasi_ak'] = 0;
+        }
         $pegawai->update($validatedData);
         return response()->json($validatedData);
     }
@@ -219,5 +212,20 @@ class PegawaiController extends Controller
     {
         $pegawais = Pegawai::select('pegawai.id', 'pegawai.nama')->get();
         return response()->json($pegawais);
+    }
+    private function get_riwayat_jabatan(Pegawai $pegawai)
+    {
+        $daftar_jabatan = [];
+        array_push($daftar_jabatan, $pegawai->jabatan->id);
+        $capaians = Capaian::where('pegawai_id', $pegawai->id)->get();
+        foreach ($capaians as $capaian) {
+            # code...
+            if (!in_array($capaian->jabatan_id, $daftar_jabatan)) {
+                array_push($daftar_jabatan, $capaian->jabatan_id);
+            }
+        }
+        $jabatans = Jabatan::whereIn('id', $daftar_jabatan)->get();
+        // dd($jabatans);
+        return $jabatans;
     }
 }

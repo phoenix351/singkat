@@ -82,7 +82,7 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 content: "Menyimpan perubahan",
                 key: "handle-save",
             });
-            const response = axios.patch(`/kelola-pak/${values.id}`, values, {
+            const response = axios.put(`/kelola-pak/${values.id}`, values, {
                 headers: { "Content-Type": "application/json" },
             });
 

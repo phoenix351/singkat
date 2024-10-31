@@ -1,10 +1,14 @@
 import React from "react";
 import { usePage, Link } from "@inertiajs/react";
-import { Row, Col, List } from "antd";
+import { Row, Col, List, Space, Typography } from "antd";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import dayjs from "dayjs";
+import "dayjs/locale/id";
 
+dayjs.locale("id");
+const { Text } = Typography;
 const DetailPak = ({ auth, histories, pegawai }) => {
     // const { pegawai } = usePage().props;
     const getUsia = (tanggal_lahir) => {
@@ -159,18 +163,34 @@ const DetailPak = ({ auth, histories, pegawai }) => {
                     dataSource={histories}
                     renderItem={(item) => (
                         <List.Item>
-                            {format(
+                            {/* {format(
                                 new Date(item.created_at),
                                 "d MMMM yyyy HH:mm:ss",
                                 {
                                     locale: id,
                                 }
-                            )}{" "}
-                            | Periode : {item.periode}- Akumulasi Angka Kredit :{" "}
-                            {item.akumulasi_ak.toFixed(2)}{" "}
-                            <span className="text-success">
-                                (+ {item.angka_kredit}){" "}
-                            </span>
+                            )}{" "} */}
+                            <Space style={{display:"flex", justifyContent:'space-between'}}>
+                                <Text strong>
+                                    Periode :{" "}
+                                    {dayjs(
+                                        `${item.tahun}-${item.bulan_mulai}`,
+                                        "YYYY-M"
+                                    ).format("MMMM YYYY")}{" "}
+                                    -{" "}
+                                    {dayjs(
+                                        `${item.tahun}-${item.bulan_akhir}`,
+                                        "YYYY-M"
+                                    ).format("MMMM YYYY")}
+                                </Text>
+                                <span>
+                                    Akumulasi Angka Kredit :{" "}
+                                    {item.akumulasi_ak.toFixed(3)}{" "}
+                                </span>
+                                <span className="text-success">
+                                    (+ {item.angka_kredit}){" "}
+                                </span>
+                            </Space>
                         </List.Item>
                     )}
                 />
