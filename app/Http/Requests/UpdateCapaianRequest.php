@@ -24,8 +24,7 @@ class UpdateCapaianRequest extends FormRequest
         return [
             'pegawai_id'=>'required',
             'predikat_id'=>'required',
-            'tahun'=>'required',
-            'periode'=>'required'
+            'file'=>'nullable'
         ];
     }
 }

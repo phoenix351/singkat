@@ -162,6 +162,7 @@ const AddCapaianForm = ({ visible, onCancel }) => {
                     <Form.Item name={"periode"} label="Periode Penilaian">
                         <Select placeholder="Pilih Periode" allowClear showSearch options={[
                             {label:'Tahunan',value:'Tahunan'},
+                            {label:'Bulanan',value:'Bulanan'},
                             {label:'Semester 1',value:'Semester 1'},
                             {label:'Semester 2',value:'Semester 2'},
                         ]}/>

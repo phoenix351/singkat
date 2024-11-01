@@ -12,7 +12,7 @@ class Capaian extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['pegawai_id', 'predikat_id', 'periode', 'tahun', 'angka_kredit'];
+    protected $fillable = ['pegawai_id', 'predikat_id', 'periode', 'tahun','bulan_mulai','bulan_akhir','path', 'angka_kredit'];
 
     public static function boot()
     {
@@ -32,6 +32,10 @@ class Capaian extends Model
     {
         return $this->HasOne(AngkaKreditHistory::class);
     }
+    public function jabatan():BelongsTo
+    {
+        return $this->belongsTo(Jabatan::class);
+    }
 
     public function predikat(): BelongsTo
     {
@@ -43,10 +47,9 @@ class Capaian extends Model
         $angka_kredit_dasar = (float)$this->pegawai->jabatan->angka_kredit;
         $nilai_ak = (float) $this->predikat->nilai;
 
-        if (strlen($this->periode) > 7) {
-            $nilai_ak = $nilai_ak / 2;
-        }
+        $month_counts = $this->bulan_akhir-$this->bulan_mulai+1;
 
-        $this->angka_kredit = $nilai_ak * $angka_kredit_dasar;
+
+        $this->angka_kredit = $nilai_ak * $angka_kredit_dasar*($month_counts/12);
     }
 }

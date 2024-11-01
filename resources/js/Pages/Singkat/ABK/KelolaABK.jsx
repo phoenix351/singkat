@@ -7,14 +7,13 @@ import Pagination from "@/Components/Pagination";
 import TableABK from "../ABK/TableABK";
 import AddAbkForm from "./AddAbkForm";
 import EditAbkForm from "./EditAbkForm";
-import ExportModal from "./ExportModal";
 import Alert from "@/Components/Alert";
+import * as XLSX from "xlsx";
 
 const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentABK, setCurrentABK] = useState(null);
-    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     const { errors, flash } = usePage().props;
 
@@ -23,9 +22,7 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
 
     const closeEditModal = () => setIsEditModalOpen(false);
 
-    const openExportModal = () => setIsExportModalOpen(true);
-    const closeExportModal = () => setIsExportModalOpen(false);
-
+ 
     const openEditModal = (abk) => {
         setCurrentABK(abk);
         setIsEditModalOpen(true);
@@ -35,9 +32,40 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
             // Refresh the page or handle post-delete actions here
         });
     };
+    const handleDownload = async (values) => {
+        const {data} = await axios.get(route("abk.fetch",{search:values}));
+           
+        
+        // return
+              const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(data);
 
+        XLSX.utils.book_append_sheet(workbook, worksheet, "abk");
+
+        // XLSX.writeFile(workbook, "template_import.xlsx");
+        const excelBuffer = XLSX.write(workbook, {
+            bookType: "xlsx",
+            type: "array",
+        });
+
+        const blob = new Blob([excelBuffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+        // Create a URL for the Blob
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "data_abk.xlsx"; // Use the filename from state
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        setOpenUnduhModal(false);
+    };
     const handleSearch = (query) => {
-        router.get("/kelola-abk", { search: query }, { replace: true });
+        router.get("/singkat/kelola-abk", { search: query }, { replace: true });
     };
 
     return (
@@ -66,7 +94,7 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
 
                 <div>
                     <button
-                        onClick={openExportModal}
+                        onClick={()=>handleDownload(search)}
                         // href="/export-pegawai?columns=id,nip_bps,nip,nama,jabatan,unit_kerja,pangkat_golongan_ruang,angka_kredit_konvensional,angka_kredit_integrasi,predikat_kinerja,tambahan_ijazah,akumulasi_ak,ijazah_terakhir,tb,usia_per_3_januari,created_at,updated_at"
                         type="button"
                         className="inline-flex items-center justify-center gap-2.5 rounded-md bg-primary py-2 px-5 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
@@ -134,11 +162,7 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
                 role={auth.user.role}
             />
 
-            <ExportModal
-                visible={isExportModalOpen}
-                onCancel={closeExportModal}
-                unitKerja={unitKerja}
-            />
+           
         </Authenticated>
     );
 };

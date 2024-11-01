@@ -50,9 +50,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/kelola-ckp/{capaian}', [CapaianController::class, 'show']);
     Route::put('/kelola-ckp/{ckp}', [CapaianController::class, 'update']);
     Route::delete('/capaian/{capaian}', [CapaianController::class, 'destroy']);
-
+    Route::get('/singkat/kelola-ckp/fetch', [CapaianController::class, 'fetch'])->name('kelola-ckp.fetch');
+    
+    Route::get('/capaian/pak/{capaian}', [CapaianController::class, 'read_pak'])->name('capaian.read_pak');
     Route::post('/capaian', [CapaianController::class, 'store'])->name('capaian.store');
-    Route::patch('/capaian/{capaian}', [CapaianController::class, 'update'])->name('capaian.update');
+    Route::post('/capaian/{capaian}', [CapaianController::class, 'update'])->name('capaian.update');
 
     Route::patch('/jabatan/{jabatan}', [JabatanController::class, 'update'])->name('jabatan.update');
 });
@@ -71,12 +73,15 @@ Route::get('/singkat/kelola-abk', [AbkController::class, 'index'])->middleware([
 Route::post('/kelola-abk', [AbkController::class, 'store'])->middleware(['auth'])->name('abk.store');
 Route::put('/kelola-abk/{abk}', [AbkController::class, 'update'])->middleware(['auth'])->name('abk.update');
 Route::delete('/kelola-abk/{abk}', [AbkController::class, 'destroy'])->middleware(['auth'])->name('abk.destroy');
+Route::get('/kelola-abk/fetch', [AbkController::class, 'fetch'])->middleware(['auth'])->name('abk.fetch');
 
 // Get Api Available Jabatan
 Route::get('/api/get-available-jabatan', [AbkController::class, 'getAvailableJabatan']);
 Route::get('/api/get-available-jabatan-edit', [AbkController::class, 'getAvailableJabatanEdit']);
 Route::get('/api/predikats', [PredikatController::class, 'fetch']);
 Route::get('/api/pegawais', [PegawaiController::class, 'fetch']);
+Route::get('/api/pegawai/histories', [PegawaiController::class, 'get_histories'])->name('pegawai.histories');
+
 
 Route::get('/api/abk-summary', [AbkController::class, 'getAbkSummary']);
 

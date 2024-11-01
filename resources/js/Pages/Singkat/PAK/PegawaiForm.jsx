@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Modal, Form, Input, Select, InputNumber } from "antd";
+import { Modal, Form, Input, Select, InputNumber, Button } from "antd";
 import { router } from "@inertiajs/react";
 
 const validateNip = (_, value) => {
@@ -171,6 +171,17 @@ const PegawaiForm = ({
                         showSearch
                         placeholder="Pilih Jabatan Pegawai"
                         optionFilterProp="label"
+                        onChange={() => {
+                            Modal.confirm({
+                              title: 'Konfirmasi',
+                              content: 'Mengubah jabatan pegawai akan mereset akumulasi angka kredit menjadi 0 (nol) !',
+                              footer: (_, { OkBtn, CancelBtn }) => (
+                                <>
+                                  <OkBtn />
+                                </>
+                              ),
+                            });
+                          }}
                         // {...(role === "admin" ? {} : { disabled: true })}
                         options={jabatan.map((item) => ({
                             label: item.nama,
