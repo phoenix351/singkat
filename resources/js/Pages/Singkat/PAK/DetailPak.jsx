@@ -1,16 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { usePage, Link } from "@inertiajs/react";
-import { Row, Col, List, Space, Typography } from "antd";
+import { Row, Col, List, Space, Typography, Select } from "antd";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
+import axios from "axios";
+import { ArrowLeftOutlined } from "@ant-design/icons";
 
 dayjs.locale("id");
 const { Text } = Typography;
 const DetailPak = ({ auth, histories, pegawai }) => {
     // const { pegawai } = usePage().props;
+    const [selectedJabatan, setSelectedJabatan] = useState(pegawai.jabatan_id);
+    const [currentHistories, setCurrentHistories] = useState(histories);
+
     const getUsia = (tanggal_lahir) => {
         // Hitung selisih dalam milidetik
         const selisihMilidetik = new Date() - new Date(tanggal_lahir);
@@ -37,10 +42,10 @@ const DetailPak = ({ auth, histories, pegawai }) => {
             {["admin", "operator", "super admin"].includes(auth.user.role) && (
                 <div className="flex justify-start gap-4.5">
                     <Link
-                        href="/kelola-pak"
+                        href="/singkat/kelola-pak"
                         className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90"
                     >
-                        Kembali
+                     <ArrowLeftOutlined/>  Kembali
                     </Link>
                 </div>
             )}
@@ -154,13 +159,42 @@ const DetailPak = ({ auth, histories, pegawai }) => {
 
                 <List
                     header={
-                        <h3 className="font-lg font-bold text-black dark:text-white">
-                            Histori Akumulasi Angka Kredit
-                        </h3>
+                        <>
+                            <h3 className="font-lg font-bold text-black dark:text-white">
+                                Histori Akumulasi Angka Kredit
+                            </h3>
+                            <Select
+                                style={{ width: 500 }}
+                                value={selectedJabatan}
+                                onChange={async (value) => {
+                                    setSelectedJabatan(value);
+                                    try {
+                                        const response = await axios.get(
+                                            route("pegawai.histories", {
+                                                pegawai_id: pegawai.id,
+                                                jabatan_id: value,
+                                            })
+                                        );
+                                        console.log({ response });
+                                        const { data } = response;
+
+                                        setCurrentHistories(data);
+                                    } catch (error) {
+                                        console.log("error : ", error);
+                                    }
+                                }}
+                                options={pegawai.daftar_jabatan.map(
+                                    (jabatan) => ({
+                                        label: jabatan.nama,
+                                        value: String(jabatan.id),
+                                    })
+                                )}
+                            />
+                        </>
                     }
                     className="mt-5"
                     bordered
-                    dataSource={histories}
+                    dataSource={currentHistories}
                     renderItem={(item) => (
                         <List.Item>
                             {/* {format(
@@ -170,7 +204,12 @@ const DetailPak = ({ auth, histories, pegawai }) => {
                                     locale: id,
                                 }
                             )}{" "} */}
-                            <Space style={{display:"flex", justifyContent:'space-between'}}>
+                            <Space
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                }}
+                            >
                                 <Text strong>
                                     Periode :{" "}
                                     {dayjs(

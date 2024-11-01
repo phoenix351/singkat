@@ -32,6 +32,10 @@ class Capaian extends Model
     {
         return $this->HasOne(AngkaKreditHistory::class);
     }
+    public function jabatan():BelongsTo
+    {
+        return $this->belongsTo(Jabatan::class);
+    }
 
     public function predikat(): BelongsTo
     {

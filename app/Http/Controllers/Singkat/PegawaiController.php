@@ -25,9 +25,9 @@ class PegawaiController extends Controller
         $keyword = "%$search%";
 
         // Subquery to calculate the total angka_kredit for each pegawai
-        
+
         $pegawais = Pegawai::with(['jabatan', 'capaian'])
-            
+
             ->where(function ($query) use ($keyword) {
                 $query->where('pegawai.nama', 'like', '%' . $keyword . '%')
                     ->orWhere('pegawai.nip', 'like', '%' . $keyword . '%')
@@ -63,6 +63,39 @@ class PegawaiController extends Controller
         //     $query->with('tambahan');
         // }])->get();
         // dd($pegawai);
+        $currentHistories = Capaian::with(['jabatan'])
+            ->where('pegawai_id', $pegawai["id"])
+            ->where('jabatan_id', $pegawai['jabatan_id'])
+            ->orderBy('tahun',)
+            ->orderBy('periode')
+            ->get()->toArray();
+        
+        $akumulasi_ak = $pegawai["akumulasi_ak"];
+        foreach ($currentHistories as $key => $history) {
+            # code...
+            $akumulasi_ak = $akumulasi_ak + $history["angka_kredit"];
+
+            $currentHistories[$key]["akumulasi_ak"] = $akumulasi_ak;
+        }
+        $pegawai["akumulasi_ak"] = $akumulasi_ak;
+        $pegawai['daftar_jabatan'] = $this->get_riwayat_jabatan($pegawai);
+
+
+        return inertia('Singkat/PAK/DetailPak', [
+            'pegawai' => $pegawai,
+            'histories' => $currentHistories,
+
+        ]);
+    }
+    public function capaian_ku()
+    {
+        $user = Auth::user();
+        // dd([$user->pegawai_id, $pegawai->id]);
+        $pegawai = Pegawai::with(['jabatan', 'capaian'])->find($user->pegawai_id);
+        // $histories = AngkaKreditHistory::where('pegawai_id', $pegawai->id)->with(['capaian' => function ($query) {
+        //     $query->with('tambahan');
+        // }])->get();
+        // dd($pegawai);
         $histories = Capaian::where('pegawai_id', $pegawai["id"])
             ->where('jabatan_id', $pegawai['jabatan_id'])
             ->orderBy('tahun',)
@@ -77,36 +110,6 @@ class PegawaiController extends Controller
         }
         $pegawai["akumulasi_ak"] = $akumulasi_ak;
         $pegawai['daftar_jabatan'] = $this->get_riwayat_jabatan($pegawai);
-
-
-        return inertia('Singkat/PAK/DetailPak', [
-            'pegawai' => $pegawai,
-            'histories' => $histories,
-
-        ]);
-    }
-    public function capaian_ku()
-    {
-        $user = Auth::user();
-        // dd([$user->pegawai_id, $pegawai->id]);
-        $pegawai = Pegawai::find($user->pegawai_id);
-        $pegawai = $pegawai->join('jabatan', 'jabatan.id', 'pegawai.jabatan_id')->where('pegawai.id', $pegawai->id)->select('pegawai.*', 'jabatan.nama as jabatan')->first()->toArray();
-        // $histories = AngkaKreditHistory::where('pegawai_id', $pegawai->id)->with(['capaian' => function ($query) {
-        //     $query->with('tambahan');
-        // }])->get();
-        $histories = Capaian::where('pegawai_id', $pegawai["id"])
-            ->orderBy('tahun',)
-            ->orderBy('periode')
-            ->get()->toArray();
-        $akumulasi_ak = $pegawai["akumulasi_ak"];
-        foreach ($histories as $key => $history) {
-            # code...
-            $akumulasi_ak = $akumulasi_ak + $history["angka_kredit"];
-
-            $histories[$key]["akumulasi_ak"] = $akumulasi_ak;
-        }
-        $pegawai["akumulasi_ak"] = $akumulasi_ak;
-        // $histories->created_at = Carbon::parse($histories->created_at)->translatedFormat('j F Y');
 
 
         return inertia('Singkat/PAK/DetailPak', [
@@ -176,6 +179,17 @@ class PegawaiController extends Controller
 
         if ($validatedData['jabatan_id'] != $pegawai->jabatan_id) {
             $validatedData['akumulasi_ak'] = 0;
+            // $newCapaian = [
+            //     'pegawai_id'=>$validatedData['nip_bps'],
+            //     'periode'=>'-',
+            //     'tahun'=> date("Y"),
+            //     'predikat_id'=>1,
+            //     'angka_kredit'=>0,
+            //     'angka_kredit_dasar'=>0,
+            //     'jabatan_id'=>$validatedData['jabatan_id']
+            // ];
+            // Capaian::create($newCapaian);
+
         }
         $pegawai->update($validatedData);
         return response()->json($validatedData);
@@ -227,5 +241,35 @@ class PegawaiController extends Controller
         $jabatans = Jabatan::whereIn('id', $daftar_jabatan)->get();
         // dd($jabatans);
         return $jabatans;
+    }
+    public function get_histories(Request $request)
+    {
+        $req = $request->all();
+        $pegawai_id = $req['pegawai_id'];
+        $jabatan_id = $req['jabatan_id'];
+        // $pegawai = Pegawai::with(['jabatan', 'capaian'])->find($pegawai_id);
+        // $histories = AngkaKreditHistory::where('pegawai_id', $pegawai->id)->with(['capaian' => function ($query) {
+        //     $query->with('tambahan');
+        // }])->get();
+        // dd($pegawai);
+        $histories = Capaian::where('pegawai_id', $pegawai_id)
+            ->where('jabatan_id', $jabatan_id)
+            ->orderBy('tahun',)
+            ->orderBy('periode')
+            ->get()->toArray();
+            // dd([$histories,$pegawai_id,$jabatan_id]);
+        if(count($histories)<1)
+        {
+            return $histories;
+        }
+        $akumulasi_ak = $histories[0]["angka_kredit_dasar"];
+        foreach ($histories as $key => $history) {
+            # code...
+            $akumulasi_ak = $akumulasi_ak + $history["angka_kredit"];
+
+            $histories[$key]["akumulasi_ak"] = $akumulasi_ak;
+        }
+        // $pegawai["akumulasi_ak"] = $akumulasi_ak;
+        return $histories;
     }
 }
