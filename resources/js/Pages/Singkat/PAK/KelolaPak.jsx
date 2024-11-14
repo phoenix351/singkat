@@ -181,26 +181,26 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                         <button
                             onClick={() => {
                                 createForm.resetFields();
-                                createForm.setFieldsValue({
-                                    id: 340013053,
-                                    nip_bps: "340013053",
-                                    nip: "197102051992022001",
-                                    nama: "Johanna Maria Farida Tampemawa, S.E.",
-                                    jabatan_id: "39",
-                                    unit_kerja: "BPS Kota Bitung",
-                                    pangkat_golongan_ruang:
-                                        "Penata Tk.I / IIId",
-                                    angka_kredit_konvensional: "313.898",
-                                    angka_kredit_integrasi: "113.898",
-                                    predikat_kinerja: "Sangat Baik",
-                                    tambahan_ijazah: null,
-                                    akumulasi_ak: "151.398",
-                                    ijazah_terakhir: "S1/DIV/Sederajat",
-                                    tanggal_lahir: "1971-02-05",
-                                    nama_jabatan: "Statistisi Ahli Muda",
-                                    angka_kredit_akumulasi: 151.398,
-                                    tambahan_ijazah: "Baik",
-                                });
+                                // createForm.setFieldsValue({
+                                //     id: 340013053,
+                                //     nip_bps: "340013053",
+                                //     nip: "197102051992022001",
+                                //     nama: "Johanna Maria Farida Tampemawa, S.E.",
+                                //     jabatan_id: "39",
+                                //     unit_kerja: "BPS Kota Bitung",
+                                //     pangkat_golongan_ruang:
+                                //         "Penata Tk.I / IIId",
+                                //     angka_kredit_konvensional: "313.898",
+                                //     angka_kredit_integrasi: "113.898",
+                                //     predikat_kinerja: "Sangat Baik",
+                                //     tambahan_ijazah: null,
+                                //     akumulasi_ak: "151.398",
+                                //     ijazah_terakhir: "S1/DIV/Sederajat",
+                                //     tanggal_lahir: "1971-02-05",
+                                //     nama_jabatan: "Statistisi Ahli Muda",
+                                //     angka_kredit_akumulasi: 151.398,
+                                //     tambahan_ijazah: "Baik",
+                                // });
                                 openModal();
                             }}
                             className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"

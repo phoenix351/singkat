@@ -31,11 +31,10 @@ const EditPegawaiForm = ({
     role,
 }) => {
     const [form] = Form.useForm();
-    
 
     useEffect(() => {
         if (pegawai) {
-            console.log({pegawai});
+            console.log({ pegawai });
             form.setFieldsValue(pegawai);
         }
     }, [pegawai, form]);
@@ -77,6 +76,7 @@ const EditPegawaiForm = ({
                     rules={[{ required: true, validator: validateNipBps }]}
                 >
                     <Input
+                        disabled
                         className="border border-slate-400 rounded-md"
                         {...(role === "admin" ? {} : { disabled: true })}
                     />
@@ -84,9 +84,11 @@ const EditPegawaiForm = ({
                 <Form.Item
                     name="nip"
                     label="NIP"
+                    disabled
                     rules={[{ required: true, validator: validateNip }]}
                 >
                     <Input
+                        disabled
                         {...(role === "admin" ? {} : { disabled: true })}
                         className="border border-slate-400 rounded-md"
                     />
@@ -97,27 +99,12 @@ const EditPegawaiForm = ({
                     rules={[{ required: true }]}
                 >
                     <Input
+                        disabled
                         {...(role === "admin" ? {} : { disabled: true })}
                         className="border border-slate-400 rounded-md"
                     />
                 </Form.Item>
-                <Form.Item
-                    name="jabatan_id"
-                    label="Jabatan"
-                    rules={[{ required: true }]}
-                    className="focus:border-none"
-                >
-                    <Select
-                        allowClear
-                        showSearch
-                        {...(role === "admin" ? {} : { disabled: true })}
-                        optionFilterProp=""
-                        options={jabatan.map((item) => ({
-                            label: item.nama,
-                            value: String(item.id),
-                        }))}
-                    />
-                </Form.Item>
+
                 <Form.Item
                     name="unit_kerja"
                     label="Satuan Kerja"
@@ -142,11 +129,29 @@ const EditPegawaiForm = ({
                     <Input className="border border-slate-400 rounded-md" />
                 </Form.Item>
                 <Form.Item
+                    name="jabatan_id"
+                    label="Jabatan"
+                    rules={[{ required: true }]}
+                    className="focus:border-none"
+                >
+                    <Select
+                        allowClear
+                        showSearch
+                        {...(role === "admin" ? {} : { disabled: true })}
+                        optionFilterProp=""
+                        options={jabatan.map((item) => ({
+                            label: item.nama,
+                            value: String(item.id),
+                        }))}
+                    />
+                </Form.Item>
+                <Form.Item
                     name="angka_kredit_konvensional"
                     label="Angka Kredit Konvensional"
                 >
                     {" "}
                     <InputNumber
+                        disabled
                         {...(role === "admin" ? {} : { disabled: true })}
                         className="border w-[30%] border-slate-400 rounded-md"
                     />
@@ -156,37 +161,27 @@ const EditPegawaiForm = ({
                     label="Angka Kredit Integrasi"
                 >
                     <InputNumber
+                        disabled
                         {...(role === "admin" ? {} : { disabled: true })}
                         className="border w-[30%] border-slate-400 rounded-md"
                     />
                 </Form.Item>
-                
+
                 <Form.Item
-                    name="tambahan_ijazah"
-                    label="25% Tambahan Ijazah"
+                    name="angka_kredit_dasar"
+                    label="Angka Kredit Dasar"
                     className="focus:border-none"
                 >
-                    <Select
-                        placeholder="Pilih Predikat Ijazah"
-                        allowClear
-                        optionFilterProp="children"
-                        options={[
-                            { value: "Sangat Baik", label: "Sangat Baik" },
-                            { value: "Baik", label: "Baik" },
-                            {
-                                value: "Butuh Perbaikan",
-                                label: "Butuh Perbaikan",
-                            },
-                            { value: "Kurang", label: "Kurang" },
-                            { value: "Sangat Kurang", label: "Sangat Kurang" },
-                        ]}
-                    />
+                    <Input className="border border-slate-400 rounded-md" />
                 </Form.Item>
 
                 <Form.Item name="ijazah_terakhir" label="Ijazah Terakhir">
                     <Input className="border border-slate-400 rounded-md" />
                 </Form.Item>
-                <Form.Item name="angka_kredit_akumulasi" label="Akumulasi Angka Kredit">
+                <Form.Item
+                    name="angka_kredit_akumulasi"
+                    label="Akumulasi Angka Kredit"
+                >
                     <Input
                         className="border border-slate-400 rounded-md"
                         disabled
