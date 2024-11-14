@@ -212,7 +212,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                         </svg>
                                         {user.role == "viewer"
                                             ? "PAK"
-                                            : "Kelola PAK"}
+                                            : "Kelola Pegawai"}
                                     </Link>
                                 </li>
                                 <li>
@@ -249,8 +249,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                             </defs>
                                         </svg>
                                         {user.role == "viewer"
-                                            ? "CKP"
-                                            : "Kelola CKP"}
+                                            ? "PAK"
+                                            : "Kelola PAK"}
                                     </Link>
                                 </li>
 

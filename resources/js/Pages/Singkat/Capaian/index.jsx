@@ -65,7 +65,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     };
 
     const handleSearch = (query) => {
-        const url = new URL(`http://localhost:8000/singkat/kelola-ckp`);
+        const url = new URL(`${route()}/singkat/kelola-ckp`);
 
         url.searchParams.set("search", query);
         router.get(url, { replace: true });
@@ -83,7 +83,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             let bulan_akhir = values.bulan[1];
             values["bulan_mulai"] = new Date(bulan_mulai).getMonth() + 1;
             values["bulan_akhir"] = new Date(bulan_akhir).getMonth() + 1;
-    
+
             values["tahun"] = new Date(values.tahun).getFullYear();
             delete values["bulan"];
             const response = await axios.post(`/capaian/${values.id}`, values, {
@@ -105,7 +105,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             });
         } finally {
             router.get(
-                "/singkat/kelola-ckp",
+                `/singkat/kelola-ckp`,
                 { search: search },
                 { preserveState: true }
             );
@@ -199,14 +199,14 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
         capaian.tahun = dayjs(new Date(`${currentCapaian.tahun}-01-01`));
         capaian.bulan = [
             dayjs(
-            `${currentCapaian.tahun}-${currentCapaian.bulan_mulai}`,
-            "YYYY-M"
-        ),
+                `${currentCapaian.tahun}-${currentCapaian.bulan_mulai}`,
+                "YYYY-M"
+            ),
             dayjs(
-            `${currentCapaian.tahun}-${currentCapaian.bulan_akhir}`,
-            "YYYY-M"
-        )
-    ];
+                `${currentCapaian.tahun}-${currentCapaian.bulan_akhir}`,
+                "YYYY-M"
+            ),
+        ];
 
         editForm.setFieldsValue(capaian);
         // editForm.setFieldValue('id', currentCapaian.id);
