@@ -65,7 +65,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     };
 
     const handleSearch = (query) => {
-        const url = new URL(`${route()}/singkat/kelola-ckp`);
+        const url = new URL(route("kelola-ckp"));
 
         url.searchParams.set("search", query);
         router.get(url, { replace: true });
