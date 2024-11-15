@@ -12,6 +12,8 @@ import axios from "axios";
 import { message } from "antd";
 
 const KelolaJabatan = ({ auth, jabatan, search }) => {
+    
+    
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentJabatan, setCurrentJabatan] = useState(null);

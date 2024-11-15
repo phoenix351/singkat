@@ -22,7 +22,6 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
 
     const closeEditModal = () => setIsEditModalOpen(false);
 
- 
     const openEditModal = (abk) => {
         setCurrentABK(abk);
         setIsEditModalOpen(true);
@@ -33,11 +32,12 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
         });
     };
     const handleDownload = async (values) => {
-        const {data} = await axios.get(route("abk.fetch",{search:values}));
-           
-        
+        const { data } = await axios.get(
+            route("abk.fetch", { search: values })
+        );
+
         // return
-              const workbook = XLSX.utils.book_new();
+        const workbook = XLSX.utils.book_new();
         const worksheet = XLSX.utils.json_to_sheet(data);
 
         XLSX.utils.book_append_sheet(workbook, worksheet, "abk");
@@ -94,7 +94,7 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
 
                 <div>
                     <button
-                        onClick={()=>handleDownload(search)}
+                        onClick={() => handleDownload(search)}
                         // href="/export-pegawai?columns=id,nip_bps,nip,nama,jabatan,unit_kerja,pangkat_golongan_ruang,angka_kredit_konvensional,angka_kredit_integrasi,predikat_kinerja,tambahan_ijazah,akumulasi_ak,ijazah_terakhir,tb,usia_per_3_januari,created_at,updated_at"
                         type="button"
                         className="inline-flex items-center justify-center gap-2.5 rounded-md bg-primary py-2 px-5 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
@@ -161,8 +161,6 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
                 unitKerja={unitKerja}
                 role={auth.user.role}
             />
-
-           
         </Authenticated>
     );
 };

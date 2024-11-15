@@ -34,7 +34,9 @@ class JabatanController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'nomor_urut_kepka'=>'required|integer',
             'nama' => 'required|string|max:255',
+            'angka_kredit' => 'required|string|max:255',
         ]);
 
         Jabatan::create($request->all());
