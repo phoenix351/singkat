@@ -183,7 +183,7 @@ class AbkController extends Controller
         // dd($search);
 
         // Join dengan unitkerja dan jabatan 
-        $abk = Jabatan::select( 'nomor_urut_kepka','jabatan.nama as jabatan','unit_kerja.nama as unit_kerja', 'abk.abk', 'abk.eksisting', 'abk.kebutuhan_pegawai')
+        $abk = Jabatan::select('unit_kerja.kode as unit_kerja_id', 'nomor_urut_kepka','jabatan.nama as jabatan','unit_kerja.nama as unit_kerja', 'abk.abk', 'abk.eksisting', 'abk.kebutuhan_pegawai')
             ->crossJoin('unit_kerja')
             ->leftJoin('abk', function ($join) {
                 $join->on('abk.unit_kerja_id', 'unit_kerja.id')

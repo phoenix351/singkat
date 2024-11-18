@@ -2,7 +2,6 @@ import { Link } from "@inertiajs/react";
 import { Empty, Popconfirm, Tooltip } from "antd";
 
 const TablePak = ({ pegawai, onEdit, onDelete, role }) => {
-console.log({pegawai});
 
     return (
         <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -96,7 +95,7 @@ console.log({pegawai});
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
-                                                {data.jabatan.nama}
+                                                {data.jabatan? data.jabatan.nama:'null'}
                                             </p>
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">

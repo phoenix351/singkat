@@ -37,8 +37,86 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
         );
 
         // return
+        const jabatanData = data.reduce((acc, item) => {
+            const nomor_urut_kepka = item.nomor_urut_kepka;
+            if (!acc[nomor_urut_kepka]) {
+                acc[nomor_urut_kepka] = [];
+            }
+            acc[nomor_urut_kepka].push(item);
+            return acc;
+        }, {});
+
+        // kelompokkan data berdasarkan jabatan yang sama
+        // nomor, nama jabatan , abk, ...
+        const satker = {};
+        const preparedData = [];
+        for (let indexJabatan of Object.keys(jabatanData)) {
+            let currentJabatan = jabatanData[indexJabatan];
+            currentJabatan.sort((a, b) => a.unit_kerja_id - b.unit_kerja_id);
+            let currentValue = [
+                currentJabatan[0].nomor_urut_kepka,
+                currentJabatan[0].jabatan,
+            ];
+            currentJabatan.forEach((abk) => {
+                if (!satker[abk.unit_kerja_id]) {
+                    satker[abk.unit_kerja_id] = abk.unit_kerja;
+                }
+                currentValue.push(
+                    ...[abk.abk, abk.eksisting, abk.kebutuhan_pegawai]
+                );
+            });
+            preparedData.push(currentValue);
+            // console.log(indexJabatan);
+        }
+
+        // console.log({ satker });
+        // return;
+
         const workbook = XLSX.utils.book_new();
-        const worksheet = XLSX.utils.json_to_sheet(data);
+        const worksheet = {};
+        // Define the header with multiple levels
+        let header = [
+            ["No", "Nama Jabatan"], // First header row
+            ["No", "Nama Jabatan"], // Second header row
+            ["No", "Nama Jabatan"], // Third
+        ];
+        let merges = [
+            { s: { r: 0, c: 0 }, e: { r: 2, c: 0 } }, // Merge 'No' vertically (rowspan 3)
+            { s: { r: 0, c: 1 }, e: { r: 2, c: 1 } }, // Merge 'Nama' vertically (rowspan 3)
+        ];
+        let index = 0;
+        for (let unit_kerja of Object.values(satker)) {
+            const firstRow = [unit_kerja,"",""];
+            const firstMerge = {
+                s: { r: 0, c: index + 2 },
+                e: { r: 0, c: index + 4 },
+            };
+            const secondRow = ["KEPKA 182 TAHUN 2024","",""];
+            const secondMerge = {
+                s: { r: 1, c: index + 2 },
+                e: { r: 1, c: index + 4 },
+            };
+            const thirdRow = ["ABK", "Eksisting", "Kebutuhan Pegawai"];
+
+            header[0].push(...firstRow);
+            header[1].push(...secondRow);
+            header[2].push(...thirdRow);
+
+            merges.push(firstMerge);
+            merges.push(secondMerge);
+            // merge unit kerja
+            index = index + 3;
+        }
+        // console.log({ header,merges });
+        // return
+
+        // Merge the cells to create a colspan and rowspan effect
+        worksheet["!merges"] = merges;
+        // Add the header to the worksheet
+        XLSX.utils.sheet_add_aoa(worksheet, header);
+        XLSX.utils.sheet_add_aoa(worksheet, preparedData, { origin: -1 });
+
+        // const worksheet = XLSX.utils.json_to_sheet(data);
 
         XLSX.utils.book_append_sheet(workbook, worksheet, "abk");
 
