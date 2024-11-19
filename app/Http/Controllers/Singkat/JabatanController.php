@@ -66,8 +66,13 @@ class JabatanController extends Controller
 
         return redirect()->route('jabatan.index')->with('success', 'Jabatan berhasil dihapus');
     }
-    public function fetch(Request $request)
+    public function fetch(Jabatan $jabatan)
     {
+        if($jabatan)
+        {
+            // return $jabatan
+            return response()->json($jabatan);
+        }
         $jabatans = Jabatan::get();
         return response()->json($jabatans);
     }

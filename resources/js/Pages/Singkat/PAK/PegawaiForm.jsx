@@ -1,6 +1,9 @@
-import React, { useEffect } from "react";
-import { Modal, Form, Input, Select, InputNumber, Button } from "antd";
-import { router } from "@inertiajs/react";
+import React, { useEffect, useState } from "react";
+import { Modal, Form, Input, Select, InputNumber, DatePicker } from "antd";
+import dayjs from "dayjs";
+import axios from "axios";
+
+const { RangePicker } = DatePicker;
 
 const validateNip = (_, value) => {
     if (!value) {
@@ -37,8 +40,17 @@ const PegawaiForm = ({
     title,
     form,
 }) => {
-    const calculateAkumulasi = () => {
-        const angkaKreditTahunan = pegawai.jabatan.angka_kredit || 0;
+    const calculateAkumulasi = async () => {
+        const validated = await form.validateFields();
+        console.log({ validated });
+
+        const angka_kredit_dasar =
+            form.getFieldValue("angka_kredit_dasar") || 0;
+        const selectedJabatan = form.getFieldValue("jabatan_id");
+
+        const { data } = await axios.get(`/api/jabatans/${selectedJabatan}`);
+
+        const angkaKreditTahunan = data.angka_kredit || 0;
         const ijazahKeAngkaKredit = {
             "SD/sederajat": 0,
             "SLTP/sederajat": 0,
@@ -50,11 +62,9 @@ const PegawaiForm = ({
             S2: 1,
             S3: 1,
         };
-        const angka_kredit_dasar =
-            form.getFieldValue("angka_kredit_dasar") || 0;
+
         const ijazah_terakhir = form.getFieldValue("ijazah_terakhir");
         let tambahan_ijazah = 0;
-
         if (
             ijazah_terakhir &&
             ijazahKeAngkaKredit.hasOwnProperty(ijazah_terakhir)
@@ -62,18 +72,53 @@ const PegawaiForm = ({
             tambahan_ijazah =
                 angkaKreditTahunan * ijazahKeAngkaKredit[ijazah_terakhir];
         }
-        const akumulasi_ak = angka_kredit_dasar + tambahan_ijazah;
-        console.log({ tambahan_ijazah });
+
+        const fromMonth = new Date(form.getFieldValue("bulan")[0]).getMonth();
+        const toMonth = new Date(form.getFieldValue("bulan")[1]).getMonth();
+        const numberMonths = toMonth - fromMonth + 1;
+        const predikat = form.getFieldValue("predikat_id");
+
+        const tambahan_predikat =
+            (angkaKreditTahunan *
+                predikats[predikat - 1].nilai *
+                numberMonths) /
+            12;
+
+        const akumulasi_ak =
+            angka_kredit_dasar + tambahan_ijazah + tambahan_predikat;
 
         form.setFieldValue("akumulasi_ak", akumulasi_ak);
     };
+
+    const [predikats, setPredikats] = useState([]);
+    const fetchPredikats = async () => {
+        try {
+            const { data } = await axios.get("/api/predikats");
+            // console.log({ data });
+            setPredikats(data);
+        } catch (error) {
+            console.error("Error when get predikat data");
+        }
+    };
+
+    useEffect(() => {
+        fetchPredikats();
+    }, []);
+
     useEffect(() => {
         if (pegawai) {
+            console.log({pegawai});
+            
+            if (pegawai.bulan_mulai) {
+                pegawai.bulan = [dayjs(pegawai.bulan_mulai), dayjs(pegawai.bulan_selesai)];
+            } else{
+                pegawai.bulan = [null,null]
+            }
             form.setFieldsValue(pegawai);
-            form.setFieldValue(
-                "akumulasi_ak",
-                form.getFieldValue("angka_kredit_dasar") || 0
-            );
+            // form.setFieldValue(
+            //     "akumulasi_ak",
+            //     form.getFieldValue("angka_kredit_dasar") || 0
+            // );
         }
     }, [pegawai]);
     const daftarPangkat = [
@@ -237,6 +282,7 @@ const PegawaiForm = ({
                                     </>
                                 ),
                             });
+                            calculateAkumulasi();
                         }}
                         // {...(role === "admin" ? {} : { disabled: true })}
                         options={jabatan.map((item) => ({
@@ -303,6 +349,36 @@ const PegawaiForm = ({
                             { label: "S2", value: "S2" },
                             { label: "S3", value: "S3" },
                         ]}
+                    />
+                </Form.Item>
+                <Form.Item
+                    name={"bulan"}
+                    label="Bulan Penilaian"
+                    rules={[{ required: true }]}
+                >
+                    <RangePicker
+                        picker="month"
+                        minDate={dayjs("2019-01-01")}
+                        format={"MMMM YYYY"}
+                        maxDate={dayjs()}
+                        onChange={calculateAkumulasi}
+                    />
+                </Form.Item>
+                <Form.Item
+                    name="predikat_id"
+                    label="Predikat Kinerja"
+                    className="focus:border-none"
+                >
+                    <Select
+                        placeholder="Pilih Predikat"
+                        allowClear
+                        showSearch
+                        optionFilterProp="label"
+                        onChange={calculateAkumulasi}
+                        options={predikats.map((predikat) => ({
+                            label: predikat.nama,
+                            value: String(predikat.id),
+                        }))}
                     />
                 </Form.Item>
                 <Form.Item name="akumulasi_ak" label="Akumulasi Angka Kredit">

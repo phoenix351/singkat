@@ -14,6 +14,7 @@ import ExportModal from "@/Pages/Singkat/PAK/ExportModal";
 import { Form, message } from "antd";
 import axios from "axios";
 import PegawaiForm from "./PegawaiForm";
+import dayjs from "dayjs";
 
 const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
     const [editForm] = Form.useForm();
@@ -40,7 +41,6 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
     const closeEditModal = () => setIsEditModalOpen(false);
 
     const handleDelete = async (id) => {
-        router.delete(`/kelola-pak/${id}`).then(() => {});
         try {
             messageApi.open({
                 type: "loading",
@@ -71,7 +71,7 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
     };
 
     const handleSearch = (query) => {
-        router.get(route('kelola-pak'), { search: query }, { replace: true });
+        router.get(route("kelola-pak"), { search: query }, { replace: true });
     };
     const handleSave = async (values) => {
         // console.log({values});
@@ -115,6 +115,9 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 content: "Menambahkan pegawai",
                 key: "handle-create",
             });
+            values["bulan_mulai"] = values["bulan"][0];
+            values["bulan_selesai"] = values["bulan"][1];
+            delete values["bulan"];
             const response = await axios.post(`/kelola-pak`, values, {
                 headers: { "Content-Type": "application/json" },
             });
@@ -181,26 +184,30 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                         <button
                             onClick={() => {
                                 createForm.resetFields();
-                                // createForm.setFieldsValue({
-                                //     id: 340013053,
-                                //     nip_bps: "340013053",
-                                //     nip: "197102051992022001",
-                                //     nama: "Johanna Maria Farida Tampemawa, S.E.",
-                                //     jabatan_id: "39",
-                                //     unit_kerja: "BPS Kota Bitung",
-                                //     pangkat_golongan_ruang:
-                                //         "Penata Tk.I / IIId",
-                                //     angka_kredit_konvensional: "313.898",
-                                //     angka_kredit_integrasi: "113.898",
-                                //     predikat_kinerja: "Sangat Baik",
-                                //     tambahan_ijazah: null,
-                                //     akumulasi_ak: "151.398",
-                                //     ijazah_terakhir: "S1/DIV/Sederajat",
-                                //     tanggal_lahir: "1971-02-05",
-                                //     nama_jabatan: "Statistisi Ahli Muda",
-                                //     angka_kredit_akumulasi: 151.398,
-                                //     tambahan_ijazah: "Baik",
-                                // });
+                                createForm.setFieldsValue({
+                                    id: 340013053,
+                                    nip_bps: "340013053",
+                                    nip: "197102051992022001",
+                                    nama: "Johanna Maria Farida Tampemawa, S.E.",
+                                    jabatan_id: "39",
+                                    unit_kerja: "BPS Kota Bitung",
+                                    pangkat_golongan_ruang:
+                                        "Penata Tk.I / IIId",
+                                    angka_kredit_konvensional: "313.898",
+                                    angka_kredit_integrasi: "113.898",
+                                    predikat_kinerja: "Sangat Baik",
+                                    tambahan_ijazah: null,
+                                    akumulasi_ak: "151.398",
+                                    ijazah_terakhir: "S1/DIV/Sederajat",
+                                    tanggal_lahir: "1971-02-05",
+                                    nama_jabatan: "Statistisi Ahli Muda",
+                                    angka_kredit_akumulasi: 151.398,
+                                    tambahan_ijazah: "Baik",
+                                    bulan: [dayjs(), dayjs()],
+                                    predikat_id: "1",
+                                    angka_kredit_dasar: 40,
+                                    akumulasi_ak: 47.125,
+                                });
                                 openModal();
                             }}
                             className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"

@@ -23,7 +23,21 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     const [currentCapaian, setCurrentCapaian] = useState(null);
     const { errors, flash } = usePage().props;
 
-    const openModal = () => setIsModalOpen(true);
+    const openModal = () => {
+        const pak = {
+            pegawai_id: "340050106",
+            nomor_sk: "0428054/KPG TAHUN 2017",
+            jenis_sk: "1",
+            tmt_sk: dayjs("2017-05-01", "YYYY-MM-DD"),
+            bulan: [
+                dayjs("2016-05-01", "YYYY-MM-DD"),
+                dayjs("2017-12-01", "YYYY-MM-DD"),
+            ],
+            predikat_id: 1,
+        };
+        addForm.setFieldsValue(pak);
+        setIsModalOpen(true);
+    };
     const closeModal = () => setIsModalOpen(false);
 
     const openEditModal = (capaian) => {
@@ -224,10 +238,20 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 />
             )}
 
-            <Head title={auth.user.role == "viewer" ? "CKP" : "Kelola CKP"} />
+            <Head
+                title={
+                    auth.user.role == "viewer"
+                        ? "Dokumen Penetapan Angka Kredit(PAK)"
+                        : "Kelola Dokumen Penetapan Angka Kredit(PAK)"
+                }
+            />
 
             <Breadcrumb
-                pageName={auth.user.role == "viewer" ? "CKP" : "Kelola CKP"}
+                pageName={
+                    auth.user.role == "viewer"
+                        ? "Dokumen Penetapan Angka Kredit(PAK)"
+                        : "Kelola Dokumen Penetapan Angka Kredit(PAK)"
+                }
             />
 
             <div className="flex flex-row sm:justify-between mb-5">

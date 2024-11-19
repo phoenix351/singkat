@@ -80,7 +80,7 @@ Route::get('/api/get-available-jabatan', [AbkController::class, 'getAvailableJab
 Route::get('/api/get-available-jabatan-edit', [AbkController::class, 'getAvailableJabatanEdit']);
 Route::get('/api/predikats', [PredikatController::class, 'fetch']);
 Route::get('/api/pegawais', [PegawaiController::class, 'fetch']);
-Route::get('/api/jabatans', [JabatanController::class, 'fetch']);
+Route::get('/api/jabatans/{jabatan}', [JabatanController::class, 'fetch'])->name('api.jabatans');
 Route::get('/api/pegawai/histories', [PegawaiController::class, 'get_histories'])->name('pegawai.histories');
 
 

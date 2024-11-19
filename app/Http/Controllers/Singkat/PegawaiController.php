@@ -11,9 +11,12 @@ use Illuminate\Http\Request;
 use App\Exports\PegawaiExport;
 use App\Models\AngkaKreditHistory;
 use App\Models\Capaian;
+use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class PegawaiController extends Controller
 {
@@ -69,7 +72,7 @@ class PegawaiController extends Controller
             ->orderBy('tahun',)
             ->orderBy('periode')
             ->get()->toArray();
-        
+
         $akumulasi_ak = $pegawai["akumulasi_ak"];
         foreach ($currentHistories as $key => $history) {
             # code...
@@ -121,31 +124,49 @@ class PegawaiController extends Controller
 
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'nip_bps' => 'required',
-            'nip' => 'required',
-            'nama' => 'required|string|max:255',
-            'jabatan_id' => 'required',
-            'unit_kerja' => 'required|string|max:255',
-            'pangkat_golongan_ruang' => 'required|string|max:255',
-            'angka_kredit_konvensional' => 'nullable',
-            'angka_kredit_integrasi' => 'nullable',
-            'predikat_kinerja' => 'nullable|string|max:255',
-            'tambahan_ijazah' => 'nullable|string|max:255',
-            'akumulasi_ak' => 'nullable|string|max:255',
-            'ijazah_terakhir' => 'nullable|string|max:255',
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'nip_bps' => 'required|string|size:9|unique:pegawai,nip_bps',
+                'nip' => 'required|string|size:18',
+                'nama' => 'required|string|max:255',
+                'jabatan_id' => 'required|numeric',
+                'unit_kerja' => 'required|string|max:255',
+                'pangkat_golongan_ruang' => 'required|string|max:255',
+                'angka_kredit_dasar' => 'nullable|numeric',
+                'angka_kredit_integrasi' => 'nullable|numeric',
+                'angka_kredit_konvensional' => 'nullable|numeric',
+                'predikat_id' => 'required|numeric',
+                'akumulasi_ak' => 'required|numeric',
+                'bulan_mulai' => 'required',
+                'bulan_selesai' => 'required',
+                'ijazah_terakhir' => 'nullable|string|max:255',
+            ]);
 
-        $validatedData["angka_kredit_konvensional"] = (string)$request->angka_kredit_konvensional;
-        $validatedData["angka_kredit_integrasi"] = (string)$request->angka_kredit_integrasi;
+            $validatedData["angka_kredit_konvensional"] = (string)$request->angka_kredit_konvensional;
+            $validatedData["angka_kredit_integrasi"] = (string)$request->angka_kredit_integrasi;
 
+            $validatedData["tanggal_lahir"] = $this->calculateTanggalLahir($validatedData['nip']);
+            $validatedData['id'] = $validatedData['nip_bps'];
+            $validatedData['bulan_mulai'] = Carbon::parse($validatedData['bulan_mulai']);
+            $validatedData['bulan_selesai'] = Carbon::parse($validatedData['bulan_selesai']);
 
-        $validatedData["tanggal_lahir"] = $this->calculateTanggalLahir($validatedData['nip']);
-        $validatedData['id'] = $validatedData['nip_bps'];
-
-
-        Pegawai::create($validatedData);
-        return response()->json($validatedData);
+            DB::beginTransaction();
+            Pegawai::create($validatedData);
+            User::create([
+                'name' => $validatedData['nama'],
+                'pegawai_id' => $validatedData['id'],
+                'username' => $validatedData['id'],
+                'role' => 'viewer',
+                'email' => $validatedData['id'] . '@monitoringbps.com',
+                'password' => Hash::make('password')
+            ]);
+            DB::commit();
+            return response()->json(["message" => "Pegawai baru berhasil ditambahkan!"]);
+            //code...
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            throw $th;
+        }
 
         // return redirect()->route('kelola-pak')->with('success', 'Pegawai berhasil ditambahkan.');
     }
@@ -197,8 +218,19 @@ class PegawaiController extends Controller
 
     public function destroy(Pegawai $pegawai)
     {
-        $pegawai->delete();
-        return redirect()->back()->with('success', 'Pegawai berhasil dihapus.');
+        try {
+            //code...
+            $user = User::where('pegawai_id',$pegawai->nip_bps)->first();
+            DB::beginTransaction();
+            $pegawai->delete();
+            $user->delete();
+            DB::commit();
+            return response()->json(["message" => "Pegawai berhasil dihapus"], 200);
+        } catch (Exception $exp) {
+            DB::rollBack();
+            return response()->json(["error" => $exp->getMessage()], 200);
+            //throw $th;
+        }
     }
 
 
@@ -257,9 +289,8 @@ class PegawaiController extends Controller
             ->orderBy('tahun',)
             ->orderBy('periode')
             ->get()->toArray();
-            // dd([$histories,$pegawai_id,$jabatan_id]);
-        if(count($histories)<1)
-        {
+        // dd([$histories,$pegawai_id,$jabatan_id]);
+        if (count($histories) < 1) {
             return $histories;
         }
         $akumulasi_ak = $histories[0]["angka_kredit_dasar"];

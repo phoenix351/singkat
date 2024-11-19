@@ -36,6 +36,16 @@ return new class extends Migration
             $table->integer('kode')->default(7100);
 
         });
+
+        Schema::table('pegawai', function (Blueprint $table) {
+            $table->float('angka_kredit_dasar')->default(0);
+        });
+        $pegawais = Pegawai::get();
+        foreach ($pegawais as $pegawai) {
+            # code...
+            $pegawai->angka_kredit_dasar = $pegawai->akumulasi_ak ? $pegawai->akumulasi_ak : 0;
+            $pegawai->save();
+        }
     }
     
     /**

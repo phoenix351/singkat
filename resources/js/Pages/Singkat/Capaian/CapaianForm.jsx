@@ -156,45 +156,48 @@ const CapaianForm = ({
                             }))}
                         />
                     </Form.Item>
+                    <Form.Item
+                    name="nomor_sk"
+                    label="Nomor SK"
+                    className="focus:border-none"
+                    >
+                        <Input/>
 
-                    <Form.Item name={"tahun"} label="Tahun Penilaian">
-                        <DatePicker
-                            picker="year"
-                            minDate={dayjs("2019-01-01", dateFormat)}
-                            disabled={type === "edit"}
-                            maxDate={dayjs()}
-                        />
                     </Form.Item>
-                    <Form.Item name={"periode"} label="Periode Penilaian">
-                        <Radio.Group
-                            placeholder="Pilih Periode"
-                            allowClear
-                            optionType="button"
-                            buttonStyle="solid"
-                            defaultValue={"Bulanan"}
-                            onChange={handlePeriodeChange}
+                    <Form.Item
+                    name="jenis_sk"
+                    label="Jenis SK"
+                    className="focus:border-none"
+                    >
+                        <Select
+                        options={[
+                            {value:"1",label:"SK Pengangkatan Pertama"},
+                            {value:"2",label:"SK Pembebasan Sementara"},
+                            {value:"3",label:"SK Pengangkatan Kembali"},
+                            {value:"4",label:"SK Kenaikan Jabatan"},
+                        ]}
+                        />
+
+                    </Form.Item>
+
+                    <Form.Item name={"tmt_sk"} label="TMT SK">
+                        <DatePicker
+                            // picker="month"
+                            // minDate={dayjs("2019-01-01", dateFormat)}
+                            format={"DD MMMM YYYY"}
+                            maxDate={dayjs()}
+                            // onChange={() => setPeriode("Bulanan")}
                             disabled={type === "edit"}
-                            options={[
-                                { label: "Bulanan", value: "Bulanan" },
-                                { label: "Semester 1", value: "Semester 1" },
-                                { label: "Semester 2", value: "Semester 2" },
-                                { label: "Tahunan", value: "Tahunan" },
-                            ]}
                         />
                     </Form.Item>
                     <Form.Item name={"bulan"} label="Bulan Penilaian">
-                                              <RangePicker
+                        <RangePicker
                             picker="month"
-                            minDate={
-                                tahun
-                                    ? dayjs(`${tahun}-01-01`, dateFormat)
-                                    : dayjs("2019-01-01", dateFormat)
-                            }
+                            minDate={dayjs("2019-01-01", dateFormat)}
                             format={"MMMM YYYY"}
-                            maxDate={tahun ? dayjs(`${tahun}-12-31`) : dayjs()}
+                            maxDate={dayjs()}
                             onChange={() => setPeriode("Bulanan")}
                             disabled={type === "edit"}
-
                         />
                     </Form.Item>
 
