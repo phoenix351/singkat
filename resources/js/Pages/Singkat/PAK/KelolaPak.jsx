@@ -82,6 +82,9 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 content: "Menyimpan perubahan",
                 key: "handle-save",
             });
+            values["bulan_mulai"] = values["bulan"][0];
+            values["bulan_selesai"] = values["bulan"][1];
+            delete values["bulan"];
             const response = axios.put(`/kelola-pak/${values.id}`, values, {
                 headers: { "Content-Type": "application/json" },
             });
@@ -185,12 +188,12 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                             onClick={() => {
                                 createForm.resetFields();
                                 createForm.setFieldsValue({
-                                    id: 340013053,
-                                    nip_bps: "340013053",
-                                    nip: "197102051992022001",
-                                    nama: "Johanna Maria Farida Tampemawa, S.E.",
+                                    id: 340060268,
+                                    nip_bps: "340060268",
+                                    nip: "199810132021041001",
+                                    nama: "Ponimin, S.Tr.Stat.",
                                     jabatan_id: "39",
-                                    unit_kerja: "BPS Kota Bitung",
+                                    unit_kerja: "BPS P",
                                     pangkat_golongan_ruang:
                                         "Penata Tk.I / IIId",
                                     angka_kredit_konvensional: "313.898",

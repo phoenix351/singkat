@@ -66,11 +66,11 @@ class PegawaiController extends Controller
         //     $query->with('tambahan');
         // }])->get();
         // dd($pegawai);
-        $currentHistories = Capaian::with(['jabatan'])
+        $currentHistories = Capaian::with(['jabatan','jenis_sk'])
             ->where('pegawai_id', $pegawai["id"])
             ->where('jabatan_id', $pegawai['jabatan_id'])
-            ->orderBy('tahun',)
-            ->orderBy('periode')
+            // ->orderBy('tahun',)
+            // ->orderBy('periode')
             ->get()->toArray();
 
         $akumulasi_ak = $pegawai["akumulasi_ak"];
@@ -101,8 +101,6 @@ class PegawaiController extends Controller
         // dd($pegawai);
         $histories = Capaian::where('pegawai_id', $pegawai["id"])
             ->where('jabatan_id', $pegawai['jabatan_id'])
-            ->orderBy('tahun',)
-            ->orderBy('periode')
             ->get()->toArray();
         $akumulasi_ak = $pegawai["akumulasi_ak"];
         foreach ($histories as $key => $history) {
@@ -187,16 +185,21 @@ class PegawaiController extends Controller
             'pangkat_golongan_ruang' => 'required|string|max:255',
             'angka_kredit_konvensional' => 'nullable',
             'angka_kredit_integrasi' => 'nullable',
-            'predikat_kinerja' => 'nullable|string|max:255',
             'tambahan_ijazah' => 'nullable|string|max:255',
             'akumulasi_ak' => 'nullable',
             'ijazah_terakhir' => 'nullable|string|max:255',
+            'bulan_mulai' => 'required',
+            'bulan_selesai' => 'required',
+            'predikat_id' => 'required|numeric',
+
 
         ]);
 
 
         // $tanggal_lahir = $this->calculateTanggalLahir($request->nip);
         $validatedData["tanggal_lahir"] = $this->calculateTanggalLahir($validatedData['nip']);
+        $validatedData['bulan_mulai'] = Carbon::parse($validatedData['bulan_mulai']);
+        $validatedData['bulan_selesai'] = Carbon::parse($validatedData['bulan_selesai']);
 
         if ($validatedData['jabatan_id'] != $pegawai->jabatan_id) {
             $validatedData['akumulasi_ak'] = 0;
@@ -220,7 +223,7 @@ class PegawaiController extends Controller
     {
         try {
             //code...
-            $user = User::where('pegawai_id',$pegawai->nip_bps)->first();
+            $user = User::where('pegawai_id', $pegawai->nip_bps)->first();
             DB::beginTransaction();
             $pegawai->delete();
             $user->delete();

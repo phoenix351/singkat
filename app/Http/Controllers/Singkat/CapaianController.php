@@ -28,8 +28,7 @@ class CapaianController extends Controller
         $capaian = Capaian::join('pegawai', 'pegawai.id', 'capaians.pegawai_id')
             ->join('jabatan', 'jabatan.id', 'capaians.jabatan_id')
             ->join('predikats', 'capaians.predikat_id', 'predikats.id')
-            ->where(DB::raw('CONCAT(capaians.periode, " ", capaians.tahun)'), 'like', $preparedSearch)
-            ->orWhere('pegawai.nama', 'like', $preparedSearch)
+            ->Where('pegawai.nama', 'like', $preparedSearch)
             ->orWhere('pegawai.nip', 'like', $preparedSearch)
             ->orWhere('jabatan.nama', 'like', $preparedSearch)
             ->orWhere('predikats.nama', 'like', $preparedSearch)
@@ -42,8 +41,6 @@ class CapaianController extends Controller
                 'capaians.*',
                 'predikats.nama as nama_predikat',
             )
-            ->orderBy('tahun')
-            ->orderBy('periode')
             ->paginate(10);
 
 
@@ -65,37 +62,9 @@ class CapaianController extends Controller
     {
         $validatedData = $request->validated();
         try {
-          
-            $current_year_data = Capaian::where('tahun', $validatedData['tahun'])
-                ->where('pegawai_id', $validatedData['pegawai_id'])
-                ->get();
-            $existing_months = [];
-            foreach ($current_year_data as  $capaian) {
-                // dd($capaian);
-                if (is_null($capaian->bulan_mulai) || is_null($capaian->bulan_akhir)) {
-                    continue;
-                }
-                for ($i = $capaian->bulan_mulai; $i <= $capaian->bulan_akhir; $i++) {
-                    array_push($existing_months, $i);
-                }
-            }
-            $added_months = [];
+            // cek if any existing months
 
-            for ($i = $validatedData['bulan_mulai']; $i <= $validatedData['bulan_akhir']; $i++) {
-                array_push($added_months, $i);
-            }
-            // check is any added months in existing
-            $isAny = false;
-            foreach ($added_months as $month) {
-                if(in_array($month,$existing_months)){
-                    $isAny=true;
-                    break;
-                }
-            }
-            if($isAny){
-                return response()->json(['message'=>'Maaf bulan dari rentang sudah ada di database'],422);
-            }
-
+            // begin saving the data
             DB::beginTransaction();
             $capaian = Capaian::create($validatedData);
             if ($request->file('file')->isValid()) {
@@ -212,7 +181,6 @@ class CapaianController extends Controller
         $capaian = Capaian::join('pegawai', 'pegawai.id', 'capaians.pegawai_id')
             ->join('jabatan', 'jabatan.id', 'pegawai.jabatan_id')
             ->join('predikats', 'capaians.predikat_id', 'predikats.id')
-            ->where(DB::raw('CONCAT(capaians.periode, " ", capaians.tahun)'), 'like', $preparedSearch)
             ->orWhere('pegawai.nama', 'like', $preparedSearch)
             ->orWhere('pegawai.nip', 'like', $preparedSearch)
             ->orWhere('jabatan.nama', 'like', $preparedSearch)

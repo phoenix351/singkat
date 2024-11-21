@@ -15,6 +15,7 @@ use App\Http\Controllers\Singkat\DashboardController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Singkat\PredikatController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SKController;
 use App\Http\Controllers\UnitKerjaController;
 
 Route::get('/', function () {
@@ -55,6 +56,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/capaian/pak/{capaian}', [CapaianController::class, 'read_pak'])->name('capaian.read_pak');
     Route::post('/capaian', [CapaianController::class, 'store'])->name('capaian.store');
     Route::post('/capaian/{capaian}', [CapaianController::class, 'update'])->name('capaian.update');
+    // SK
+    Route::get('/singkat/admin/jenis-sk', [SKController::class, 'index'])->name('singkat.admin.jenis-sk');
+    Route::post('/singkat/admin/jenis-sk', [SKController::class, 'store'])->name('singkat.admin.jenis-sk.store');
+    Route::put('/singkat/admin/jenis-sk', [SKController::class, 'update'])->name('singkat.admin.jenis-sk.update');
+    Route::delete('/singkat/admin/jenis-sk/{sk}', [SKController::class, 'destroy'])->name('singkat.admin.jenis-sk.destroy');
 
     Route::patch('/jabatan/{jabatan}', [JabatanController::class, 'update'])->name('jabatan.update');
 });
@@ -83,6 +89,8 @@ Route::get('/api/pegawais', [PegawaiController::class, 'fetch']);
 Route::get('/api/jabatans/{jabatan}', [JabatanController::class, 'fetch'])->name('api.jabatans');
 Route::get('/api/pegawai/histories', [PegawaiController::class, 'get_histories'])->name('pegawai.histories');
 
+Route::get('/api/jenis-sk', [SKController::class, 'fetchAll']);
+Route::get('/api/jenis-sk/{sk}', [SKController::class, 'fetchOne']);
 
 Route::get('/api/abk-summary', [AbkController::class, 'getAbkSummary']);
 

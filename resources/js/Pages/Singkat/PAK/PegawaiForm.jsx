@@ -42,7 +42,6 @@ const PegawaiForm = ({
 }) => {
     const calculateAkumulasi = async () => {
         const validated = await form.validateFields();
-        console.log({ validated });
 
         const angka_kredit_dasar =
             form.getFieldValue("angka_kredit_dasar") || 0;
@@ -72,10 +71,14 @@ const PegawaiForm = ({
             tambahan_ijazah =
                 angkaKreditTahunan * ijazahKeAngkaKredit[ijazah_terakhir];
         }
-
-        const fromMonth = new Date(form.getFieldValue("bulan")[0]).getMonth();
-        const toMonth = new Date(form.getFieldValue("bulan")[1]).getMonth();
-        const numberMonths = toMonth - fromMonth + 1;
+        const { fromDate, toDate } = {
+            fromDate: new Date(form.getFieldValue("bulan")[0]),
+            toDate: new Date(form.getFieldValue("bulan")[1]),
+        };
+        const fromMonth = fromDate.getMonth();
+        const toMonth = toDate.getMonth();
+        const yearDiff = toDate.getFullYear() - fromDate.getFullYear();
+        const numberMonths = toMonth - fromMonth + 1 + yearDiff*12;        
         const predikat = form.getFieldValue("predikat_id");
 
         const tambahan_predikat =
@@ -87,7 +90,7 @@ const PegawaiForm = ({
         const akumulasi_ak =
             angka_kredit_dasar + tambahan_ijazah + tambahan_predikat;
 
-        form.setFieldValue("akumulasi_ak", akumulasi_ak);
+        form.setFieldValue("akumulasi_ak", Number(akumulasi_ak).toFixed(4));
     };
 
     const [predikats, setPredikats] = useState([]);
@@ -107,12 +110,14 @@ const PegawaiForm = ({
 
     useEffect(() => {
         if (pegawai) {
-            console.log({pegawai});
-            
+
             if (pegawai.bulan_mulai) {
-                pegawai.bulan = [dayjs(pegawai.bulan_mulai), dayjs(pegawai.bulan_selesai)];
-            } else{
-                pegawai.bulan = [null,null]
+                pegawai.bulan = [
+                    dayjs(pegawai.bulan_mulai),
+                    dayjs(pegawai.bulan_selesai),
+                ];
+            } else {
+                pegawai.bulan = [null, null];
             }
             form.setFieldsValue(pegawai);
             // form.setFieldValue(
@@ -287,7 +292,7 @@ const PegawaiForm = ({
                         // {...(role === "admin" ? {} : { disabled: true })}
                         options={jabatan.map((item) => ({
                             label: item.nama,
-                            value: String(item.id),
+                            value: item.id,
                         }))}
                     />
                 </Form.Item>
@@ -377,7 +382,7 @@ const PegawaiForm = ({
                         onChange={calculateAkumulasi}
                         options={predikats.map((predikat) => ({
                             label: predikat.nama,
-                            value: String(predikat.id),
+                            value: predikat.id,
                         }))}
                     />
                 </Form.Item>

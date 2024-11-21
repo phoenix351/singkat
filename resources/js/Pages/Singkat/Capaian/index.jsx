@@ -20,14 +20,37 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     const [messageApi, contextHolder] = message.useMessage();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [currentCapaian, setCurrentCapaian] = useState(null);
     const { errors, flash } = usePage().props;
+    function preparePAK(values) {
+        let bulan_mulai = values.bulan[0];
+        let bulan_selesai = values.bulan[1];
+        // Add one day to bulan_selesai before formatting it
+        const adjustedBulanSelesai = new Date(bulan_selesai);
+        adjustedBulanSelesai.setDate(adjustedBulanSelesai.getDate() + 1);
+        const adjustedBulanMulai = new Date(bulan_mulai);
+        adjustedBulanMulai.setDate(adjustedBulanMulai.getDate() + 1);
+        values["bulan_mulai"] = new Date(adjustedBulanMulai)
+            .toISOString()
+            .slice(0, 10);
+        values["bulan_selesai"] = new Date(adjustedBulanSelesai)
+            .toISOString()
+            .slice(0, 10);
+        values["tmt_sk"] = new Date(values["tmt_sk"])
+            .toISOString()
+            .slice(0, 10);
 
+        delete values["bulan"];
+        if (!values.file) {
+            delete values["file"];
+        }
+        return values;
+    }
     const openModal = () => {
         const pak = {
-            pegawai_id: "340050106",
+            pegawai_id: 340011442,
             nomor_sk: "0428054/KPG TAHUN 2017",
-            jenis_sk: "1",
+            jenis_sk: 1,
+            angka_kredit: 18.75,
             tmt_sk: dayjs("2017-05-01", "YYYY-MM-DD"),
             bulan: [
                 dayjs("2016-05-01", "YYYY-MM-DD"),
@@ -41,7 +64,18 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     const closeModal = () => setIsModalOpen(false);
 
     const openEditModal = (capaian) => {
-        setCurrentCapaian(capaian);
+        const bulan_mulai = dayjs(capaian.bulan_mulai, "YYYY-MM-DD");
+        const bulan_selesai = dayjs(capaian.bulan_selesai, "YYYY-MM-DD");
+        capaian.bulan = [bulan_mulai, bulan_selesai];
+        capaian.tmt_sk = dayjs(capaian.tmt_sk, "YYYY-MM-DD");
+        if (capaian.predikat_id) {
+            capaian.predikat_id = Number(capaian.predikat_id);
+        }
+        if (capaian.jenis_sk) {
+            capaian.jenis_sk = Number(capaian.jenis_sk);
+        }
+        
+        editForm.setFieldsValue(capaian);
         setIsEditModalOpen(true);
     };
 
@@ -85,23 +119,19 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
         router.get(url, { replace: true });
     };
     const handleSave = async (values) => {
-        // console.log({ values });
-
+        values = preparePAK(values);
+        const contentType = values.hasOwnProperty("file")
+            ? "multipart/form-data"
+            : "application/json";
         try {
             messageApi.open({
                 key: "submit-form",
                 type: "loading",
                 content: "menyimpan capaian pegawai",
             });
-            let bulan_mulai = values.bulan[0];
-            let bulan_akhir = values.bulan[1];
-            values["bulan_mulai"] = new Date(bulan_mulai).getMonth() + 1;
-            values["bulan_akhir"] = new Date(bulan_akhir).getMonth() + 1;
 
-            values["tahun"] = new Date(values.tahun).getFullYear();
-            delete values["bulan"];
             const response = await axios.post(`/capaian/${values.id}`, values, {
-                headers: { "Content-Type": "multipart/form-data" },
+                headers: { "Content-Type": contentType },
             });
             messageApi.open({
                 key: "submit-form",
@@ -125,33 +155,37 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             );
         }
     };
-    const handleAdd = async (values) => {
-        let bulan_mulai = values.bulan[0];
-        let bulan_akhir = values.bulan[1];
-        values["bulan_mulai"] = new Date(bulan_mulai).getMonth() + 1;
-        values["bulan_akhir"] = new Date(bulan_akhir).getMonth() + 1;
 
-        values["tahun"] = new Date(values.tahun).getFullYear();
-        delete values["bulan"];
+    const handleAdd = async (values) => {
+        values = preparePAK(values);
+        if (values.file === null) {
+            messageApi.open({
+                key: "add-form",
+                type: "error",
+                content: "Mohon lampirkan dokumen PAK",
+            });
+            addForm.setFields({
+                file: {
+                    errors: ["mohon tambahkan file"],
+                },
+            });
+            return;
+        }
 
         try {
             messageApi.open({
                 key: "add-form",
                 type: "loading",
-                content: "menambahkan capaian pegawai",
+                content: "menambahkan PAK...",
             });
-            // let tahun_bulan = new Date(values.tahun);
-            // let preparedTahun = `${tahun_bulan.getFullYear()}`;
-            // const data = { ...values };
-            // data.tahun = preparedTahun;
-            // return
+
             const response = await axios.post(`/capaian`, values, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             messageApi.open({
                 key: "add-form",
                 type: "success",
-                content: "perubahan telah disimpan",
+                content: "PAK sudah ditambahkan",
             });
             // router.get("/singkat/kelola-ckp", {}, { preserveState: true });
         } catch (error) {
@@ -204,27 +238,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
         URL.revokeObjectURL(url);
         setOpenUnduhModal(false);
     };
-    useEffect(() => {
-        // console.log({currentCapaian});
-        if (!currentCapaian) return;
-        let capaian = { ...currentCapaian };
-        // console.log({ capaian });
-
-        capaian.tahun = dayjs(new Date(`${currentCapaian.tahun}-01-01`));
-        capaian.bulan = [
-            dayjs(
-                `${currentCapaian.tahun}-${currentCapaian.bulan_mulai}`,
-                "YYYY-M"
-            ),
-            dayjs(
-                `${currentCapaian.tahun}-${currentCapaian.bulan_akhir}`,
-                "YYYY-M"
-            ),
-        ];
-
-        editForm.setFieldsValue(capaian);
-        // editForm.setFieldValue('id', currentCapaian.id);
-    }, [currentCapaian]);
+ 
 
     return (
         <AuthenticatedLayout user={auth.user}>
@@ -351,13 +365,11 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             <CapaianForm
                 visible={isEditModalOpen}
                 onCancel={closeEditModal}
-                capaian={currentCapaian}
                 onFinish={handleSave}
                 form={editForm}
                 title="Ubah Capaian Pegawai"
                 okText="Simpan"
                 type="edit"
-                initPeriod={currentCapaian ? currentCapaian.periode : ""}
             />
             {/* Export Modal */}
         </AuthenticatedLayout>

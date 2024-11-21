@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 
 const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
     let count = 1;
-
+    
     return (
         <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
             <div className="max-w-full overflow-x-auto">
@@ -69,12 +69,12 @@ const TableCapaian = ({ capaian, onEdit, onDelete, role }) => {
                                             <p className="text-black dark:text-white">
                                                 {/* {`${data.tahun} ${data.periode}`} */}
                                                 {dayjs(
-                                                    `${data.tahun}-${data.bulan_mulai} `,
-                                                    "YYYY-M"
+                                                    data.bulan_mulai,
+                                                    "YYYY-MM-DD"
                                                 ).format("MMM YYYY")}{" s.d "}
                                                 {dayjs(
-                                                    `${data.tahun}-${data.bulan_akhir} `,
-                                                    "YYYY-M"
+                                                    data.bulan_selesai,
+                                                    "YYYY-MM-DD"
                                                 ).format("MMM YYYY")}
                                             </p>
                                         </td>

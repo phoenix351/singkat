@@ -29,16 +29,15 @@ const CapaianForm = ({
     title,
     okText,
     type,
-    initPeriod,
 }) => {
     const [predikats, setPredikats] = useState([]);
-    const [periode, setPeriode] = useState("");
     const [pegawais, setPegawais] = useState([]);
     const [file, setFile] = useState(null);
-    const [tahun, setTahun] = useState(null);
+    const [daftarJenisSk,setDaftarJenisSK] = useState([]);
 
     // define message
     const [messageApi, contextHolder] = message.useMessage();
+    
 
     const fetchPredikats = async () => {
         try {
@@ -54,53 +53,28 @@ const CapaianForm = ({
             const { data } = await axios.get("/api/pegawais");
             setPegawais(data);
         } catch (error) {
-            console.error("Error when get predikat data");
+            console.error("Error when get pegawai data");
+        }
+    };
+    const fetchDaftarJenisSK = async () => {
+        try {
+            const { data } = await axios.get("/api/jenis-sk");
+            setDaftarJenisSK(data);
+        } catch (error) {
+            console.error("Error when get jenis-sk data");
         }
     };
 
     useEffect(() => {
         fetchPredikats();
         fetchPegawais();
+        fetchDaftarJenisSK()
         // form.setFieldsValue(capaian);
     }, []);
-    useEffect(() => {
-        setPeriode(initPeriod);
-    }, [initPeriod]);
-    useEffect(() => {
-        form.setFieldValue("periode", periode);
-    }, [periode]);
+   
 
-    const handlePeriodeChange = (event) => {
-        let currentPeriode = event.target.value;
-        setPeriode(currentPeriode);
-        const tahun = new Date(form.getFieldValue("tahun")).getFullYear();
-        setTahun(tahun);
-        if (currentPeriode === "Tahunan") {
-            const dates = [
-                dayjs(`${tahun}-01`, "YYYY-MM"),
-                dayjs(`${tahun}-12`, "YYYY-MM"),
-            ];
-            form.setFieldValue("bulan", dates);
-        }
-        if (currentPeriode === "Semester 1") {
-            const dates = [
-                dayjs(`${tahun}-01`, "YYYY-MM"),
-                dayjs(`${tahun}-06`, "YYYY-MM"),
-            ];
-            form.setFieldValue("bulan", dates);
-        }
-        if (currentPeriode === "Semester 2") {
-            const dates = [
-                dayjs(`${tahun}-07`, "YYYY-MM"),
-                dayjs(`${tahun}-12`, "YYYY-MM"),
-            ];
-            form.setFieldValue("bulan", dates);
-        }
-        if (currentPeriode === "Bulanan") {
-            const dates = [dayjs(`${tahun}-01`, "YYYY-MM"), null];
-            form.setFieldValue("bulan", dates);
-        }
-    };
+
+    
     useEffect(() => {
         form.setFieldValue("file", file);
         // console.log({file});
@@ -148,7 +122,7 @@ const CapaianForm = ({
                             placeholder="Pilih Pegawai"
                             allowClear
                             showSearch
-                            disabled={type === "edit"}
+                            // disabled={type === "edit"}
                             optionFilterProp="label"
                             options={pegawais.map((pegawai) => ({
                                 label: pegawai.nama,
@@ -161,7 +135,7 @@ const CapaianForm = ({
                     label="Nomor SK"
                     className="focus:border-none"
                     >
-                        <Input/>
+                        <Input className="border border-slate-400 rounded-md" />
 
                     </Form.Item>
                     <Form.Item
@@ -170,12 +144,7 @@ const CapaianForm = ({
                     className="focus:border-none"
                     >
                         <Select
-                        options={[
-                            {value:"1",label:"SK Pengangkatan Pertama"},
-                            {value:"2",label:"SK Pembebasan Sementara"},
-                            {value:"3",label:"SK Pengangkatan Kembali"},
-                            {value:"4",label:"SK Kenaikan Jabatan"},
-                        ]}
+                        options={daftarJenisSk.map(({nama,id})=>({label:nama,value:id}))}
                         />
 
                     </Form.Item>
@@ -187,7 +156,7 @@ const CapaianForm = ({
                             format={"DD MMMM YYYY"}
                             maxDate={dayjs()}
                             // onChange={() => setPeriode("Bulanan")}
-                            disabled={type === "edit"}
+                            // disabled={type === "edit"}
                         />
                     </Form.Item>
                     <Form.Item name={"bulan"} label="Bulan Penilaian">
@@ -196,8 +165,7 @@ const CapaianForm = ({
                             minDate={dayjs("2019-01-01", dateFormat)}
                             format={"MMMM YYYY"}
                             maxDate={dayjs()}
-                            onChange={() => setPeriode("Bulanan")}
-                            disabled={type === "edit"}
+                            // disabled={type === "edit"}
                         />
                     </Form.Item>
 
@@ -216,6 +184,22 @@ const CapaianForm = ({
                                 value: predikat.id,
                             }))}
                         />
+                    </Form.Item>
+                    <Form.Item
+                        name="angka_kredit"
+                        label="Angka Kredit Perolehan"
+                        className="focus:border-none"
+                        tooltip="Desimal pakai titik"
+                    >
+                        <InputNumber/>
+                    </Form.Item>
+                    <Form.Item
+                        name="angka_kredit_akumulasi"
+                        label="Angka Kredit Akumulasi"
+                        className="focus:border-none"
+                        tooltip="Desimal pakai titik"
+                    >
+                        <InputNumber/>
                     </Form.Item>
 
                     <Form.Item name={"file"} label="Dokumen PAK" required>

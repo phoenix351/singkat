@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreCapaianRequest extends FormRequest
+class UpdateSkRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,16 +22,8 @@ class StoreCapaianRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'pegawai_id' => 'required',
-            'nomor_sk' => 'required',
-            'tmt_sk' => 'required',
-            'jenis_sk' => 'required',
-            'predikat_id' => 'required',
-            'bulan_mulai' => 'required|date',
-            'bulan_selesai' => 'required|date',
-            'file' => 'required',
-            'angka_kredit' => 'required|numeric',
-            'angka_kredit_akumulasi' => 'required|numeric'
+            'id'=>'required|numeric',
+            'nama'=>'required|string',
         ];
     }
 }

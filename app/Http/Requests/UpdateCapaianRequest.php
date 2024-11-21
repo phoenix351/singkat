@@ -22,9 +22,17 @@ class UpdateCapaianRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'pegawai_id'=>'required',
-            'predikat_id'=>'required',
-            'file'=>'nullable'
+            'id'=>'required',
+            'pegawai_id' => 'required',
+            'nomor_sk' => 'required',
+            'tmt_sk' => 'required',
+            'jenis_sk' => 'required',
+            'predikat_id' => 'required',
+            'bulan_mulai' => 'required|date',
+            'bulan_selesai' => 'required|date',
+            'file' => 'nullable',
+            'angka_kredit' => 'required|numeric',
+            'angka_kredit_akumulasi' => 'required|numeric'
         ];
     }
 }
