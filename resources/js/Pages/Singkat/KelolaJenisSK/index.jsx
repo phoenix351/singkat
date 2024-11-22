@@ -62,7 +62,6 @@ const KelolaJenisSK = ({ auth }) => {
     async function fetchJenisSk() {
         try {
             const { data } = await axios.get("/api/jenis-sk");
-            console.log({ data });
 
             setDaftarJenisSk(data);
         } catch (error) {
@@ -91,10 +90,11 @@ const KelolaJenisSK = ({ auth }) => {
                 content: "Berhasil menambahkan data",
             });
         } catch (error) {
+            
             messageApi.open({
                 type: "error",
                 key: "handle-add",
-                content: "Terjadi kesalahan",
+                content: error.response.data.message,
             });
         } finally {
             setIsModalOpen(false);
@@ -109,16 +109,25 @@ const KelolaJenisSK = ({ auth }) => {
                 content: "Menyimpan perubahan...",
             });
 
-            const response = await axios.put(
+            const { data } = await axios.put(
                 `/singkat/admin/jenis-sk`,
                 values,
                 { headers: { "Content-Type": "application/json" } }
             );
-            messageApi.open({
-                type: "success",
-                key: "handle-save",
-                content: "Berhasil menyimpan perubahan",
-            });
+
+            if (data.hasOwnProperty("error")) {
+                messageApi.open({
+                    type: "error",
+                    key: "handle-save",
+                    content: data.error,
+                });
+            } else {
+                messageApi.open({
+                    type: "success",
+                    key: "handle-save",
+                    content: data.message,
+                });
+            }
         } catch (error) {
             messageApi.open({
                 type: "error",
@@ -175,9 +184,21 @@ const KelolaJenisSK = ({ auth }) => {
                         {
                             title: "Hapus",
                             render: (_, record) => (
-                                <Button onClick={() => handleDelete(record.id)}>
-                                    <DeleteOutlined /> Hapus
-                                </Button>
+                                <Popconfirm
+                                    title="Hapus Jenis SK"
+                                    description="Apakah anda yakin akan menghapus Jenis SK ini?"
+                                    onConfirm={() => {
+                                        handleDelete(record.id);
+                                    }}
+                                    onCancel={() => {}}
+                                >
+                                    <Button>
+                                        <DeleteOutlined /> Hapus
+                                    </Button>
+                                </Popconfirm>
+                                // <Button onClick={() => handleDelete(record.id)}>
+                                //     <DeleteOutlined /> Hapus
+                                // </Button>
                             ),
                         },
                     ]}

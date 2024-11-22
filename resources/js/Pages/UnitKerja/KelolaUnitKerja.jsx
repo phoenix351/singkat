@@ -33,7 +33,7 @@ const KelolaUnitKerja = ({ auth, unitKerja, search }) => {
     };
 
     const handleSearch = (query) => {
-        router.get("/unit-kerja", { search: query }, { replace: true });
+        router.get("/singkat/admin/unit-kerja", { search: query }, { replace: true });
     };
     return (
         <Authenticated title="Unit Kerja" user={auth.user}>

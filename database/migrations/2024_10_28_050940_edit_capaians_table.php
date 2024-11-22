@@ -32,10 +32,7 @@ return new class extends Migration
             $capaian->angka_kredit_dasar = Pegawai::find($capaian->pegawai_id)->akumulasi_ak;
             $capaian->save();
         }
-        Schema::table('unit_kerja', function (Blueprint $table) {
-            $table->integer('kode')->default(7100);
-
-        });
+        
 
        
     }

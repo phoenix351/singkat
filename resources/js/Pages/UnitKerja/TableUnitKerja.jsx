@@ -11,7 +11,11 @@ const TableUnitKerja = ({ unitKerja, onEdit, onDelete }) => {
                             <th className="min-w-[50px] text-center py-4 px-4 font-medium text-black dark:text-white xl:pl-11">
                                 No
                             </th>
+                            <th className="min-w-[50px] text-center py-4 px-4 font-medium text-black dark:text-white xl:pl-11">
+                              Kode
+                            </th>
 
+                            
                             <th className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white">
                                 Nama Satuan Kerja
                             </th>
@@ -28,6 +32,11 @@ const TableUnitKerja = ({ unitKerja, onEdit, onDelete }) => {
                                         <td className="border-b text-center border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white text-center">
                                                 {unitKerja.from + key}
+                                            </p>
+                                        </td>
+                                        <td className="border-b text-center border-[#eee] py-5 px-4 dark:border-strokedark">
+                                            <p className="text-black dark:text-white text-center">
+                                                {data.kode}
                                             </p>
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">

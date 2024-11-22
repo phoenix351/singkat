@@ -37,9 +37,14 @@ class SKController extends Controller
     public function store(StoreSkRequest $request)
     {
         $validatedSk = $request->validated();
+        $newId = JenisSK::orderBy('id', 'DESC')->first()->id + 1;
+
         try {
             //code...
-            JenisSK::create($validatedSk);
+            JenisSK::create([
+                'id' => isset($validatedSk['new_id']) ? $validatedSk['new_id'] : $newId,
+                'nama' => $validatedSk['nama']
+            ]);
             return response()->json(['message' => 'Succesfully saved the data']);
         } catch (\Throwable $th) {
             return response()->json(['error' => 'Failed to save the data']);
@@ -52,12 +57,18 @@ class SKController extends Controller
         try {
             //code...
             $jenis_sk = JenisSK::find($validatedSk['id']);
-            $jenis_sk->update($validatedSk);
+            $jenis_sk->update([
+                'nama' => $validatedSk['nama'],
+                'id' => isset($validatedSk['new_id']) ? $validatedSk['new_id'] : $validatedSk['id'],
+            ]);
             $jenis_sk->save();
-            return response()->json(['message' => 'Succesfully saved the changes']);
-        } catch (\Exception $ex) {
-            return response()->json(['error' => $ex->getMessage()]);
-            //throw $th;
+            return response()->json(['message' => 'Berhasil menyimpan perubahan']);
+        } catch (\Throwable $ex) {
+            if ($ex->getCode() == "23000") {
+                return response()->json(['error' => 'ID sudah terpakai!']);
+            }
+            throw $ex;
+            return response()->json(['error' => 'Gagal mengupdate data']);
         }
     }
     public function destroy(JenisSK $sk)

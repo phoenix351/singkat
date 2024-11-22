@@ -23,6 +23,7 @@ class UpdateSkRequest extends FormRequest
     {
         return [
             'id'=>'required|numeric',
+            'new_id'=>'numeric|nullable',
             'nama'=>'required|string',
         ];
     }

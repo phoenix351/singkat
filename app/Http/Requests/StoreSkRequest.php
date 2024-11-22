@@ -22,6 +22,7 @@ class StoreSkRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'new_id'=>'numeric|nullable',
             'nama'=>'required|string'
         ];
     }

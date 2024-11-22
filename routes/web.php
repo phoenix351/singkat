@@ -98,18 +98,18 @@ Route::get('/api/abk-summary', [AbkController::class, 'getAbkSummary']);
 Route::get('/export-abk', [AbkController::class, 'export'])->middleware(['auth'])->name('abk.export');
 
 // User
-Route::get('/users', [UserController::class, 'index'])->middleware(['auth'])->name('users.index');
+Route::get('/singkat/admin/users', [UserController::class, 'index'])->middleware(['auth'])->name('users.index');
 Route::post('/users', [UserController::class, 'store'])->middleware(['auth'])->name('users.store');
 Route::put('/users/{user}', [UserController::class, 'update'])->middleware(['auth'])->name('users.update');
 Route::delete('/users/{user}', [UserController::class, 'destroy'])->middleware(['auth'])->name('users.destroy');
 
 // Jabatan
-Route::get('/jabatan', [JabatanController::class, 'index'])->middleware(['auth'])->name('jabatan.index');
+Route::get('/singkat/admin/jabatan', [JabatanController::class, 'index'])->middleware(['auth'])->name('jabatan.index');
 Route::post('/jabatan', [JabatanController::class, 'store'])->middleware(['auth'])->name('jabatan.store');
 Route::delete('/jabatan/{jabatan}', [JabatanController::class, 'destroy'])->middleware(['auth'])->name('jabatan.destroy');
 
 // Unit Kerja
-Route::get('/unit-kerja', [UnitKerjaController::class, 'index'])->middleware(['auth'])->name('unit-kerja.index');
+Route::get('/singkat/admin/unit-kerja', [UnitKerjaController::class, 'index'])->middleware(['auth'])->name('unit-kerja.index');
 Route::post('/unit-kerja', [UnitKerjaController::class, 'store'])->middleware(['auth'])->name('unit-kerja.store');
 Route::put('/unit-kerja/{unitKerja}', [UnitKerjaController::class, 'update'])->middleware(['auth'])->name('unit-kerja.update');
 Route::delete('/unit-kerja/{unitKerja}', [UnitKerjaController::class, 'destroy'])->middleware(['auth'])->name('unit-kerja.destroy');
