@@ -41,7 +41,7 @@ const CapaianForm = ({
 
     const fetchPredikats = async () => {
         try {
-            const { data } = await axios.get("/api/predikats");
+            const { data } = await axios.get(route("index")+"/api/predikats");
             // console.log({ data });
             setPredikats(data);
         } catch (error) {
@@ -50,7 +50,7 @@ const CapaianForm = ({
     };
     const fetchPegawais = async () => {
         try {
-            const { data } = await axios.get("/api/pegawais");
+            const { data } = await axios.get(route("index")+"/api/pegawais");
             setPegawais(data);
         } catch (error) {
             console.error("Error when get pegawai data");
@@ -58,7 +58,7 @@ const CapaianForm = ({
     };
     const fetchDaftarJenisSK = async () => {
         try {
-            const { data } = await axios.get("/api/jenis-sk");
+            const { data } = await axios.get(route("index")+"/api/jenis-sk");
             setDaftarJenisSK(data);
         } catch (error) {
             console.error("Error when get jenis-sk data");

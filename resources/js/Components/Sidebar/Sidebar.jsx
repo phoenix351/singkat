@@ -63,8 +63,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
         >
             {/* <!-- SIDEBAR HEADER --> */}
             <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
-                <Link href="/dashboard">
-                    <img src={"/images/logo/bps-sulut.png"} alt="Logo" />
+                <Link href={route("home")}>
+                    <img src={route("index")+"/images/logo/bps-sulut.png"} alt="Logo" />
                 </Link>
 
                 <button
@@ -104,7 +104,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                             <ul className="mb-6 flex flex-col gap-1.5">
                                 <li>
                                     <Link
-                                        href="/capaian-ku"
+                                        href={route("singkat")+"/capaian-ku"}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             currentUrl.includes("capaian-ku") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -143,7 +143,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 {/* <!-- Menu Item Profile --> */}
                                 <li>
                                     <Link
-                                        href="/singkat/dashboard"
+                                        href={route("singkat.dashboard")}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("dashboard") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -179,7 +179,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/singkat/kelola-pak"
+                                        href={route("singkat")+"/kelola-pak"}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("kelolapak") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -217,7 +217,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/singkat/kelola-ckp"
+                                        href={route("singkat")+"/kelola-ckp"}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("capaian") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -256,7 +256,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
 
                                 <li>
                                     <Link
-                                        href="/singkat/kelola-abk"
+                                        href={route("singkat")+"/kelola-abk"}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("kelolaabk") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -293,7 +293,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                             <ul className="mb-6 flex flex-col gap-1.5">
                                 <li>
                                     <Link
-                                        href="/singkat/admin/users"
+                                        href={route("singkat.admin.users")}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("users") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -318,7 +318,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/singkat/admin/jabatan"
+                                        href={route("singkat.admin.jabatan")}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("jabatan") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -343,9 +343,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/singkat/admin/jenis-sk"
+                                        href={route("singkat.admin.jenis-sk")}
                                         onClick={()=>{
-                                            console.log({pathname});
                                             
                                         }}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
@@ -372,7 +371,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/singkat/admin/unit-kerja"
+                                        href={route('singkat.admin.unit-kerja')}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("unitkerja") &&
                                             "bg-graydark dark:bg-meta-4"

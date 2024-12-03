@@ -25,13 +25,7 @@ const AddAbkForm = ({ visible, onCancel, jabatan, unitKerja }) => {
         }
     };
 
-    // const checkPrice = (_, value) => {
-    //     if (value.number > 0) {
-    //         return Promise.resolve();
-    //     }
-    //     return Promise.reject(new Error("Price must be greater than zero!"));
-    // };
-
+ 
     const checkEksisting = (field, value) => {
         const abk = form.getFieldValue("abk");
         const jabatan_id = form.getFieldValue("jabatan_id");
@@ -47,7 +41,7 @@ const AddAbkForm = ({ visible, onCancel, jabatan, unitKerja }) => {
     };
 
     const handleSubmit = (values) => {
-        router.post("/kelola-abk", values);
+        router.post(route("singkat.admin.abk.store"), values);
         form.resetFields();
         onCancel();
     };

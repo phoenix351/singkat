@@ -16,7 +16,7 @@ const Card = ({ imagePath, name, description, link }) => {
         >
             <img
                 onError={(event) => {
-                    event.target.src = "/images/logo/logo-bps.png";
+                    event.target.src = route('index')+"/images/logo/logo-bps.png";
                 }}
                 src={imagePath}
                 // src={"/images/logo-bps.png"}

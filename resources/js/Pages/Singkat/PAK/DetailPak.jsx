@@ -75,7 +75,7 @@ const DetailPak = ({ auth, histories, pegawai }) => {
             render: (_, record) => (
                 <>
                     <a
-                        href={`/capaian/pak/${record.id}`}
+                        href={route("singkat.admin.pak.show",{pak:record.id})}
                         className="hover:text-primary"
                         target="_blank"
                     >
@@ -89,7 +89,7 @@ const DetailPak = ({ auth, histories, pegawai }) => {
         if (!jabatan_id) {
             return {};
         }
-        const { data } = await axios.get(`/api/jabatans/${jabatan_id}`);
+        const { data } = await axios.get(route("index")+`/api/jabatans/${jabatan_id}`);
         return data;
     };
 

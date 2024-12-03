@@ -41,7 +41,7 @@ const KelolaJenisSK = ({ auth }) => {
             });
 
             const response = await axios.delete(
-                `/singkat/admin/jenis-sk/${id}`
+                route("singkat.admin.jenis-sk.destroy",{sk:id})
             );
             messageApi.open({
                 type: "success",
@@ -61,7 +61,7 @@ const KelolaJenisSK = ({ auth }) => {
     }
     async function fetchJenisSk() {
         try {
-            const { data } = await axios.get("/api/jenis-sk");
+            const { data } = await axios.get(route("index") + "/api/jenis-sk");
 
             setDaftarJenisSk(data);
         } catch (error) {
@@ -69,7 +69,7 @@ const KelolaJenisSK = ({ auth }) => {
         }
     }
     const handleSearch = (query) => {
-        router.get("/jenis-sk", { search: query }, { replace: true });
+        router.get(route("singkat.admin.jenis-sk"), { search: query }, { replace: true });
     };
     const handleAdd = async (values) => {
         try {
@@ -80,7 +80,7 @@ const KelolaJenisSK = ({ auth }) => {
             });
 
             const response = await axios.post(
-                `/singkat/admin/jenis-sk`,
+                route("singkat.admin.jenis-sk.store"),
                 values,
                 { headers: { "Content-Type": "application/json" } }
             );
@@ -110,7 +110,7 @@ const KelolaJenisSK = ({ auth }) => {
             });
 
             const { data } = await axios.put(
-                `/singkat/admin/jenis-sk`,
+                route("singkat.admin.jenis-sk.update"),
                 values,
                 { headers: { "Content-Type": "application/json" } }
             );

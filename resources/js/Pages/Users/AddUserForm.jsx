@@ -7,7 +7,7 @@ const AddUserForm = ({ visible, onCancel }) => {
     const { errors } = usePage().props;
 
     const handleSubmit = (values) => {
-        router.post("/users", values);
+        router.post(route("singkat.admin.users.store"), values);
         form.resetFields();
         onCancel();
     };

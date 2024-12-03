@@ -26,13 +26,13 @@ const KelolaUser = ({ auth, users, search }) => {
         setIsEditModalOpen(true);
     };
     const handleDelete = (id) => {
-        router.delete(`/users/${id}`).then(() => {
+        router.delete(route("singkat.admin.users.destroy",{user:id})).then(() => {
             // Refresh the page or handle post-delete actions here
         });
     };
 
     const handleSearch = (query) => {
-        router.get("/users", { search: query }, { replace: true });
+        router.get(route("singkat.admin.users"), { search: query }, { replace: true });
     };
     return (
         <Authenticated title="User" user={auth.user}>

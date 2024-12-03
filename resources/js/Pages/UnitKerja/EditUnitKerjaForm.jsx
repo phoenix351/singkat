@@ -12,7 +12,7 @@ const EditUnitKerjaForm = ({ visible, onCancel, unitKerja }) => {
     }, [unitKerja, form]);
 
     const handleSubmit = (values) => {
-        router.put(`/unit-kerja/${unitKerja.id}`, values);
+        router.put(route("singkat.admin.unit-kerja.update",{unitKerja:unitKerja.id}), values);
         onCancel();
         form.resetFields();
     };

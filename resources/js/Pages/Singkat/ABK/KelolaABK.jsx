@@ -27,13 +27,13 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
         setIsEditModalOpen(true);
     };
     const handleDelete = (id) => {
-        router.delete(`/kelola-abk/${id}`).then(() => {
+        router.delete(route("singkat.admin.abk.destroy",{abk:id})).then(() => {
             // Refresh the page or handle post-delete actions here
         });
     };
     const handleDownload = async (values) => {
         const { data } = await axios.get(
-            route("abk.fetch", { search: values })
+            route("singkat.admin.abk.fetch", { search: values })
         );
 
         // return
@@ -143,7 +143,7 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
         setOpenUnduhModal(false);
     };
     const handleSearch = (query) => {
-        router.get("/singkat/kelola-abk", { search: query }, { replace: true });
+        router.get(route("singkat.admin.abk"), { search: query }, { replace: true });
     };
 
     return (

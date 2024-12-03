@@ -7,10 +7,7 @@ import SearchInput from "@/Components/SearchInput";
 
 import Pagination from "@/Components/Pagination";
 
-// import AddPegawaiForm from "@/Pages/PAK/AddPegawaiForm";
-// import EditPegawaiForm from "@/Pages/PAK/EditPegawaiForm";
 import ExportModal from "@/Pages/Singkat/PAK/ExportModal";
-// import Alert from "@/Components/Alert";
 import { Form, message } from "antd";
 import axios from "axios";
 import PegawaiForm from "./PegawaiForm";
@@ -47,7 +44,9 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 content: "Menghapus data pegawai",
                 key: "handle-delete",
             });
-            const response = axios.delete(`/kelola-pak/${id}`);
+            const response = axios.delete(
+                route("singkat.admin.pak.delete", { id: id })
+            );
 
             messageApi.open({
                 type: "success",
@@ -71,7 +70,11 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
     };
 
     const handleSearch = (query) => {
-        router.get(route("kelola-pak"), { search: query }, { replace: true });
+        router.get(
+            route("singkat.kelola-pak"),
+            { search: query },
+            { replace: true }
+        );
     };
     const handleSave = async (values) => {
         // console.log({values});
@@ -85,9 +88,13 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
             values["bulan_mulai"] = values["bulan"][0];
             values["bulan_selesai"] = values["bulan"][1];
             delete values["bulan"];
-            const response = axios.put(`/kelola-pak/${values.id}`, values, {
-                headers: { "Content-Type": "application/json" },
-            });
+            const response = axios.put(
+                route("singkat.admin.pak.update", { pegawai: values.id }),
+                values,
+                {
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
 
             messageApi.open({
                 type: "success",
@@ -105,7 +112,6 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
             router.reload({
                 preserveState: true,
                 preserveScroll: true,
-                method: "get",
             });
         }
     };
@@ -121,9 +127,13 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
             values["bulan_mulai"] = values["bulan"][0];
             values["bulan_selesai"] = values["bulan"][1];
             delete values["bulan"];
-            const response = await axios.post(`/kelola-pak`, values, {
-                headers: { "Content-Type": "application/json" },
-            });
+            const response = await axios.post(
+                route("singkat.admin.pak.store"),
+                values,
+                {
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
 
             messageApi.open({
                 type: "success",
@@ -239,14 +249,6 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 />
             </div>
 
-            {/* Modal Form */}
-            {/* <AddPegawaiForm
-                jabatan={jabatan}
-                unitKerja={unitKerja}
-                visible={isModalOpen}
-                onCancel={closeModal}
-                role={auth.user.role}
-            /> */}
             <PegawaiForm
                 key="create-form"
                 jabatan={jabatan}
@@ -259,14 +261,7 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 title="Tambah Pegawai"
                 form={createForm}
             />
-            {/* <EditPegawaiForm
-                jabatan={jabatan}
-                unitKerja={unitKerja}
-                visible={isEditModalOpen}
-                onCancel={closeEditModal}
-                pegawai={currentPegawai}
-                role={auth.user.role}
-            /> */}
+
             <PegawaiForm
                 key="edit-form"
                 jabatan={jabatan}
@@ -281,7 +276,6 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 form={editForm}
             />
 
-            {/* Export Modal */}
             <ExportModal
                 visible={isExportModalOpen}
                 onCancel={closeExportModal}

@@ -1,18 +1,16 @@
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import React, { useEffect, useState } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
-
-import Pagination from "@/Components/Pagination";
-import CapaianForm from "./CapaianForm";
 import dayjs from "dayjs";
 import { Button, Form, message } from "antd";
 import axios from "axios";
 import * as XLSX from "xlsx";
-// import Alert from "@/Components/Alert";
 
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import Pagination from "@/Components/Pagination";
 import Breadcrumb from "@/Components/Breadcrumb";
 import SearchInput from "@/Components/SearchInput";
 import Table from "./TableCapaian";
+import CapaianForm from "./CapaianForm";
 
 const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     const [editForm] = Form.useForm();
@@ -74,7 +72,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
         if (capaian.jenis_sk) {
             capaian.jenis_sk = Number(capaian.jenis_sk);
         }
-        
+
         editForm.setFieldsValue(capaian);
         setIsEditModalOpen(true);
     };
@@ -86,14 +84,16 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             messageApi.open({
                 key: "submit-form",
                 type: "loading",
-                content: "menghapus 1 capaian...",
+                content: "menghapus 1 PAK...",
             });
             // return
-            const response = await axios.delete(`/capaian/${id}`);
+            const response = await axios.delete(
+                route("singkat.admin.pak.destroy", { pak: id })
+            );
             messageApi.open({
                 key: "submit-form",
                 type: "success",
-                content: "1 capaian berhasil terhapus",
+                content: "1 PAK berhasil terhapus",
             });
             setIsEditModalOpen(false);
         } catch (error) {
@@ -104,16 +104,12 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 content: "terjadi kesalahan server",
             });
         } finally {
-            router.get(
-                "/singkat/kelola-ckp",
-                { search: search },
-                { preserveState: true }
-            );
+            router.reload({ preserveState: true, preserveScroll: true });
         }
     };
 
     const handleSearch = (query) => {
-        const url = new URL(route("kelola-ckp"));
+        const url = new URL(route("singkat.admin.pak"));
 
         url.searchParams.set("search", query);
         router.get(url, { replace: true });
@@ -127,32 +123,30 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             messageApi.open({
                 key: "submit-form",
                 type: "loading",
-                content: "menyimpan capaian pegawai",
+                content: "menyimpan perubahan...",
             });
 
-            const response = await axios.post(`/capaian/${values.id}`, values, {
-                headers: { "Content-Type": contentType },
-            });
+            const response = await axios.post(
+                route("singkat.admin.pak.store"),
+                values,
+                {
+                    headers: { "Content-Type": contentType },
+                }
+            );
             messageApi.open({
                 key: "submit-form",
                 type: "success",
                 content: "perubahan telah disimpan",
             });
-            // router.get("/singkat/kelola-ckp", {}, { preserveState: true });
             setIsEditModalOpen(false);
         } catch (error) {
-            console.log({ error });
             messageApi.open({
                 key: "submit-form",
                 type: "error",
                 content: error.response.data.error,
             });
         } finally {
-            router.get(
-                `/singkat/kelola-ckp`,
-                { search: search },
-                { preserveState: true }
-            );
+            router.reload({ preserveState: true, preserveScroll: true });
         }
     };
 
@@ -179,9 +173,13 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 content: "menambahkan PAK...",
             });
 
-            const response = await axios.post(`/capaian`, values, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
+            const response = await axios.post(
+                route("singkat.admin.pak.store") ,
+                values,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }
+            );
             messageApi.open({
                 key: "add-form",
                 type: "success",
@@ -189,24 +187,18 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             });
             // router.get("/singkat/kelola-ckp", {}, { preserveState: true });
         } catch (error) {
-            console.log({ error });
             messageApi.open({
                 key: "add-form",
                 type: "error",
                 content: error.response.data.message,
             });
         } finally {
-            router.get(
-                "/singkat/kelola-ckp",
-                { search: search },
-                { preserveState: true }
-            );
-            setIsModalOpen(false);
+            router.reload({ preserveState: true, preserveScroll: true });
         }
     };
     const handleDownload = async (values) => {
         const { data } = await axios.get(
-            route("kelola-ckp.fetch", { search: values })
+            route("singkat.admin.pak.fetch", { search: values })
         );
 
         // return
@@ -238,7 +230,6 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
         URL.revokeObjectURL(url);
         setOpenUnduhModal(false);
     };
- 
 
     return (
         <AuthenticatedLayout user={auth.user}>
@@ -315,7 +306,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                                     d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"
                                 ></path>
                             </svg>
-                            Tambah capaian
+                            Tambah PAK
                         </button>
                     )}
                 </div>
@@ -339,16 +330,6 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 />
             </div>
 
-            {/* Modal Form */}
-            {/* <AddCapaianForm
-                jabatan={jabatan}
-                // capaian={capaian}
-                unitKerja={unitKerja}
-                visible={isModalOpen}
-                onCancel={closeModal}
-                role={auth.user.role}
-            />
-           */}
             <CapaianForm
                 jabatan={jabatan}
                 // capaian={capaian}

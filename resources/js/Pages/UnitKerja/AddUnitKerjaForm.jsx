@@ -6,7 +6,7 @@ const AddUnitKerjaForm = ({ visible, onCancel }) => {
     const [form] = Form.useForm();
 
     const handleSubmit = (values) => {
-        router.post("/unit-kerja", values);
+        router.post(route("singkat.admin.unit-kerja.store"), values);
         form.resetFields();
         onCancel();
     };
