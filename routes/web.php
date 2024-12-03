@@ -1,20 +1,16 @@
 <?php
 
 use App\Http\Controllers\Singkat\AbkController;
-use App\Models\User;
-use Inertia\Inertia;
-use App\Models\Pegawai;
-use App\Models\UnitKerja;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Singkat\JabatanController;
 use App\Http\Controllers\Singkat\PegawaiController;
-use App\Http\Controllers\Singkat\CapaianController;
 use App\Http\Controllers\Singkat\DashboardController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Singkat\PredikatController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Singkat\PAKController;
 use App\Http\Controllers\SKController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UnitKerjaController;
@@ -47,12 +43,12 @@ Route::middleware('auth')->group(function () {
     Route::patch('/singkat/kelola-pak/{pegawai}', [PegawaiController::class, 'update']);
 
     // CKP
-    Route::get("/singkat/admin/pak", [CapaianController::class, "index"])->name("singkat.admin.pak");
-    Route::get('/singkat/admin/pak/{pak}', [CapaianController::class,'show'])->name('singkat.admin.pak.show');
-    Route::post('/singkat/admin/pak', [CapaianController::class,'store'])->name('singkat.admin.pak.store');
-    Route::put('/singkat/admin/pak/{pak}', [CapaianController::class,'update'])->name('singkat.admin.pak.update');
-    Route::delete('/singkat/admin/pak/{pak}', [CapaianController::class,'destroy'])->name('singkat.admin.pak.destroy');
-    Route::get('/singkat/admin/pak/fetch', [CapaianController::class, 'fetch'])->name('singkat.admin.pak.fetch');
+    Route::get("/singkat/admin/pak", [PAKController::class, "index"])->name("singkat.admin.pak");
+    Route::get('/singkat/admin/pak/{pak}', [PAKController::class,'show'])->name('singkat.admin.pak.show');
+    Route::post('/singkat/admin/pak', [PAKController::class,'store'])->name('singkat.admin.pak.store');
+    Route::put('/singkat/admin/pak/{pak}', [PAKController::class,'update'])->name('singkat.admin.pak.update');
+    Route::delete('/singkat/admin/pak/{pak}', [PAKController::class,'destroy'])->name('singkat.admin.pak.destroy');
+    Route::get('/singkat/admin/pak/fetch', [PAKController::class, 'fetch'])->name('singkat.admin.pak.fetch');
 
     // SK
     Route::get('/singkat/admin/jenis-sk', [SKController::class, 'index'])->name('singkat.admin.jenis-sk');

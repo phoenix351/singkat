@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Singkat;
 
-use App\Http\Requests\StoreCapaianRequest;
-use App\Http\Requests\UpdateCapaianRequest;
+use App\Http\Requests\StorePAKRequest;
+use App\Http\Requests\UpdatePAKRequest;
 use App\Models\AngkaKreditHistory;
 use App\Models\Capaian;
 use App\Models\Pegawai;
@@ -16,7 +16,7 @@ use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
-class CapaianController extends Controller
+class PAKController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -58,7 +58,7 @@ class CapaianController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCapaianRequest $request)
+    public function store(StorePAKRequest $request)
     {
         $validatedData = $request->validated();
         try {
@@ -117,7 +117,7 @@ class CapaianController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateCapaianRequest $request, Capaian $capaian)
+    public function update(UpdatePAKRequest $request, Capaian $capaian)
     {
         try {
             //code...
