@@ -37,10 +37,10 @@ class LoginController extends Controller
 
     public function sso_callback(Request $request)
     {
+
         $state = $request->session()->pull('state');
-
         $codeVerifier = $request->session()->pull('code_verifier');
-
+        // dd([$request->session()]);
         throw_unless(
             strlen($state) > 0 && $state === $request->state,
             InvalidArgumentException::class
@@ -71,7 +71,10 @@ class LoginController extends Controller
         $user = User::where('pegawai_id', $userInfo['nip-lama'])->first();
         if ($user) {
             Auth::login($user);
-            return redirect('/');
+            $request->session()->regenerate();
+            return redirect()->intended(route('index', absolute: false));
+
+            // return redirect('/');
         }
         return redirect('/login')->with('errors', 'User belum terdaftar!');
     }

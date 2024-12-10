@@ -10,10 +10,4 @@ export default defineConfig({
         }),
         react(),
     ],
-    server: {
-        https: true, // Ensure the Vite dev server uses HTTPS
-        host: "0.0.0.0", // Optional: Adjust host settings for your environment
-    },
-    // base: "//build/",
-    base: "/",
 });
