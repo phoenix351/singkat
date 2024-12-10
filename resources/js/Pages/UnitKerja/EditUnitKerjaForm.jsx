@@ -12,7 +12,7 @@ const EditUnitKerjaForm = ({ visible, onCancel, unitKerja }) => {
     }, [unitKerja, form]);
 
     const handleSubmit = (values) => {
-        router.put(`/unit-kerja/${unitKerja.id}`, values);
+        router.put(route("singkat.admin.unit-kerja.update",{unitKerja:unitKerja.id}), values);
         onCancel();
         form.resetFields();
     };
@@ -32,7 +32,25 @@ const EditUnitKerjaForm = ({ visible, onCancel, unitKerja }) => {
                 wrapperCol={{ span: 24 }}
                 autoComplete="off"
                 size="large"
+                onKeyDown={(event)=>{
+                    if(event.code==="Enter")
+                    {
+                        form.submit();
+                    }
+                }}
             >
+                <Form.Item
+                    name="kode"
+                    label="Kode Satuan Kerja"
+                    rules={[
+                        {
+                            required: true,
+                            message: "Nama Satuan Kerja tidak boleh kosong.",
+                        },
+                    ]}
+                >
+                    <Input className="border border-slate-400 rounded-md" />
+                </Form.Item>
                 <Form.Item
                     name="nama"
                     label="Nama Satuan Kerja"

@@ -7,18 +7,7 @@ import axios from "axios";
 import TableDashboard from "./TableDashboard";
 
 export default function Dashboard({ auth, jumlahPegawai, users, unitKerja }) {
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await axios.get("/api/abk-summary");
-                setChartData(response.data);
-            } catch (error) {
-                console.error("Error fetching data: ", error);
-            }
-        };
-
-        fetchData();
-    }, []);
+    
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="Dashboard" />

@@ -1,51 +1,84 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, Select, InputNumber, DatePicker, message } from "antd";
-import { router } from "@inertiajs/react";
-
+import {
+    Modal,
+    Form,
+    Input,
+    Select,
+    InputNumber,
+    DatePicker,
+    message,
+    Upload,
+    Radio,
+} from "antd";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import axios from "axios";
-
+import UploadPAK from "@/Components/UploadPAK";
 const disabledStyle = {
     color: "#000",
 };
 
+const dateFormat = "YYYY-MM-DD";
+const { RangePicker } = DatePicker;
 
-const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText,type }) => {
-    
+const CapaianForm = ({
+    visible,
+    onCancel,
+    onFinish,
+    form,
+    title,
+    okText,
+    type,
+}) => {
     const [predikats, setPredikats] = useState([]);
     const [pegawais, setPegawais] = useState([]);
+    const [file, setFile] = useState(null);
+    const [daftarJenisSk,setDaftarJenisSK] = useState([]);
 
     // define message
     const [messageApi, contextHolder] = message.useMessage();
-
-   
+    
 
     const fetchPredikats = async () => {
         try {
-            const { data } = await axios.get('/api/predikats');
+            const { data } = await axios.get(route("index")+"/api/predikats");
             // console.log({ data });
             setPredikats(data);
         } catch (error) {
-            console.error('Error when get predikat data');
+            console.error("Error when get predikat data");
         }
-
-    }
+    };
     const fetchPegawais = async () => {
         try {
-            const { data } = await axios.get('/api/pegawais');
+            const { data } = await axios.get(route("index")+"/api/pegawais");
             setPegawais(data);
         } catch (error) {
-            console.error('Error when get predikat data');
+            console.error("Error when get pegawai data");
         }
-
-    }
+    };
+    const fetchDaftarJenisSK = async () => {
+        try {
+            const { data } = await axios.get(route("index")+"/api/jenis-sk");
+            setDaftarJenisSK(data);
+        } catch (error) {
+            console.error("Error when get jenis-sk data");
+        }
+    };
 
     useEffect(() => {
         fetchPredikats();
         fetchPegawais();
+        fetchDaftarJenisSK()
         // form.setFieldsValue(capaian);
-        
-    }, [])
+    }, []);
+   
 
+
+    
+    useEffect(() => {
+        form.setFieldValue("file", file);
+        // console.log({file});
+    }, [file]);
 
     return (
         <>
@@ -71,7 +104,12 @@ const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText,type }) => 
                     autoComplete="off"
                     size="large"
                 >
-                    <Form.Item name="id" label="ID" className="focus:border-none" hidden>
+                    <Form.Item
+                        name="id"
+                        label="ID"
+                        className="focus:border-none"
+                        hidden
+                    >
                         <Input />
                     </Form.Item>
 
@@ -79,16 +117,58 @@ const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText,type }) => 
                         name="pegawai_id"
                         label="Pegawai"
                         className="focus:border-none"
-                        >
+                    >
                         <Select
                             placeholder="Pilih Pegawai"
                             allowClear
                             showSearch
-                            disabled={type==='edit'}
+                            // disabled={type === "edit"}
                             optionFilterProp="label"
-                            options={pegawais.map(pegawai => ({ label: pegawai.nama, value: pegawai.id }))}
+                            options={pegawais.map((pegawai) => ({
+                                label: pegawai.nama,
+                                value: pegawai.id,
+                            }))}
                         />
                     </Form.Item>
+                    <Form.Item
+                    name="nomor_sk"
+                    label="Nomor SK"
+                    className="focus:border-none"
+                    >
+                        <Input className="border border-slate-400 rounded-md" />
+
+                    </Form.Item>
+                    <Form.Item
+                    name="jenis_sk"
+                    label="Jenis SK"
+                    className="focus:border-none"
+                    >
+                        <Select
+                        options={daftarJenisSk.map(({nama,id})=>({label:nama,value:id}))}
+                        />
+
+                    </Form.Item>
+
+                    <Form.Item name={"tmt_sk"} label="TMT SK">
+                        <DatePicker
+                            // picker="month"
+                            // minDate={dayjs("2019-01-01", dateFormat)}
+                            format={"DD MMMM YYYY"}
+                            maxDate={dayjs()}
+                            // onChange={() => setPeriode("Bulanan")}
+                            // disabled={type === "edit"}
+                        />
+                    </Form.Item>
+                    <Form.Item name={"bulan"} label="Bulan Penilaian">
+                        <RangePicker
+                            picker="month"
+                            minDate={dayjs("2019-01-01", dateFormat)}
+                            format={"MMMM YYYY"}
+                            maxDate={dayjs()}
+                            // disabled={type === "edit"}
+                        />
+                    </Form.Item>
+
                     <Form.Item
                         name="predikat_id"
                         label="Predikat Kinerja"
@@ -99,20 +179,32 @@ const CapaianForm = ({ visible, onCancel, onFinish,form,title,okText,type }) => 
                             allowClear
                             showSearch
                             optionFilterProp="label"
-                            options={predikats.map(predikat => ({ label: predikat.nama, value: predikat.id }))}
+                            options={predikats.map((predikat) => ({
+                                label: predikat.nama,
+                                value: predikat.id,
+                            }))}
                         />
                     </Form.Item>
-                    <Form.Item name={"tahun"} label="Tahun Penilaian">
-                        <DatePicker picker="year" />
+                    <Form.Item
+                        name="angka_kredit"
+                        label="Angka Kredit Perolehan"
+                        className="focus:border-none"
+                        tooltip="Desimal pakai titik"
+                    >
+                        <InputNumber/>
                     </Form.Item>
-                    <Form.Item name={"periode"} label="Periode Penilaian">
-                        <Select placeholder="Pilih Periode" allowClear showSearch options={[
-                            { label: 'Tahunan', value: 'Tahunan' },
-                            { label: 'Semester 1', value: 'Semester 1' },
-                            { label: 'Semester 2', value: 'Semester 2' },
-                        ]} />
+                    <Form.Item
+                        name="angka_kredit_akumulasi"
+                        label="Angka Kredit Akumulasi"
+                        className="focus:border-none"
+                        tooltip="Desimal pakai titik"
+                    >
+                        <InputNumber/>
                     </Form.Item>
 
+                    <Form.Item name={"file"} label="Dokumen PAK" required>
+                        <UploadPAK setFile={setFile} />
+                    </Form.Item>
                 </Form>
             </Modal>
         </>

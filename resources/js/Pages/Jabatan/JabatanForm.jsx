@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
-import { Modal, Form, Input } from "antd";
+import { Modal, Form, Input, InputNumber } from "antd";
 import { router } from "@inertiajs/react";
 
-const EditJabatanForm = ({ visible, onFinish,onCancel, jabatan }) => {
+const EditJabatanForm = ({ visible, onFinish, onCancel, jabatan }) => {
     const [form] = Form.useForm();
 
     useEffect(() => {
@@ -10,8 +10,6 @@ const EditJabatanForm = ({ visible, onFinish,onCancel, jabatan }) => {
             form.setFieldsValue(jabatan);
         }
     }, [jabatan, form]);
-
-    
 
     return (
         <Modal
@@ -29,7 +27,13 @@ const EditJabatanForm = ({ visible, onFinish,onCancel, jabatan }) => {
                 autoComplete="off"
                 size="large"
             >
-                
+                <Form.Item
+                    name="nomor_urut_kepka"
+                    label="Nomor Urut Berdasarkan Kepka"
+                    
+                >
+                    <InputNumber className="border border-slate-400 rounded-md" />
+                </Form.Item>
                 <Form.Item
                     name="nama"
                     label="Nama Jabatan"
@@ -42,11 +46,7 @@ const EditJabatanForm = ({ visible, onFinish,onCancel, jabatan }) => {
                 >
                     <Input className="border border-slate-400 rounded-md" />
                 </Form.Item>
-                <Form.Item
-                    name="id"
-                    label="Id Jabatan"
-                    
-                >
+                <Form.Item name="id" label="Id Jabatan" hidden>
                     <Input className="border border-slate-400 rounded-md" />
                 </Form.Item>
                 <Form.Item

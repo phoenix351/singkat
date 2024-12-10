@@ -63,8 +63,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
         >
             {/* <!-- SIDEBAR HEADER --> */}
             <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
-                <Link href="/dashboard">
-                    <img src={"/images/logo/bps-sulut.png"} alt="Logo" />
+                <Link href={route("home")}>
+                    <img src={route("index")+"/images/logo/bps-sulut.png"} alt="Logo" />
                 </Link>
 
                 <button
@@ -104,7 +104,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                             <ul className="mb-6 flex flex-col gap-1.5">
                                 <li>
                                     <Link
-                                        href="/capaian-ku"
+                                        href={route("singkat")+"/capaian-ku"}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             currentUrl.includes("capaian-ku") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -143,7 +143,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 {/* <!-- Menu Item Profile --> */}
                                 <li>
                                     <Link
-                                        href="/singkat/dashboard"
+                                        href={route("singkat.dashboard")}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("dashboard") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -179,9 +179,47 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/singkat/kelola-pak"
+                                        href={route("singkat.admin.pegawai")}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("kelolapak") &&
+                                            "bg-graydark dark:bg-meta-4"
+                                        }`}
+                                    >
+                                        <svg
+                                            className="fill-current"
+                                            width="18"
+                                            height="19"
+                                            viewBox="0 0 18 19"
+                                            fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <g clipPath="url(#clip0_130_9756)">
+                                                <path
+                                                    d="M15.7501 0.55835H2.2501C1.29385 0.55835 0.506348 1.34585 0.506348 2.3021V15.8021C0.506348 16.7584 1.29385 17.574 2.27822 17.574H15.7782C16.7345 17.574 17.5501 16.7865 17.5501 15.8021V2.3021C17.522 1.34585 16.7063 0.55835 15.7501 0.55835ZM6.69385 10.599V6.4646H11.3063V10.5709H6.69385V10.599ZM11.3063 11.8646V16.3083H6.69385V11.8646H11.3063ZM1.77197 6.4646H5.45635V10.5709H1.77197V6.4646ZM12.572 6.4646H16.2563V10.5709H12.572V6.4646ZM2.2501 1.82397H15.7501C16.0313 1.82397 16.2563 2.04897 16.2563 2.33022V5.2271H1.77197V2.3021C1.77197 2.02085 1.96885 1.82397 2.2501 1.82397ZM1.77197 15.8021V11.8646H5.45635V16.3083H2.2501C1.96885 16.3083 1.77197 16.0834 1.77197 15.8021ZM15.7501 16.3083H12.572V11.8646H16.2563V15.8021C16.2563 16.0834 16.0313 16.3083 15.7501 16.3083Z"
+                                                    fill=""
+                                                />
+                                            </g>
+                                            <defs>
+                                                <clipPath id="clip0_130_9756">
+                                                    <rect
+                                                        width="18"
+                                                        height="18"
+                                                        fill="white"
+                                                        transform="translate(0 0.052124)"
+                                                    />
+                                                </clipPath>
+                                            </defs>
+                                        </svg>
+                                        {user.role == "viewer"
+                                            ? "PAK"
+                                            : "Kelola Pegawai"}
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href={route("singkat.admin.pak")}
+                                        className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+                                            pathname.includes("capaian") &&
                                             "bg-graydark dark:bg-meta-4"
                                         }`}
                                     >
@@ -215,48 +253,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                             : "Kelola PAK"}
                                     </Link>
                                 </li>
-                                <li>
-                                    <Link
-                                        href="/singkat/kelola-ckp"
-                                        className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                                            pathname.includes("capaian") &&
-                                            "bg-graydark dark:bg-meta-4"
-                                        }`}
-                                    >
-                                        <svg
-                                            className="fill-current"
-                                            width="18"
-                                            height="19"
-                                            viewBox="0 0 18 19"
-                                            fill="none"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                            <g clipPath="url(#clip0_130_9756)">
-                                                <path
-                                                    d="M15.7501 0.55835H2.2501C1.29385 0.55835 0.506348 1.34585 0.506348 2.3021V15.8021C0.506348 16.7584 1.29385 17.574 2.27822 17.574H15.7782C16.7345 17.574 17.5501 16.7865 17.5501 15.8021V2.3021C17.522 1.34585 16.7063 0.55835 15.7501 0.55835ZM6.69385 10.599V6.4646H11.3063V10.5709H6.69385V10.599ZM11.3063 11.8646V16.3083H6.69385V11.8646H11.3063ZM1.77197 6.4646H5.45635V10.5709H1.77197V6.4646ZM12.572 6.4646H16.2563V10.5709H12.572V6.4646ZM2.2501 1.82397H15.7501C16.0313 1.82397 16.2563 2.04897 16.2563 2.33022V5.2271H1.77197V2.3021C1.77197 2.02085 1.96885 1.82397 2.2501 1.82397ZM1.77197 15.8021V11.8646H5.45635V16.3083H2.2501C1.96885 16.3083 1.77197 16.0834 1.77197 15.8021ZM15.7501 16.3083H12.572V11.8646H16.2563V15.8021C16.2563 16.0834 16.0313 16.3083 15.7501 16.3083Z"
-                                                    fill=""
-                                                />
-                                            </g>
-                                            <defs>
-                                                <clipPath id="clip0_130_9756">
-                                                    <rect
-                                                        width="18"
-                                                        height="18"
-                                                        fill="white"
-                                                        transform="translate(0 0.052124)"
-                                                    />
-                                                </clipPath>
-                                            </defs>
-                                        </svg>
-                                        {user.role == "viewer"
-                                            ? "CKP"
-                                            : "Kelola CKP"}
-                                    </Link>
-                                </li>
 
                                 <li>
                                     <Link
-                                        href="/singkat/kelola-abk"
+                                        href={route("singkat.admin.abk")}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("kelolaabk") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -293,7 +293,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                             <ul className="mb-6 flex flex-col gap-1.5">
                                 <li>
                                     <Link
-                                        href="/users"
+                                        href={route("singkat.admin.users")}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("users") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -318,7 +318,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/jabatan"
+                                        href={route("singkat.admin.jabatan")}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("jabatan") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -343,7 +343,35 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/unit-kerja"
+                                        href={route("singkat.admin.jenis-sk")}
+                                        onClick={()=>{
+                                            
+                                        }}
+                                        className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+                                            pathname.includes("jenissk") &&
+                                            "bg-graydark dark:bg-meta-4"
+                                        }`}
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            strokeWidth={1.5}
+                                            stroke="currentColor"
+                                            className="size-5"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z"
+                                            />
+                                        </svg>
+                                        Jenis SK
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href={route('singkat.admin.unit-kerja')}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("unitkerja") &&
                                             "bg-graydark dark:bg-meta-4"

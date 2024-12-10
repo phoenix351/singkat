@@ -14,7 +14,7 @@ const Detail = ({ auth, capaian, pegawai }) => {
 
             <div className="flex justify-start gap-4.5">
                 <Link
-                    href="/kelola-ckp"
+                    href={route("singkat")+"/kelola-ckp"}
                     className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90"
                 >
                     Kembali

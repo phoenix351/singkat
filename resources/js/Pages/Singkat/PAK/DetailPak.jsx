@@ -1,12 +1,22 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { usePage, Link } from "@inertiajs/react";
-import { Row, Col, List } from "antd";
+import { Row, Col, List, Space, Typography, Select, Table } from "antd";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import dayjs from "dayjs";
+import "dayjs/locale/id";
+import axios from "axios";
+import { ArrowLeftOutlined, EyeOutlined } from "@ant-design/icons";
+import CardPAK from "@/Components/CardPAK";
 
+dayjs.locale("id");
+const { Text } = Typography;
 const DetailPak = ({ auth, histories, pegawai }) => {
     // const { pegawai } = usePage().props;
+    const [selectedJabatan, setSelectedJabatan] = useState(pegawai.jabatan_id);
+    const [currentHistories, setCurrentHistories] = useState(histories);
+
     const getUsia = (tanggal_lahir) => {
         // Hitung selisih dalam milidetik
         const selisihMilidetik = new Date() - new Date(tanggal_lahir);
@@ -27,16 +37,71 @@ const DetailPak = ({ auth, histories, pegawai }) => {
 
         return `${tahun} tahun ${bulan} bulan`;
     };
+    const historyColumns = [
+        {
+            title: "Nomor SK",
+            dataIndex: "nomor_sk",
+        },
+        {
+            title: "Jenis SK",
+            dataIndex: "jenis_sk",
+            render: (_, record) => record.jenis_sk.nama,
+
+        },
+        {
+            title: "TMT SK",
+            dataIndex: "tmt_sk",
+            render:(value)=>dayjs(value,'YYYY-MM-DD').format('DD MMMM YYYY')
+        },
+        {
+            title: "Jabatan",
+            render: (_, record) => record.jabatan.nama,
+        },
+        {
+            title: "Angka Kredit Akumulasi (Penambahan)",
+            render: (_, record) => (
+                <>
+                    {record.angka_kredit_akumulasi}
+                    {
+                        <span className="text-success">
+                            (+ {record.angka_kredit}){" "}
+                        </span>
+                    }
+                </>
+            ),
+        },
+        {
+            title: "Lihat PAK",
+            render: (_, record) => (
+                <>
+                    <a
+                        href={route("singkat.admin.pak.show",{pak:record.id})}
+                        className="hover:text-primary"
+                        target="_blank"
+                    >
+                        <EyeOutlined />
+                    </a>
+                </>
+            ),
+        },
+    ];
+    const getDetailJabatan = async function (jabatan_id) {
+        if (!jabatan_id) {
+            return {};
+        }
+        const { data } = await axios.get(route("index")+`/api/jabatans/${jabatan_id}`);
+        return data;
+    };
 
     return (
         <AuthenticatedLayout user={auth.user}>
             {["admin", "operator", "super admin"].includes(auth.user.role) && (
                 <div className="flex justify-start gap-4.5">
                     <Link
-                        href="/kelola-pak"
+                        href="/singkat/kelola-pak"
                         className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90"
                     >
-                        Kembali
+                        <ArrowLeftOutlined /> Kembali
                     </Link>
                 </div>
             )}
@@ -147,33 +212,12 @@ const DetailPak = ({ auth, histories, pegawai }) => {
                         </div>
                     </div>
                 </div>
-
-                <List
-                    header={
-                        <h3 className="font-lg font-bold text-black dark:text-white">
-                            Histori Akumulasi Angka Kredit
-                        </h3>
-                    }
-                    className="mt-5"
-                    bordered
-                    dataSource={histories}
-                    renderItem={(item) => (
-                        <List.Item>
-                            {format(
-                                new Date(item.created_at),
-                                "d MMMM yyyy HH:mm:ss",
-                                {
-                                    locale: id,
-                                }
-                            )}{" "}
-                            | Periode : {item.periode}- Akumulasi Angka Kredit :{" "}
-                            {item.akumulasi_ak.toFixed(2)}{" "}
-                            <span className="text-success">
-                                (+ {item.angka_kredit}){" "}
-                            </span>
-                        </List.Item>
-                    )}
-                />
+                <CardPAK title={"Daftar Penetapan Angka Kredit (PAK)"}>
+                    <Table
+                        dataSource={currentHistories}
+                        columns={historyColumns}
+                    />
+                </CardPAK>
             </div>
         </AuthenticatedLayout>
     );

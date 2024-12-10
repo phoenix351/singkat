@@ -24,7 +24,8 @@ class UpdateJabatanRequest extends FormRequest
         return [
             'id'=>'required',
             'nama'=>'nullable',
-            'angka_kredit'=>'nullable'
+            'angka_kredit'=>'nullable',
+            'nomor_urut_kepka'=>'nullable'
         ];
     }
 }

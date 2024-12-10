@@ -7,13 +7,11 @@ import SearchInput from "@/Components/SearchInput";
 
 import Pagination from "@/Components/Pagination";
 
-// import AddPegawaiForm from "@/Pages/PAK/AddPegawaiForm";
-// import EditPegawaiForm from "@/Pages/PAK/EditPegawaiForm";
 import ExportModal from "@/Pages/Singkat/PAK/ExportModal";
-// import Alert from "@/Components/Alert";
 import { Form, message } from "antd";
 import axios from "axios";
 import PegawaiForm from "./PegawaiForm";
+import dayjs from "dayjs";
 
 const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
     const [editForm] = Form.useForm();
@@ -40,14 +38,15 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
     const closeEditModal = () => setIsEditModalOpen(false);
 
     const handleDelete = async (id) => {
-        router.delete(`/kelola-pak/${id}`).then(() => {});
         try {
             messageApi.open({
                 type: "loading",
                 content: "Menghapus data pegawai",
                 key: "handle-delete",
             });
-            const response = axios.delete(`/kelola-pak/${id}`);
+            const response = axios.delete(
+                route("singkat.admin.pak.delete", { id: id })
+            );
 
             messageApi.open({
                 type: "success",
@@ -71,7 +70,11 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
     };
 
     const handleSearch = (query) => {
-        router.get("/kelola-pak", { search: query }, { replace: true });
+        router.get(
+            route("singkat.kelola-pak"),
+            { search: query },
+            { replace: true }
+        );
     };
     const handleSave = async (values) => {
         // console.log({values});
@@ -82,9 +85,16 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 content: "Menyimpan perubahan",
                 key: "handle-save",
             });
-            const response = axios.patch(`/kelola-pak/${values.id}`, values, {
-                headers: { "Content-Type": "application/json" },
-            });
+            values["bulan_mulai"] = values["bulan"][0];
+            values["bulan_selesai"] = values["bulan"][1];
+            delete values["bulan"];
+            const response = axios.put(
+                route("singkat.admin.pak.update", { pegawai: values.id }),
+                values,
+                {
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
 
             messageApi.open({
                 type: "success",
@@ -102,7 +112,6 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
             router.reload({
                 preserveState: true,
                 preserveScroll: true,
-                method: "get",
             });
         }
     };
@@ -115,9 +124,16 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 content: "Menambahkan pegawai",
                 key: "handle-create",
             });
-            const response = await axios.post(`/kelola-pak`, values, {
-                headers: { "Content-Type": "application/json" },
-            });
+            values["bulan_mulai"] = values["bulan"][0];
+            values["bulan_selesai"] = values["bulan"][1];
+            delete values["bulan"];
+            const response = await axios.post(
+                route("singkat.admin.pak.store"),
+                values,
+                {
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
 
             messageApi.open({
                 type: "success",
@@ -182,12 +198,12 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                             onClick={() => {
                                 createForm.resetFields();
                                 createForm.setFieldsValue({
-                                    id: 340013053,
-                                    nip_bps: "340013053",
-                                    nip: "197102051992022001",
-                                    nama: "Johanna Maria Farida Tampemawa, S.E.",
+                                    id: 340060268,
+                                    nip_bps: "340060268",
+                                    nip: "199810132021041001",
+                                    nama: "Ponimin, S.Tr.Stat.",
                                     jabatan_id: "39",
-                                    unit_kerja: "BPS Kota Bitung",
+                                    unit_kerja: "BPS P",
                                     pangkat_golongan_ruang:
                                         "Penata Tk.I / IIId",
                                     angka_kredit_konvensional: "313.898",
@@ -200,6 +216,10 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                                     nama_jabatan: "Statistisi Ahli Muda",
                                     angka_kredit_akumulasi: 151.398,
                                     tambahan_ijazah: "Baik",
+                                    bulan: [dayjs(), dayjs()],
+                                    predikat_id: "1",
+                                    angka_kredit_dasar: 40,
+                                    akumulasi_ak: 47.125,
                                 });
                                 openModal();
                             }}
@@ -229,14 +249,6 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 />
             </div>
 
-            {/* Modal Form */}
-            {/* <AddPegawaiForm
-                jabatan={jabatan}
-                unitKerja={unitKerja}
-                visible={isModalOpen}
-                onCancel={closeModal}
-                role={auth.user.role}
-            /> */}
             <PegawaiForm
                 key="create-form"
                 jabatan={jabatan}
@@ -249,14 +261,7 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 title="Tambah Pegawai"
                 form={createForm}
             />
-            {/* <EditPegawaiForm
-                jabatan={jabatan}
-                unitKerja={unitKerja}
-                visible={isEditModalOpen}
-                onCancel={closeEditModal}
-                pegawai={currentPegawai}
-                role={auth.user.role}
-            /> */}
+
             <PegawaiForm
                 key="edit-form"
                 jabatan={jabatan}
@@ -271,7 +276,6 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 form={editForm}
             />
 
-            {/* Export Modal */}
             <ExportModal
                 visible={isExportModalOpen}
                 onCancel={closeExportModal}

@@ -33,13 +33,22 @@ class JabatanController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'nama' => 'required|string|max:255',
-        ]);
+        try {
+            //code...
+            $request->validate([
+                'nomor_urut_kepka' => 'required|integer',
+                'nama' => 'required|string|max:255',
+                'angka_kredit' => 'required|string|max:255',
+            ]);
 
-        Jabatan::create($request->all());
-
-        return redirect()->route('jabatan.index')->with('success', 'Jabatan berhasil ditambahkan');
+            Jabatan::create($request->all());
+            return response()->json(['message' => 'Jabatan berhasil ditambahkan'], 200);
+        } catch (\Exception $ex) {
+            //throw $th;
+            return response()->json([
+                'error' => $ex->getMessage()
+            ], 200,);
+        }
     }
 
 
@@ -63,5 +72,14 @@ class JabatanController extends Controller
         $jabatan->delete();
 
         return redirect()->route('jabatan.index')->with('success', 'Jabatan berhasil dihapus');
+    }
+    public function fetch(Jabatan $jabatan)
+    {
+        if ($jabatan) {
+            // return $jabatan
+            return response()->json($jabatan);
+        }
+        $jabatans = Jabatan::get();
+        return response()->json($jabatans);
     }
 }

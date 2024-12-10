@@ -8,6 +8,7 @@ use App\Models\Jabatan;
 use App\Models\UnitKerja;
 use App\Exports\AbkExport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AbkController extends Controller
@@ -17,19 +18,38 @@ class AbkController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
+        // dd($search);
 
         // Join dengan unitkerja dan jabatan 
-        $abk = Abk::select('abk.*', 'unit_kerja.nama as unit_kerja', 'jabatan.nama as jabatan')
-            ->join('unit_kerja', 'abk.unit_kerja_id', '=', 'unit_kerja.id')
-            ->join('jabatan', 'abk.jabatan_id', '=', 'jabatan.id')
-            ->where('jabatan_id', 'like', '%' . $search . '%')
-            ->orWhere('unit_kerja_id', 'like', '%' . $search . '%')
-            ->orWhere('abk', 'like', '%' . $search . '%')
-            ->orWhere('eksisting', 'like', '%' . $search . '%')
-            ->orWhere('kebutuhan_pegawai', 'like', '%' . $search . '%')
+        $abk = Jabatan::select('unit_kerja.nama as unit_kerja', 'jabatan.nama as jabatan', 'abk.abk', 'abk.eksisting', 'abk.kebutuhan_pegawai')
+            ->crossJoin('unit_kerja')
+            ->leftJoin('abk', function ($join) {
+                $join->on('abk.unit_kerja_id', 'unit_kerja.id')
+                    ->on('abk.jabatan_id', 'jabatan.id');
+            })
+            ->where('jabatan.nama', 'like', '%' . $search . '%')
+            ->orWhere('unit_kerja.nama', 'like', '%' . $search . '%')
+            ->orWhere(DB::raw("CAST(abk.abk AS CHAR)"), '=', $search)
+            ->orWhere(DB::raw("CAST(abk.eksisting AS CHAR)"), '=', $search)
+            ->orWhere(DB::raw("CAST(abk.kebutuhan_pegawai AS CHAR)"), '=', $search)
+            // ->orWhere('abk.eksisting', '=',   $search)
+            // ->orWhere('abk.kebutuhan_pegawai','=',  $search)
             ->orderByRaw("CASE WHEN unit_kerja.nama = 'BPS Prov. Sulawesi Utara' THEN 0 ELSE 1 END, unit_kerja.nama")
-            ->paginate(20);
-
+            ->paginate();
+        // $abk = Abk::select('abk.*', 'unit_kerja.nama as unit_kerja', 'jabatan.nama as jabatan')
+        //     ->leftJoin('unit_kerja', 'abk.unit_kerja_id', '=', 'unit_kerja.id')
+        //     ->leftJoin('jabatan', 'abk.jabatan_id', '=', 'jabatan.id')
+        //     ->where('jabatan.nama', 'like', '%' . $search . '%')
+        //     ->orWhere('unit_kerja.nama', 'like', '%' . $search . '%')
+        //     ->orWhere(DB::raw("CAST(abk.abk AS CHAR)"), '=', $search)
+        //     ->orWhere(DB::raw("CAST(abk.eksisting AS CHAR)"), '=', $search)
+        //     ->orWhere(DB::raw("CAST(abk.kebutuhan_pegawai AS CHAR)"), '=', $search)
+        //     // ->orWhere('abk.eksisting', '=',   $search)
+        //     // ->orWhere('abk.kebutuhan_pegawai','=',  $search)
+        //     ->orderByRaw("CASE WHEN unit_kerja.nama = 'BPS Prov. Sulawesi Utara' THEN 0 ELSE 1 END, unit_kerja.nama")
+        //     ->paginate();
+        // $queries = DB::getQueryLog($abk); 
+        // dd($abk);
         return Inertia::render('Singkat/ABK/KelolaABK', [
             'abk' => $abk,
             'search' => $search,
@@ -156,5 +176,42 @@ class AbkController extends Controller
         }
 
         return Excel::download(new AbkExport($columns, $showAllJabatan), 'abk.xlsx');
+    }
+    public function fetch(Request $request)
+    {
+        $search = $request->input('search');
+        // dd($search);
+
+        // Join dengan unitkerja dan jabatan 
+        $abk = Jabatan::select('unit_kerja.kode as unit_kerja_id', 'nomor_urut_kepka','jabatan.nama as jabatan','unit_kerja.nama as unit_kerja', 'abk.abk', 'abk.eksisting', 'abk.kebutuhan_pegawai')
+            ->crossJoin('unit_kerja')
+            ->leftJoin('abk', function ($join) {
+                $join->on('abk.unit_kerja_id', 'unit_kerja.id')
+                    ->on('abk.jabatan_id', 'jabatan.id');
+            })
+            ->where('jabatan.nama', 'like', '%' . $search . '%')
+            ->orWhere('unit_kerja.nama', 'like', '%' . $search . '%')
+            ->orWhere(DB::raw("CAST(abk.abk AS CHAR)"), '=', $search)
+            ->orWhere(DB::raw("CAST(abk.eksisting AS CHAR)"), '=', $search)
+            ->orWhere(DB::raw("CAST(abk.kebutuhan_pegawai AS CHAR)"), '=', $search)
+            // ->orWhere('abk.eksisting', '=',   $search)
+            // ->orWhere('abk.kebutuhan_pegawai','=',  $search)
+            ->orderBy('nomor_urut_kepka')
+            ->get();
+        // $abk = Abk::select('abk.*', 'unit_kerja.nama as unit_kerja', 'jabatan.nama as jabatan')
+        //     ->leftJoin('unit_kerja', 'abk.unit_kerja_id', '=', 'unit_kerja.id')
+        //     ->leftJoin('jabatan', 'abk.jabatan_id', '=', 'jabatan.id')
+        //     ->where('jabatan.nama', 'like', '%' . $search . '%')
+        //     ->orWhere('unit_kerja.nama', 'like', '%' . $search . '%')
+        //     ->orWhere(DB::raw("CAST(abk.abk AS CHAR)"), '=', $search)
+        //     ->orWhere(DB::raw("CAST(abk.eksisting AS CHAR)"), '=', $search)
+        //     ->orWhere(DB::raw("CAST(abk.kebutuhan_pegawai AS CHAR)"), '=', $search)
+        //     // ->orWhere('abk.eksisting', '=',   $search)
+        //     // ->orWhere('abk.kebutuhan_pegawai','=',  $search)
+        //     ->orderBy('nomor_urut_kepka')
+        //     ->get();
+        // $queries = DB::getQueryLog($abk); 
+        // dd($abk);
+        return response()->json($abk, 200);
     }
 }
