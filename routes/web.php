@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Singkat\AbkController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,12 @@ use App\Http\Controllers\SKController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UnitKerjaController;
 
+// ROute SSO 
+Route::get('/sso-login', [LoginController::class, 'sso_redirect'])->name('sso-login');
+Route::get('/sso-callback', [LoginController::class, 'sso_callback'])->name('sso-callback');
+
+
+
 Route::get('/', function () {
     $user = Auth::user();
     // dd($user);
@@ -27,6 +34,9 @@ Route::get('/', function () {
 })->name("index");
 
 Route::get('/token/csrf', [TokenController::class, 'get_csrf_token'])->name('api.token.csrf');
+
+
+
 
 // ROUTE APLIKASI SINGKAT 
 

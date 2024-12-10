@@ -5,7 +5,7 @@ import InputError from "@/Components/InputError";
 import InputLabel from "@/Components/InputLabel";
 import PrimaryButton from "@/Components/PrimaryButton";
 import TextInput from "@/Components/TextInput";
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Head, Link, router, useForm } from "@inertiajs/react";
 import { set } from "date-fns";
 import axios from "axios";
 
@@ -197,6 +197,18 @@ export default function Login({ status, canResetPassword }) {
                                         type="submit"
                                         value="Masuk"
                                         className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                                    />
+                                </div>
+                                <div
+                                    className="mb-5"
+                                    onClick={() => {
+                                        window.location.href = "/sso-login";
+                                    }}
+                                >
+                                    <input
+                                        // type="submit"
+                                        value="Login SSO"
+                                        className="w-full cursor-pointer rounded-lg border  bg-slate-300 p-4  transition hover:bg-opacity-90"
                                     />
                                 </div>
                             </form>
