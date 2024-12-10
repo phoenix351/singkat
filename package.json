@@ -1,6 +1,9 @@
 {
     "private": true,
+    "name":"Aplikasi Layanan BPS Sulut",
+    "version":"0.0.1",
     "type": "module",
+    "homepage": "https://sulut.web.bps.go.id/",
     "scripts": {
         "dev": "vite",
         "build": "vite build"

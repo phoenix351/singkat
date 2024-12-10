@@ -14,6 +14,6 @@ export default defineConfig({
         https: true, // Ensure the Vite dev server uses HTTPS
         host: "0.0.0.0", // Optional: Adjust host settings for your environment
     },
-    base: "/sdm/build/",
-    // base: "/",
+    // base: "//build/",
+    base: "/",
 });

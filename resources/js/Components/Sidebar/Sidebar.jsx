@@ -179,7 +179,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 </li>
                                 <li>
                                     <Link
-                                        href={route("singkat")+"/kelola-pak"}
+                                        href={route("singkat.admin.pegawai")}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("kelolapak") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -217,7 +217,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
                                 </li>
                                 <li>
                                     <Link
-                                        href={route("singkat")+"/kelola-ckp"}
+                                        href={route("singkat.admin.pak")}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("capaian") &&
                                             "bg-graydark dark:bg-meta-4"
@@ -256,7 +256,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, user }) => {
 
                                 <li>
                                     <Link
-                                        href={route("singkat")+"/kelola-abk"}
+                                        href={route("singkat.admin.abk")}
                                         className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
                                             pathname.includes("kelolaabk") &&
                                             "bg-graydark dark:bg-meta-4"

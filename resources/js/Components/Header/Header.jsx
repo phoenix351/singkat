@@ -52,7 +52,7 @@ const Header = ({ setSidebarOpen, sidebarOpen, user }) => {
 
                     <Link
                         className="block flex-shrink-0 lg:hidden"
-                        href={router("home")}
+                        href={route("home")}
                     >
                         <img
                             src={route("index")+"/images/logo/bps-sulut.png"}
