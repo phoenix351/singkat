@@ -29,20 +29,19 @@ const CapaianForm = ({
     title,
     okText,
     type,
-    initPeriod,
 }) => {
     const [predikats, setPredikats] = useState([]);
-    const [periode, setPeriode] = useState("");
     const [pegawais, setPegawais] = useState([]);
     const [file, setFile] = useState(null);
-    const [tahun, setTahun] = useState(null);
+    const [daftarJenisSk,setDaftarJenisSK] = useState([]);
 
     // define message
     const [messageApi, contextHolder] = message.useMessage();
+    
 
     const fetchPredikats = async () => {
         try {
-            const { data } = await axios.get("/api/predikats");
+            const { data } = await axios.get(route("index")+"/api/predikats");
             // console.log({ data });
             setPredikats(data);
         } catch (error) {
@@ -51,56 +50,31 @@ const CapaianForm = ({
     };
     const fetchPegawais = async () => {
         try {
-            const { data } = await axios.get("/api/pegawais");
+            const { data } = await axios.get(route("index")+"/api/pegawais");
             setPegawais(data);
         } catch (error) {
-            console.error("Error when get predikat data");
+            console.error("Error when get pegawai data");
+        }
+    };
+    const fetchDaftarJenisSK = async () => {
+        try {
+            const { data } = await axios.get(route("index")+"/api/jenis-sk");
+            setDaftarJenisSK(data);
+        } catch (error) {
+            console.error("Error when get jenis-sk data");
         }
     };
 
     useEffect(() => {
         fetchPredikats();
         fetchPegawais();
+        fetchDaftarJenisSK()
         // form.setFieldsValue(capaian);
     }, []);
-    useEffect(() => {
-        setPeriode(initPeriod);
-    }, [initPeriod]);
-    useEffect(() => {
-        form.setFieldValue("periode", periode);
-    }, [periode]);
+   
 
-    const handlePeriodeChange = (event) => {
-        let currentPeriode = event.target.value;
-        setPeriode(currentPeriode);
-        const tahun = new Date(form.getFieldValue("tahun")).getFullYear();
-        setTahun(tahun);
-        if (currentPeriode === "Tahunan") {
-            const dates = [
-                dayjs(`${tahun}-01`, "YYYY-MM"),
-                dayjs(`${tahun}-12`, "YYYY-MM"),
-            ];
-            form.setFieldValue("bulan", dates);
-        }
-        if (currentPeriode === "Semester 1") {
-            const dates = [
-                dayjs(`${tahun}-01`, "YYYY-MM"),
-                dayjs(`${tahun}-06`, "YYYY-MM"),
-            ];
-            form.setFieldValue("bulan", dates);
-        }
-        if (currentPeriode === "Semester 2") {
-            const dates = [
-                dayjs(`${tahun}-07`, "YYYY-MM"),
-                dayjs(`${tahun}-12`, "YYYY-MM"),
-            ];
-            form.setFieldValue("bulan", dates);
-        }
-        if (currentPeriode === "Bulanan") {
-            const dates = [dayjs(`${tahun}-01`, "YYYY-MM"), null];
-            form.setFieldValue("bulan", dates);
-        }
-    };
+
+    
     useEffect(() => {
         form.setFieldValue("file", file);
         // console.log({file});
@@ -148,7 +122,7 @@ const CapaianForm = ({
                             placeholder="Pilih Pegawai"
                             allowClear
                             showSearch
-                            disabled={type === "edit"}
+                            // disabled={type === "edit"}
                             optionFilterProp="label"
                             options={pegawais.map((pegawai) => ({
                                 label: pegawai.nama,
@@ -156,45 +130,42 @@ const CapaianForm = ({
                             }))}
                         />
                     </Form.Item>
+                    <Form.Item
+                    name="nomor_sk"
+                    label="Nomor SK"
+                    className="focus:border-none"
+                    >
+                        <Input className="border border-slate-400 rounded-md" />
 
-                    <Form.Item name={"tahun"} label="Tahun Penilaian">
-                        <DatePicker
-                            picker="year"
-                            minDate={dayjs("2019-01-01", dateFormat)}
-                            disabled={type === "edit"}
-                            maxDate={dayjs()}
-                        />
                     </Form.Item>
-                    <Form.Item name={"periode"} label="Periode Penilaian">
-                        <Radio.Group
-                            placeholder="Pilih Periode"
-                            allowClear
-                            optionType="button"
-                            buttonStyle="solid"
-                            defaultValue={"Bulanan"}
-                            onChange={handlePeriodeChange}
-                            disabled={type === "edit"}
-                            options={[
-                                { label: "Bulanan", value: "Bulanan" },
-                                { label: "Semester 1", value: "Semester 1" },
-                                { label: "Semester 2", value: "Semester 2" },
-                                { label: "Tahunan", value: "Tahunan" },
-                            ]}
+                    <Form.Item
+                    name="jenis_sk"
+                    label="Jenis SK"
+                    className="focus:border-none"
+                    >
+                        <Select
+                        options={daftarJenisSk.map(({nama,id})=>({label:nama,value:id}))}
+                        />
+
+                    </Form.Item>
+
+                    <Form.Item name={"tmt_sk"} label="TMT SK">
+                        <DatePicker
+                            // picker="month"
+                            // minDate={dayjs("2019-01-01", dateFormat)}
+                            format={"DD MMMM YYYY"}
+                            maxDate={dayjs()}
+                            // onChange={() => setPeriode("Bulanan")}
+                            // disabled={type === "edit"}
                         />
                     </Form.Item>
                     <Form.Item name={"bulan"} label="Bulan Penilaian">
-                                              <RangePicker
+                        <RangePicker
                             picker="month"
-                            minDate={
-                                tahun
-                                    ? dayjs(`${tahun}-01-01`, dateFormat)
-                                    : dayjs("2019-01-01", dateFormat)
-                            }
+                            minDate={dayjs("2019-01-01", dateFormat)}
                             format={"MMMM YYYY"}
-                            maxDate={tahun ? dayjs(`${tahun}-12-31`) : dayjs()}
-                            onChange={() => setPeriode("Bulanan")}
-                            disabled={type === "edit"}
-
+                            maxDate={dayjs()}
+                            // disabled={type === "edit"}
                         />
                     </Form.Item>
 
@@ -213,6 +184,22 @@ const CapaianForm = ({
                                 value: predikat.id,
                             }))}
                         />
+                    </Form.Item>
+                    <Form.Item
+                        name="angka_kredit"
+                        label="Angka Kredit Perolehan"
+                        className="focus:border-none"
+                        tooltip="Desimal pakai titik"
+                    >
+                        <InputNumber/>
+                    </Form.Item>
+                    <Form.Item
+                        name="angka_kredit_akumulasi"
+                        label="Angka Kredit Akumulasi"
+                        className="focus:border-none"
+                        tooltip="Desimal pakai titik"
+                    >
+                        <InputNumber/>
                     </Form.Item>
 
                     <Form.Item name={"file"} label="Dokumen PAK" required>

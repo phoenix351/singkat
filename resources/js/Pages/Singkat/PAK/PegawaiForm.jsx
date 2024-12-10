@@ -1,6 +1,9 @@
-import React, { useEffect } from "react";
-import { Modal, Form, Input, Select, InputNumber, Button } from "antd";
-import { router } from "@inertiajs/react";
+import React, { useEffect, useState } from "react";
+import { Modal, Form, Input, Select, InputNumber, DatePicker } from "antd";
+import dayjs from "dayjs";
+import axios from "axios";
+
+const { RangePicker } = DatePicker;
 
 const validateNip = (_, value) => {
     if (!value) {
@@ -37,10 +40,90 @@ const PegawaiForm = ({
     title,
     form,
 }) => {
+    const calculateAkumulasi = async () => {
+        const validated = await form.validateFields();
+
+        const angka_kredit_dasar =
+            form.getFieldValue("angka_kredit_dasar") || 0;
+        const selectedJabatan = form.getFieldValue("jabatan_id");
+
+        const { data } = await axios.get(`/api/jabatans/${selectedJabatan}`);
+
+        const angkaKreditTahunan = data.angka_kredit || 0;
+        const ijazahKeAngkaKredit = {
+            "SD/sederajat": 0,
+            "SLTP/sederajat": 0,
+            "SLTA/sederajat": 0,
+            DI: 0,
+            DII: 0,
+            DIII: 0,
+            "S1/DIV/sederajat": 0,
+            S2: 1,
+            S3: 1,
+        };
+
+        const ijazah_terakhir = form.getFieldValue("ijazah_terakhir");
+        let tambahan_ijazah = 0;
+        if (
+            ijazah_terakhir &&
+            ijazahKeAngkaKredit.hasOwnProperty(ijazah_terakhir)
+        ) {
+            tambahan_ijazah =
+                angkaKreditTahunan * ijazahKeAngkaKredit[ijazah_terakhir];
+        }
+        const { fromDate, toDate } = {
+            fromDate: new Date(form.getFieldValue("bulan")[0]),
+            toDate: new Date(form.getFieldValue("bulan")[1]),
+        };
+        const fromMonth = fromDate.getMonth();
+        const toMonth = toDate.getMonth();
+        const yearDiff = toDate.getFullYear() - fromDate.getFullYear();
+        const numberMonths = toMonth - fromMonth + 1 + yearDiff*12;        
+        const predikat = form.getFieldValue("predikat_id");
+
+        const tambahan_predikat =
+            (angkaKreditTahunan *
+                predikats[predikat - 1].nilai *
+                numberMonths) /
+            12;
+
+        const akumulasi_ak =
+            angka_kredit_dasar + tambahan_ijazah + tambahan_predikat;
+
+        form.setFieldValue("akumulasi_ak", Number(akumulasi_ak).toFixed(4));
+    };
+
+    const [predikats, setPredikats] = useState([]);
+    const fetchPredikats = async () => {
+        try {
+            const { data } = await axios.get("/api/predikats");
+            // console.log({ data });
+            setPredikats(data);
+        } catch (error) {
+            console.error("Error when get predikat data");
+        }
+    };
+
+    useEffect(() => {
+        fetchPredikats();
+    }, []);
+
     useEffect(() => {
         if (pegawai) {
+
+            if (pegawai.bulan_mulai) {
+                pegawai.bulan = [
+                    dayjs(pegawai.bulan_mulai),
+                    dayjs(pegawai.bulan_selesai),
+                ];
+            } else {
+                pegawai.bulan = [null, null];
+            }
             form.setFieldsValue(pegawai);
-            console.log({ pegawai });
+            // form.setFieldValue(
+            //     "akumulasi_ak",
+            //     form.getFieldValue("angka_kredit_dasar") || 0
+            // );
         }
     }, [pegawai]);
     const daftarPangkat = [
@@ -106,7 +189,9 @@ const PegawaiForm = ({
 
     return (
         <Modal
-            title={title}
+            title={`${title} ${form.getFieldValue(
+                "nama"
+            )}  (${form.getFieldValue("nip_bps")})`}
             open={visible}
             style={{ top: 20 }}
             onCancel={onCancel}
@@ -131,6 +216,7 @@ const PegawaiForm = ({
                     name="nip_bps"
                     label="NIP BPS"
                     rules={[{ required: true, validator: validateNipBps }]}
+                    hidden={type === "edit"}
                 >
                     <Input
                         placeholder="Masukkan NIP lama contoh : 32002098"
@@ -142,6 +228,7 @@ const PegawaiForm = ({
                     name="nip"
                     label="NIP"
                     rules={[{ required: true, validator: validateNip }]}
+                    hidden={type === "edit"}
                 >
                     <Input
                         placeholder="Masukkan NIP baru contoh : 198810232001041002"
@@ -153,40 +240,12 @@ const PegawaiForm = ({
                     name="nama"
                     label="Nama Pegawai"
                     rules={[{ required: true }]}
+                    hidden={type === "edit"}
                 >
                     <Input
                         placeholder="Nama Lengkap Tanpa Singkatan"
                         // {...(role === "admin" ? {} : { disabled: true })}
                         className="border border-slate-400 rounded-md"
-                    />
-                </Form.Item>
-                <Form.Item
-                    name="jabatan_id"
-                    label="Jabatan"
-                    rules={[{ required: true }]}
-                    className="focus:border-none"
-                >
-                    <Select
-                        allowClear
-                        showSearch
-                        placeholder="Pilih Jabatan Pegawai"
-                        optionFilterProp="label"
-                        onChange={() => {
-                            Modal.confirm({
-                              title: 'Konfirmasi',
-                              content: 'Mengubah jabatan pegawai akan mereset akumulasi angka kredit menjadi 0 (nol) !',
-                              footer: (_, { OkBtn, CancelBtn }) => (
-                                <>
-                                  <OkBtn />
-                                </>
-                              ),
-                            });
-                          }}
-                        // {...(role === "admin" ? {} : { disabled: true })}
-                        options={jabatan.map((item) => ({
-                            label: item.nama,
-                            value: String(item.id),
-                        }))}
                     />
                 </Form.Item>
                 <Form.Item
@@ -207,6 +266,37 @@ const PegawaiForm = ({
                     />
                 </Form.Item>
                 <Form.Item
+                    name="jabatan_id"
+                    label="Jabatan"
+                    rules={[{ required: true }]}
+                    className="focus:border-none"
+                >
+                    <Select
+                        allowClear
+                        showSearch
+                        placeholder="Pilih Jabatan Pegawai"
+                        optionFilterProp="label"
+                        onChange={() => {
+                            Modal.confirm({
+                                title: "Konfirmasi",
+                                content:
+                                    "Mengubah jabatan pegawai akan mereset akumulasi angka kredit menjadi 0 (nol) !",
+                                footer: (_, { OkBtn, CancelBtn }) => (
+                                    <>
+                                        <OkBtn />
+                                    </>
+                                ),
+                            });
+                            calculateAkumulasi();
+                        }}
+                        // {...(role === "admin" ? {} : { disabled: true })}
+                        options={jabatan.map((item) => ({
+                            label: item.nama,
+                            value: item.id,
+                        }))}
+                    />
+                </Form.Item>
+                <Form.Item
                     name="pangkat_golongan_ruang"
                     label="Pangkat / Golongan Ruang"
                     rules={[{ required: true }]}
@@ -222,40 +312,30 @@ const PegawaiForm = ({
                 <Form.Item
                     name="angka_kredit_konvensional"
                     label="Angka Kredit Konvensional"
+                    hidden={type === "edit"}
                 >
                     <InputNumber className="border w-[30%] border-slate-400 rounded-md" />
                 </Form.Item>
                 <Form.Item
                     name="angka_kredit_integrasi"
                     label="Angka Kredit Integrasi"
+                    hidden={type === "edit"}
                 >
                     <InputNumber className="border w-[30%] border-slate-400 rounded-md" />
                 </Form.Item>
 
                 <Form.Item
-                    name="tambahan_ijazah"
-                    label="25% Tambahan Ijazah"
+                    name="angka_kredit_dasar"
+                    label="Angka Kredit Dasar / Terakhir"
                     className="focus:border-none"
+                    onChange={() => calculateAkumulasi()}
                 >
-                    <Select
-                        placeholder="Pilih Predikat Ijazah"
-                        allowClear
-                        optionFilterProp="children"
-                        options={[
-                            { value: "Sangat Baik", label: "Sangat Baik" },
-                            { value: "Baik", label: "Baik" },
-                            {
-                                value: "Butuh Perbaikan",
-                                label: "Butuh Perbaikan",
-                            },
-                            { value: "Kurang", label: "Kurang" },
-                            { value: "Sangat Kurang", label: "Sangat Kurang" },
-                        ]}
-                    />
+                    <InputNumber className="border border-slate-400 rounded-md" />
                 </Form.Item>
 
                 <Form.Item name="ijazah_terakhir" label="Ijazah Terakhir">
                     <Select
+                        onSelect={() => calculateAkumulasi()}
                         placeholder="Pilih Ijazah yang Ditamatkan"
                         options={[
                             { label: "SD/sederajat", value: "SD/sederajat" },
@@ -276,8 +356,41 @@ const PegawaiForm = ({
                         ]}
                     />
                 </Form.Item>
+                <Form.Item
+                    name={"bulan"}
+                    label="Bulan Penilaian"
+                    rules={[{ required: true }]}
+                >
+                    <RangePicker
+                        picker="month"
+                        minDate={dayjs("2019-01-01")}
+                        format={"MMMM YYYY"}
+                        maxDate={dayjs()}
+                        onChange={calculateAkumulasi}
+                    />
+                </Form.Item>
+                <Form.Item
+                    name="predikat_id"
+                    label="Predikat Kinerja"
+                    className="focus:border-none"
+                >
+                    <Select
+                        placeholder="Pilih Predikat"
+                        allowClear
+                        showSearch
+                        optionFilterProp="label"
+                        onChange={calculateAkumulasi}
+                        options={predikats.map((predikat) => ({
+                            label: predikat.nama,
+                            value: predikat.id,
+                        }))}
+                    />
+                </Form.Item>
                 <Form.Item name="akumulasi_ak" label="Akumulasi Angka Kredit">
-                    <Input className="border border-slate-400 rounded-md" />
+                    <InputNumber
+                        readOnly
+                        className="border border-slate-400 rounded-md"
+                    />
                 </Form.Item>
             </Form>
         </Modal>

@@ -32,7 +32,7 @@ const EditAbkForm = ({ visible, onCancel, abk, jabatan, unitKerja, role }) => {
     const handleUnitKerjaChange = async (value, currentJabatanId = null) => {
         setSelectedUnitKerja(value);
         try {
-            const response = await axios.get("/api/get-available-jabatan", {
+            const response = await axios.get(route("index")+"/api/get-available-jabatan", {
                 params: { unit_kerja_id: value },
             });
 
@@ -64,7 +64,7 @@ const EditAbkForm = ({ visible, onCancel, abk, jabatan, unitKerja, role }) => {
     };
 
     const handleSubmit = (values) => {
-        router.put(`/kelola-abk/${abk.id}`, values);
+        router.put(route("singkat.admin.abk.update",{abk:abk.id}), values);
         onCancel();
         form.resetFields();
     };

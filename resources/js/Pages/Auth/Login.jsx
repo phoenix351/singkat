@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Checkbox from "@/Components/Checkbox";
 import GuestLayout from "@/Layouts/GuestLayout";
 import InputError from "@/Components/InputError";
@@ -7,15 +7,28 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import TextInput from "@/Components/TextInput";
 import { Head, Link, useForm } from "@inertiajs/react";
 import { set } from "date-fns";
+import axios from "axios";
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         login: "",
         password: "",
         remember: false,
+        _token: "",
     });
 
     useEffect(() => {
+        async function getToken() {
+            try {
+                const { data } = await axios.get(route("api.token.csrf"));
+                setData("_token",data);
+                console.log({data});
+                
+            } catch (error) {
+                console.log("error get token");
+            }
+        }
+        getToken();
         return () => {
             reset("password");
         };
@@ -36,7 +49,10 @@ export default function Login({ status, canResetPassword }) {
                         <div className="w-full p-4 sm:p-12.5 xl:p-17.5">
                             <div className="mb-9 flex justify-center  text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
                                 <img
-                                    src="/images/logo/Satker-Hitam.png"
+                                    src={
+                                        route("index") +
+                                        "/images/logo/Satker-Hitam.png"
+                                    }
                                     alt=""
                                     className="w-90"
                                 />

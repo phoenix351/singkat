@@ -27,13 +27,13 @@ const KelolaUnitKerja = ({ auth, unitKerja, search }) => {
     };
     const handleDelete = (id) => {
         console.log(id);
-        router.delete(`/unit-kerja/${id}`).then(() => {
+        router.delete(route("singkat.admin.unit-kerja.destroy",{unitKerja:id})).then(() => {
             // Refresh the page or handle post-delete actions here
         });
     };
 
     const handleSearch = (query) => {
-        router.get("/unit-kerja", { search: query }, { replace: true });
+        router.get(route("singkat.admin.unit-kerja"), { search: query }, { replace: true });
     };
     return (
         <Authenticated title="Unit Kerja" user={auth.user}>

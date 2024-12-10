@@ -32,8 +32,11 @@ return new class extends Migration
             $capaian->angka_kredit_dasar = Pegawai::find($capaian->pegawai_id)->akumulasi_ak;
             $capaian->save();
         }
-    }
+        
 
+       
+    }
+    
     /**
      * Reverse the migrations.
      */
@@ -44,6 +47,10 @@ return new class extends Migration
             $table->dropColumn('bulan_akhir');
             $table->dropColumn('path');
             $table->unique(['pegawai_id', 'tahun', 'periode']);
+        });
+        Schema::table('unit_kerja', function (Blueprint $table) {
+            $table->dropColumn('kode');
+    
         });
     }
 };

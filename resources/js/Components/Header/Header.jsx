@@ -1,7 +1,6 @@
 import DropdownUser from "./DropdownUser";
 import DarkModeSwitcher from "./DarkModeSwitcher";
 import { Link, router } from "@inertiajs/react";
-import { Image } from "antd";
 
 const Header = ({ setSidebarOpen, sidebarOpen, user }) => {
     return (
@@ -53,10 +52,10 @@ const Header = ({ setSidebarOpen, sidebarOpen, user }) => {
 
                     <Link
                         className="block flex-shrink-0 lg:hidden"
-                        href="/dahsboard"
+                        href={route("home")}
                     >
                         <img
-                            src={"/images/logo/bps-sulut.png"}
+                            src={route("index")+"/images/logo/bps-sulut.png"}
                             alt="Logo"
                             width={200}
                         />
@@ -69,7 +68,7 @@ const Header = ({ setSidebarOpen, sidebarOpen, user }) => {
                     <div
                         className="cursor-pointer flex"
                         onClick={() =>
-                            router.get("/", {}, { preserveState: true })
+                            router.get(route("index"), {}, { preserveState: true })
                         }
                     >
                         <svg

@@ -22,23 +22,101 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
 
     const closeEditModal = () => setIsEditModalOpen(false);
 
- 
     const openEditModal = (abk) => {
         setCurrentABK(abk);
         setIsEditModalOpen(true);
     };
     const handleDelete = (id) => {
-        router.delete(`/kelola-abk/${id}`).then(() => {
+        router.delete(route("singkat.admin.abk.destroy",{abk:id})).then(() => {
             // Refresh the page or handle post-delete actions here
         });
     };
     const handleDownload = async (values) => {
-        const {data} = await axios.get(route("abk.fetch",{search:values}));
-           
-        
+        const { data } = await axios.get(
+            route("singkat.admin.abk.fetch", { search: values })
+        );
+
         // return
-              const workbook = XLSX.utils.book_new();
-        const worksheet = XLSX.utils.json_to_sheet(data);
+        const jabatanData = data.reduce((acc, item) => {
+            const nomor_urut_kepka = item.nomor_urut_kepka;
+            if (!acc[nomor_urut_kepka]) {
+                acc[nomor_urut_kepka] = [];
+            }
+            acc[nomor_urut_kepka].push(item);
+            return acc;
+        }, {});
+
+        // kelompokkan data berdasarkan jabatan yang sama
+        // nomor, nama jabatan , abk, ...
+        const satker = {};
+        const preparedData = [];
+        for (let indexJabatan of Object.keys(jabatanData)) {
+            let currentJabatan = jabatanData[indexJabatan];
+            currentJabatan.sort((a, b) => a.unit_kerja_id - b.unit_kerja_id);
+            let currentValue = [
+                currentJabatan[0].nomor_urut_kepka,
+                currentJabatan[0].jabatan,
+            ];
+            currentJabatan.forEach((abk) => {
+                if (!satker[abk.unit_kerja_id]) {
+                    satker[abk.unit_kerja_id] = abk.unit_kerja;
+                }
+                currentValue.push(
+                    ...[abk.abk, abk.eksisting, abk.kebutuhan_pegawai]
+                );
+            });
+            preparedData.push(currentValue);
+            // console.log(indexJabatan);
+        }
+
+        // console.log({ satker });
+        // return;
+
+        const workbook = XLSX.utils.book_new();
+        const worksheet = {};
+        // Define the header with multiple levels
+        let header = [
+            ["No", "Nama Jabatan"], // First header row
+            ["No", "Nama Jabatan"], // Second header row
+            ["No", "Nama Jabatan"], // Third
+        ];
+        let merges = [
+            { s: { r: 0, c: 0 }, e: { r: 2, c: 0 } }, // Merge 'No' vertically (rowspan 3)
+            { s: { r: 0, c: 1 }, e: { r: 2, c: 1 } }, // Merge 'Nama' vertically (rowspan 3)
+        ];
+        let index = 0;
+        for (let unit_kerja of Object.values(satker)) {
+            const firstRow = [unit_kerja,"",""];
+            const firstMerge = {
+                s: { r: 0, c: index + 2 },
+                e: { r: 0, c: index + 4 },
+            };
+            const secondRow = ["KEPKA 182 TAHUN 2024","",""];
+            const secondMerge = {
+                s: { r: 1, c: index + 2 },
+                e: { r: 1, c: index + 4 },
+            };
+            const thirdRow = ["ABK", "Eksisting", "Kebutuhan Pegawai"];
+
+            header[0].push(...firstRow);
+            header[1].push(...secondRow);
+            header[2].push(...thirdRow);
+
+            merges.push(firstMerge);
+            merges.push(secondMerge);
+            // merge unit kerja
+            index = index + 3;
+        }
+        // console.log({ header,merges });
+        // return
+
+        // Merge the cells to create a colspan and rowspan effect
+        worksheet["!merges"] = merges;
+        // Add the header to the worksheet
+        XLSX.utils.sheet_add_aoa(worksheet, header);
+        XLSX.utils.sheet_add_aoa(worksheet, preparedData, { origin: -1 });
+
+        // const worksheet = XLSX.utils.json_to_sheet(data);
 
         XLSX.utils.book_append_sheet(workbook, worksheet, "abk");
 
@@ -65,7 +143,7 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
         setOpenUnduhModal(false);
     };
     const handleSearch = (query) => {
-        router.get("/singkat/kelola-abk", { search: query }, { replace: true });
+        router.get(route("singkat.admin.abk"), { search: query }, { replace: true });
     };
 
     return (
@@ -94,7 +172,7 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
 
                 <div>
                     <button
-                        onClick={()=>handleDownload(search)}
+                        onClick={() => handleDownload(search)}
                         // href="/export-pegawai?columns=id,nip_bps,nip,nama,jabatan,unit_kerja,pangkat_golongan_ruang,angka_kredit_konvensional,angka_kredit_integrasi,predikat_kinerja,tambahan_ijazah,akumulasi_ak,ijazah_terakhir,tb,usia_per_3_januari,created_at,updated_at"
                         type="button"
                         className="inline-flex items-center justify-center gap-2.5 rounded-md bg-primary py-2 px-5 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
@@ -161,8 +239,6 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
                 unitKerja={unitKerja}
                 role={auth.user.role}
             />
-
-           
         </Authenticated>
     );
 };

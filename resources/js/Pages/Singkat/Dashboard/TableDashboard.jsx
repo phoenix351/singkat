@@ -8,7 +8,9 @@ const TableDashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get("/api/abk-summary");
+                const response = await axios.get(
+                    route("index") + "/api/abk-summary"
+                );
                 setData(response.data);
             } catch (error) {
                 console.error("Error fetching data: ", error);

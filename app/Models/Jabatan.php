@@ -11,5 +11,5 @@ class Jabatan extends Model
 
     protected $table = 'jabatan';
 
-    protected $fillable = ['nama','angka_kredit'];
+    protected $fillable = ['nama','angka_kredit','nomor_urut_kepka'];
 }

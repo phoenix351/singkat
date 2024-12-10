@@ -14,7 +14,7 @@ const EditUserForm = ({ visible, onCancel, user }) => {
     }, [user, form]);
 
     const handleSubmit = (values) => {
-        router.put(`/users/${user.id}`, values);
+        router.put(route("singkat.admin.users.update",{user:user.id}), values);
         onCancel();
         form.resetFields();
     };

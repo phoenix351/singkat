@@ -17,6 +17,8 @@ class UnitKerjaController extends Controller
 
         $unitKerja = UnitKerja::query()
             ->where('nama', 'like', "%{$search}%")
+            ->orWhere('kode', 'like', "%{$search}%")
+            ->orderBy('kode')
             ->paginate(20)
             ->appends(['search' => $search]);
 
@@ -33,6 +35,7 @@ class UnitKerjaController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
+            'kode' => 'required|string'
         ]);
 
         UnitKerja::create($request->all());
@@ -47,6 +50,7 @@ class UnitKerjaController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
+            'kode' => 'required|string'
         ]);
 
         $unitKerja->update($request->all());
