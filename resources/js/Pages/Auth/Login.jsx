@@ -196,7 +196,7 @@ export default function Login({ status, canResetPassword }) {
                                     <input
                                         type="submit"
                                         value="Masuk"
-                                        className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                                        className="w-full cursor-pointer rounded-lg border border-gray bg-gray p-4  transition hover:bg-opacity-90"
                                     />
                                 </div>
                                 <div
@@ -205,11 +205,18 @@ export default function Login({ status, canResetPassword }) {
                                         window.location.href = "/sso-login";
                                     }}
                                 >
-                                    <input
+                                    <span
                                         // type="submit"
-                                        value="Login SSO"
-                                        className="w-full cursor-pointer rounded-lg border  bg-slate-300 p-4  transition hover:bg-opacity-90"
-                                    />
+                                        className="flex items-center justify-center cursor-pointer rounded-lg border  bg-blue-700 p-4  transition hover:bg-opacity-90 text-white"
+                                    >Masuk dengan SSO
+<img
+                                    src={
+                                        route("index") +
+                                        "/images/logo/logo-bps.png"
+                                    }
+                                    alt=""
+                                    className="ml-2 w-[30px]"
+                                />                                    </span>
                                 </div>
                             </form>
                         </div>

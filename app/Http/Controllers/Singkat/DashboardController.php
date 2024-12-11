@@ -21,7 +21,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         if ($user->role === 'viewer') {
-            return redirect('/kelola-pak/' . $user->pegawai_id);
+            return redirect('/singkat/capaian-ku/');
         }
         $jumlahPegawai = Pegawai::count();
         $totalUsers = User::count();
