@@ -22,7 +22,6 @@ export default function Login({ status, canResetPassword }) {
             try {
                 const { data } = await axios.get(route("api.token.csrf"));
                 setData("_token",data);
-                console.log({data});
                 
             } catch (error) {
                 console.log("error get token");

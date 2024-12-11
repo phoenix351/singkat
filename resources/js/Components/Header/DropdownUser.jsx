@@ -3,10 +3,25 @@ import { Link } from "@inertiajs/react";
 
 const DropdownUser = ({ user }) => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [token, setToken] = useState("")
 
     const trigger = useRef();
     const dropdown = useRef();
 
+    useEffect(() => {
+        async function getToken() {
+            try {
+                const { data } = await axios.get(route("api.token.csrf"));
+                setToken(data);
+                // console.log({data});
+                
+            } catch (error) {
+                console.log("error get token");
+            }
+        }
+        getToken();
+        
+    }, []);
     // close on click outside
     useEffect(() => {
         const clickHandler = ({ target }) => {
@@ -114,6 +129,7 @@ const DropdownUser = ({ user }) => {
                 <Link
                     href={route("logout")}
                     method="post"
+                    data={{_token:token}}
                     className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
                 >
                     <svg
