@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Select, InputNumber } from "antd";
-import { router } from "@inertiajs/react";
+import { Modal, Form, Select, InputNumber, Input } from "antd";
 import axios from "axios"; // Ensure axios is imported
 
-const EditAbkForm = ({ visible, onCancel, abk, jabatan, unitKerja, role }) => {
+const EditAbkForm = ({ visible, onCancel, handleSave,abk, jabatan, unitKerja, role }) => {
     const [form] = Form.useForm();
 
     const [jabatanOptions, setJabatanOptions] = useState([]);
     const [selectedUnitKerja, setSelectedUnitKerja] = useState(null);
+
 
     useEffect(() => {
         if (abk) {
@@ -32,9 +32,12 @@ const EditAbkForm = ({ visible, onCancel, abk, jabatan, unitKerja, role }) => {
     const handleUnitKerjaChange = async (value, currentJabatanId = null) => {
         setSelectedUnitKerja(value);
         try {
-            const response = await axios.get(route("index")+"/api/get-available-jabatan", {
-                params: { unit_kerja_id: value },
-            });
+            const response = await axios.get(
+                route("index") + "/api/get-available-jabatan",
+                {
+                    params: { unit_kerja_id: value },
+                }
+            );
 
             let options = response.data.map((jabatan) => ({
                 value: jabatan.id,
@@ -63,11 +66,7 @@ const EditAbkForm = ({ visible, onCancel, abk, jabatan, unitKerja, role }) => {
         }
     };
 
-    const handleSubmit = (values) => {
-        router.put(route("singkat.admin.abk.update",{abk:abk.id}), values);
-        onCancel();
-        form.resetFields();
-    };
+    
 
     return (
         <Modal
@@ -82,13 +81,24 @@ const EditAbkForm = ({ visible, onCancel, abk, jabatan, unitKerja, role }) => {
             <Form
                 form={form}
                 name="control-hooks"
-                onFinish={handleSubmit}
+                onFinish={handleSave}
+                onKeyDown={(event) => {
+                    if (event.code === "Enter") {
+                        form.submit();
+                    }
+                }}
                 style={{ maxWidth: 600 }}
                 layout="vertical"
                 wrapperCol={{ span: 24 }}
                 autoComplete="off"
                 size="large"
             >
+                <Form.Item name={"_token"} hidden>
+                    <Input />
+                </Form.Item>
+                <Form.Item name={"id"} hidden>
+                    <Input />
+                </Form.Item>
                 <Form.Item
                     name="unit_kerja_id"
                     label="Unit Kerja"

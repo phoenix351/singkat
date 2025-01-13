@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Modal, Form, Input } from "antd";
 import { router } from "@inertiajs/react";
+import axios from "axios";
 
 const EditUnitKerjaForm = ({ visible, onCancel, unitKerja }) => {
     const [form] = Form.useForm();
@@ -10,9 +11,25 @@ const EditUnitKerjaForm = ({ visible, onCancel, unitKerja }) => {
             form.setFieldsValue(unitKerja);
         }
     }, [unitKerja, form]);
+    useEffect(() => {
+        async function getToken() {
+            try {
+                const { data } = await axios.get(route("api.token.csrf"));
+                form.setFieldValue("_token", data);
+            } catch (error) {
+                console.log("error get token");
+            }
+        }
+        getToken();
+    }, []);
 
     const handleSubmit = (values) => {
-        router.put(route("singkat.admin.unit-kerja.update",{unitKerja:unitKerja.id}), values);
+        router.put(
+            route("singkat.admin.unit-kerja.update", {
+                unitKerja: unitKerja.id,
+            }),
+            values
+        );
         onCancel();
         form.resetFields();
     };
@@ -32,13 +49,15 @@ const EditUnitKerjaForm = ({ visible, onCancel, unitKerja }) => {
                 wrapperCol={{ span: 24 }}
                 autoComplete="off"
                 size="large"
-                onKeyDown={(event)=>{
-                    if(event.code==="Enter")
-                    {
+                onKeyDown={(event) => {
+                    if (event.code === "Enter") {
                         form.submit();
                     }
                 }}
             >
+                <Form.Item name="_token" hidden>
+                    <Input />
+                </Form.Item>
                 <Form.Item
                     name="kode"
                     label="Kode Satuan Kerja"

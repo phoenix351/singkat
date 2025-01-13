@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Modal, Form, Input, Select } from "antd";
 import { router, usePage } from "@inertiajs/react";
+import axios from "axios";
 
 const EditUserForm = ({ visible, onCancel, user }) => {
     const [form] = Form.useForm();
@@ -14,10 +15,24 @@ const EditUserForm = ({ visible, onCancel, user }) => {
     }, [user, form]);
 
     const handleSubmit = (values) => {
-        router.put(route("singkat.admin.users.update",{user:user.id}), values);
+        router.put(
+            route("singkat.admin.users.update", { user: user.id }),
+            values
+        );
         onCancel();
         form.resetFields();
     };
+useEffect(() => {
+    async function getToken() {
+        try {
+            const { data } = await axios.get(route("api.token.csrf"));
+            form.setFieldValue("_token", data);
+        } catch (error) {
+            console.log("error get token");
+        }
+    }
+    getToken();
+}, [])
 
     return (
         <Modal
@@ -35,6 +50,9 @@ const EditUserForm = ({ visible, onCancel, user }) => {
                 autoComplete="off"
                 size="large"
             >
+                <Form.Item name="_token" hidden>
+                    <Input />
+                </Form.Item>
                 <Form.Item
                     name="name"
                     label="Nama Lengkap"

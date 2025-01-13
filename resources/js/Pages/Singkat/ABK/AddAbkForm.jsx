@@ -1,10 +1,8 @@
-import React, { useState } from "react";
-import { Modal, Form, Input, Button, Select, InputNumber, Alert } from "antd";
-import { router, usePage } from "@inertiajs/react";
+import React, { useEffect, useState } from "react";
+import { Modal, Form, Input, Select, InputNumber } from "antd";
+import axios from "axios";
 
-const AddAbkForm = ({ visible, onCancel, jabatan, unitKerja }) => {
-    const [form] = Form.useForm();
-
+const AddAbkForm = ({ visible, onCancel, unitKerja, handleCreate, form }) => {
     const [jabatanOptions, setJabatanOptions] = useState([]);
     const [selectedUnitKerja, setSelectedUnitKerja] = useState(null);
 
@@ -25,7 +23,6 @@ const AddAbkForm = ({ visible, onCancel, jabatan, unitKerja }) => {
         }
     };
 
- 
     const checkEksisting = (field, value) => {
         const abk = form.getFieldValue("abk");
         const jabatan_id = form.getFieldValue("jabatan_id");
@@ -40,11 +37,17 @@ const AddAbkForm = ({ visible, onCancel, jabatan, unitKerja }) => {
         );
     };
 
-    const handleSubmit = (values) => {
-        router.post(route("singkat.admin.abk.store"), values);
-        form.resetFields();
-        onCancel();
-    };
+    useEffect(() => {
+        async function getToken() {
+            try {
+                const { data } = await axios.get(route("api.token.csrf"));
+                form.setFieldValue("_token", data);
+            } catch (error) {
+                console.log("error get token");
+            }
+        }
+        getToken();
+    }, []);
 
     return (
         <Modal
@@ -59,7 +62,12 @@ const AddAbkForm = ({ visible, onCancel, jabatan, unitKerja }) => {
             <Form
                 form={form}
                 name="control-hooks"
-                onFinish={handleSubmit}
+                onFinish={handleCreate}
+                onKeyDown={(event) => {
+                    if (event.code === "Enter") {
+                        form.submit();
+                    }
+                }}
                 onValuesChange={() => form.validateFields()}
                 style={{ maxWidth: 600 }}
                 layout="vertical"
@@ -67,6 +75,9 @@ const AddAbkForm = ({ visible, onCancel, jabatan, unitKerja }) => {
                 autoComplete="off"
                 size="large"
             >
+                <Form.Item hidden name={"_token"}>
+                    <Input />
+                </Form.Item>
                 <Form.Item
                     name="unit_kerja_id"
                     label="Satuan Kerja"

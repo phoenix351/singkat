@@ -9,27 +9,98 @@ import AddAbkForm from "./AddAbkForm";
 import EditAbkForm from "./EditAbkForm";
 import Alert from "@/Components/Alert";
 import * as XLSX from "xlsx";
-
+import { Form, message } from "antd";
+const contentType = "application/json"
 const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentABK, setCurrentABK] = useState(null);
 
+    const [createForm] = Form.useForm();
+    const [messageApi, contextHolder] = message.useMessage();
+
     const { errors, flash } = usePage().props;
 
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
-
     const closeEditModal = () => setIsEditModalOpen(false);
 
     const openEditModal = (abk) => {
         setCurrentABK(abk);
         setIsEditModalOpen(true);
     };
+    const handleCreate = async (values) => {
+        try {
+            messageApi.open({
+                key: "create-form",
+                type: "loading",
+                content: "menyimpan perubahan...",
+            });
+
+            const response = await axios.post(
+                route("singkat.admin.abk.store"),
+                values,
+                {
+                    headers: { "Content-Type": contentType },
+                }
+            );
+            messageApi.open({
+                key: "create-form",
+                type: "success",
+                content: "perubahan telah disimpan",
+            });
+            setIsEditModalOpen(false);
+        } catch (error) {
+            console.log(error);
+            
+            messageApi.open({
+                key: "create-form",
+                type: "error",
+                content: "terjadi error, hubungi pengembang...",
+            });
+        } finally {
+            router.reload({ preserveState: true, preserveScroll: true });
+        }
+    };
+    const handleSave = async (values) => {
+        try {
+            messageApi.open({
+                key: "save-form",
+                type: "loading",
+                content: "menyimpan perubahan...",
+            });
+
+            const response = await axios.put(
+                route("singkat.admin.abk.update", { abk: values.id }),
+                values,
+                {
+                    headers: { "Content-Type": contentType },
+                }
+            );
+            messageApi.open({
+                key: "save-form",
+                type: "success",
+                content: "perubahan telah disimpan",
+            });
+            setIsEditModalOpen(false);
+        } catch (error) {
+            console.log(error);
+            
+            messageApi.open({
+                key: "save-form",
+                type: "error",
+                content: "terjadi error, hubungi pengembang...",
+            });
+        } finally {
+            router.reload({ preserveState: true, preserveScroll: true });
+        }
+    };
     const handleDelete = (id) => {
-        router.delete(route("singkat.admin.abk.destroy",{abk:id})).then(() => {
-            // Refresh the page or handle post-delete actions here
-        });
+        router
+            .delete(route("singkat.admin.abk.destroy", { abk: id }))
+            .then(() => {
+                // Refresh the page or handle post-delete actions here
+            });
     };
     const handleDownload = async (values) => {
         const { data } = await axios.get(
@@ -86,12 +157,12 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
         ];
         let index = 0;
         for (let unit_kerja of Object.values(satker)) {
-            const firstRow = [unit_kerja,"",""];
+            const firstRow = [unit_kerja, "", ""];
             const firstMerge = {
                 s: { r: 0, c: index + 2 },
                 e: { r: 0, c: index + 4 },
             };
-            const secondRow = ["KEPKA 182 TAHUN 2024","",""];
+            const secondRow = ["KEPKA 182 TAHUN 2024", "", ""];
             const secondMerge = {
                 s: { r: 1, c: index + 2 },
                 e: { r: 1, c: index + 4 },
@@ -143,7 +214,11 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
         setOpenUnduhModal(false);
     };
     const handleSearch = (query) => {
-        router.get(route("singkat.admin.abk"), { search: query }, { replace: true });
+        router.get(
+            route("singkat.admin.abk"),
+            { search: query },
+            { replace: true }
+        );
     };
 
     return (
@@ -163,7 +238,7 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
             <Breadcrumb
                 pageName={auth.user.role == "viewer" ? "ABK" : "Kelola ABK"}
             />
-
+            {contextHolder}
             <div className="flex flex-row sm:justify-between mb-5">
                 <SearchInput
                     initialQuery={search}
@@ -230,10 +305,13 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
                 onCancel={closeModal}
                 jabatan={jabatan}
                 unitKerja={unitKerja}
+                handleCreate={handleCreate}
+                form={createForm}
             />
             <EditAbkForm
                 visible={isEditModalOpen}
                 onCancel={closeEditModal}
+                handleSave={handleSave}
                 abk={currentABK}
                 jabatan={jabatan}
                 unitKerja={unitKerja}

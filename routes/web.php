@@ -56,7 +56,7 @@ Route::middleware('auth')->group(function () {
     Route::get("/singkat/admin/pak", [PAKController::class, "index"])->name("singkat.admin.pak");
     Route::get('/singkat/admin/pak/{pak}', [PAKController::class,'show'])->name('singkat.admin.pak.show');
     Route::post('/singkat/admin/pak', [PAKController::class,'store'])->name('singkat.admin.pak.store');
-    Route::put('/singkat/admin/pak/{pak}', [PAKController::class,'update'])->name('singkat.admin.pak.update');
+    Route::post('/singkat/admin/pak/{pak}', [PAKController::class,'update'])->name('singkat.admin.pak.update');
     Route::delete('/singkat/admin/pak/{pak}', [PAKController::class,'destroy'])->name('singkat.admin.pak.destroy');
     Route::get('/singkat/admin/pak/fetch', [PAKController::class, 'fetch'])->name('singkat.admin.pak.fetch');
 
@@ -67,21 +67,21 @@ Route::middleware('auth')->group(function () {
     Route::delete('/singkat/admin/jenis-sk/{sk}', [SKController::class, 'destroy'])->name('singkat.admin.jenis-sk.destroy');
 
     // Pegawai
-    Route::get("/singkat/admin/pegawai", [PegawaiController::class, "kelola_pak"])->middleware(['auth'])->name("singkat.admin.pegawai");
+    Route::get("/singkat/admin/pegawai", [PegawaiController::class, "kelola_pak"])->name("singkat.admin.pegawai");
     Route::get('/singkat/admin/pegawai/{pegawai}', [PegawaiController::class, 'singkat.admin.pegawai.show']);
     Route::post('/singkat/admin/pegawai', [PegawaiController::class, 'store'])->name('singkat.admin.pegawai.store');
-    Route::put('/singkat/admin/pegawai/{pegawai}', [PegawaiController::class, 'singkat.admin.pegawai.update']);
-    Route::delete('/singkat/admin/pegawai/{pegawai}', [PegawaiController::class, 'singkat.admin.pegawai.destroy']);
-    Route::get('/singkat/admin/pegawai/export', [PegawaiController::class, 'export'])->middleware(['auth'])->name('singkat.admin.pegawai.export');
+    Route::put('/singkat/admin/pegawai/{pegawai}', [PegawaiController::class, 'update'])->name('singkat.admin.pegawai.update');
+    Route::delete('/singkat/admin/pegawai/{pegawai}', [PegawaiController::class, 'destroy'])->name('singkat.admin.pegawai.destroy');
+    Route::get('/singkat/admin/pegawai/export', [PegawaiController::class, 'export'])->name('singkat.admin.pegawai.export');
 
 
     // ABK
-    Route::get('/singkat/admin/abk', [AbkController::class, 'index'])->middleware(['auth'])->name('singkat.admin.abk');
-    Route::post('/singkat/admin/abk', [AbkController::class, 'store'])->middleware(['auth'])->name('singkat.admin.abk.store');
-    Route::put('/singkat/admin/abk/{abk}', [AbkController::class, 'update'])->middleware(['auth'])->name('singkat.admin.abk.update');
-    Route::delete('/singkat/admin/abk/{abk}', [AbkController::class, 'destroy'])->middleware(['auth'])->name('singkat.admin.abk.destroy');
-    Route::get('/singkat/admin/abk/fetch', [AbkController::class, 'fetch'])->middleware(['auth'])->name('singkat.admin.abk.fetch');
-    Route::get('/singkat/admin/abk/export', [AbkController::class, 'export'])->middleware(['auth'])->name('singkat.admin.abk.export');
+    Route::get('/singkat/admin/abk', [AbkController::class, 'index'])->name('singkat.admin.abk');
+    Route::post('/singkat/admin/abk', [AbkController::class, 'store'])->name('singkat.admin.abk.store');
+    Route::put('/singkat/admin/abk/{abk}', [AbkController::class, 'update'])->name('singkat.admin.abk.update');
+    Route::delete('/singkat/admin/abk/{abk}', [AbkController::class, 'destroy'])->name('singkat.admin.abk.destroy');
+    Route::get('/singkat/admin/abk/fetch', [AbkController::class, 'fetch'])->name('singkat.admin.abk.fetch');
+    Route::get('/singkat/admin/abk/export', [AbkController::class, 'export'])->name('singkat.admin.abk.export');
 
     // User
     Route::get('/singkat/admin/users', [UserController::class, 'index'])->name('singkat.admin.users');

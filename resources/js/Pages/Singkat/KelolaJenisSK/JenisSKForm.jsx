@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Modal, Form, Input, InputNumber } from "antd";
+import axios from "axios";
 
 const JenisSKForm = ({
     visible,
@@ -10,6 +11,18 @@ const JenisSKForm = ({
     okText,
     cancelText,
 }) => {
+    useEffect(() => {
+        async function getToken() {
+            try {
+                const { data } = await axios.get(route("api.token.csrf"));
+                form.setFieldValue("_token", data);
+            } catch (error) {
+                console.log("error get token");
+            }
+        }
+        getToken();
+    }, []);
+
     return (
         <Modal
             title={title}
@@ -33,6 +46,9 @@ const JenisSKForm = ({
             >
                 <Form.Item name="id" label="ID" hidden>
                     <Input className="border border-slate-400 rounded-md" />
+                </Form.Item>
+                <Form.Item name="_token" hidden>
+                    <Input />
                 </Form.Item>
                 <Form.Item name="new_id" label="ID Baru">
                     <Input

@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Modal, Form, Input } from "antd";
 import { router } from "@inertiajs/react";
+import axios from "axios";
 
 const AddUnitKerjaForm = ({ visible, onCancel }) => {
     const [form] = Form.useForm();
@@ -10,6 +11,17 @@ const AddUnitKerjaForm = ({ visible, onCancel }) => {
         form.resetFields();
         onCancel();
     };
+    useEffect(() => {
+        async function getToken() {
+            try {
+                const { data } = await axios.get(route("api.token.csrf"));
+                form.setFieldValue("_token", data);
+            } catch (error) {
+                console.log("error get token");
+            }
+        }
+        getToken();
+    }, []);
 
     return (
         <Modal
@@ -29,6 +41,9 @@ const AddUnitKerjaForm = ({ visible, onCancel }) => {
                 autoComplete="off"
                 size="large"
             >
+                <Form.Item name="_token" hidden>
+                    <Input />
+                </Form.Item>
                 <Form.Item
                     name="nama"
                     label="Nama Satuan Kerja"

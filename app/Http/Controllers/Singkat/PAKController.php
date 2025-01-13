@@ -10,6 +10,7 @@ use App\Models\Pegawai;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 // use Illuminate\Support\Facades\Request;
 use Inertia\Inertia;
@@ -44,7 +45,7 @@ class PAKController extends Controller
             ->paginate(10);
 
 
-        return Inertia::render('Singkat/Capaian/index', ['capaian' => $capaian, 'search' => $search]);
+        return Inertia::render('Singkat/PAK/index', ['capaian' => $capaian, 'search' => $search]);
     }
 
     /**mys
@@ -94,16 +95,19 @@ class PAKController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Capaian $capaian)
+    public function show(Capaian $pak)
     {
-        $pegawai = Pegawai::join('jabatan', 'jabatan.id', 'pegawai.jabatan_id')->where('pegawai.id', $capaian->pegawai_id)->select('pegawai.*', 'jabatan.nama as jabatan')->first();
 
-        $capaian = $capaian::where('id', $capaian->id)->with('predikat')->first();
-        return inertia('Capaian/Detail', [
-            'pegawai' => $pegawai,
-            'capaian' => $capaian,
+        // dd($pak->path);
+        if ($pak->path) {
 
-        ]);
+            $is_file_exists = Storage::exists($pak->path);
+            if ($is_file_exists) {
+                return response()->file(Storage::path($pak->path));
+            }
+        }
+
+        throw new NotFoundHttpException("Dokumen Tidak ditemukan");
     }
 
     /**
@@ -117,25 +121,31 @@ class PAKController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdatePAKRequest $request, Capaian $capaian)
+    public function update(UpdatePAKRequest $request, Capaian $pak)
     {
+        // $validatedData = $request->all();
+        // dd($validatedData);
         try {
             //code...
 
+            if (!$pak->exists) {
+                throw new \Exception('Capaian instance not found or is invalid.');
+            }
             DB::beginTransaction();
-            $validatedData = $request->all();
-            // dd($validatedData);
-            if ($request->file('file')) {
-                // ...
+            $validatedData = $request->validated();
+
+            if ($request->file('file')->isValid()) {
+                // ...\
+                Log::info("writing file");
                 $path = $request->file('file')->storeAs('filePak', $validatedData['pegawai_id'] . $validatedData['id'] . ".pdf");
                 $validatedData['path'] = $path;
                 unset($validatedData['file']);
             }
             // cek untuk data tahunan
 
-            $capaian->update($validatedData);
-            $capaian->save();
-            // dd($validatedData);
+            $pak->update($validatedData);
+            // dd($pak);
+            // $capaian->save();
             DB::commit();
             return response()->json(['message' => 'data berhasil diupdate'], 200);
         } catch (\Throwable $th) {
@@ -147,12 +157,12 @@ class PAKController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Capaian $capaian)
+    public function destroy(Capaian $pak)
     {
         try {
             //code...
             DB::beginTransaction();
-            $capaian->delete();
+            $pak->delete();
             DB::commit();
             return response()->json(['message' => 'capaian berhasil dihapus'], 204);
         } catch (\Throwable $th) {
@@ -197,13 +207,13 @@ class PAKController extends Controller
             ->get();
         return response()->json($capaian, 200);
     }
-    public function read_pak(Capaian $capaian)
+    public function read_pak(Capaian $pak)
     {
-        if ($capaian->path) {
+        if ($pak->path) {
 
-            $is_file_exists = Storage::exists($capaian->path);
+            $is_file_exists = Storage::exists($pak->path);
             if ($is_file_exists) {
-                return response()->file(Storage::path($capaian->path));
+                return response()->file(Storage::path($pak->path));
             }
         }
 

@@ -43,7 +43,7 @@ class PegawaiController extends Controller
             ->paginate(20);
         // dd([$pegawais]);
 
-        return Inertia::render('Singkat/PAK/KelolaPak', [
+        return Inertia::render('Singkat/Pegawai/index', [
             'pegawai' => $pegawais,
             'search' => $search,
             'jabatan' => Jabatan::all(),
@@ -84,7 +84,7 @@ class PegawaiController extends Controller
         $pegawai['daftar_jabatan'] = $this->get_riwayat_jabatan($pegawai);
 
 
-        return inertia('Singkat/PAK/DetailPak', [
+        return inertia('Singkat/Pegawai/Detail', [
             'pegawai' => $pegawai,
             'histories' => $currentHistories,
 
@@ -99,7 +99,8 @@ class PegawaiController extends Controller
         //     $query->with('tambahan');
         // }])->get();
         // dd($pegawai);
-        $histories = Capaian::where('pegawai_id', $pegawai["id"])
+        $histories = Capaian::with(['jabatan'])
+            ->where('pegawai_id', $pegawai["id"])
             ->where('jabatan_id', $pegawai['jabatan_id'])
             ->get()->toArray();
         $akumulasi_ak = $pegawai["akumulasi_ak"];
@@ -113,7 +114,7 @@ class PegawaiController extends Controller
         $pegawai['daftar_jabatan'] = $this->get_riwayat_jabatan($pegawai);
 
 
-        return inertia('Singkat/PAK/DetailPak', [
+        return inertia('Singkat/Pegawai/Detail', [
             'pegawai' => $pegawai,
             'histories' => $histories,
 
@@ -203,17 +204,7 @@ class PegawaiController extends Controller
 
         if ($validatedData['jabatan_id'] != $pegawai->jabatan_id) {
             $validatedData['akumulasi_ak'] = 0;
-            // $newCapaian = [
-            //     'pegawai_id'=>$validatedData['nip_bps'],
-            //     'periode'=>'-',
-            //     'tahun'=> date("Y"),
-            //     'predikat_id'=>1,
-            //     'angka_kredit'=>0,
-            //     'angka_kredit_dasar'=>0,
-            //     'jabatan_id'=>$validatedData['jabatan_id']
-            // ];
-            // Capaian::create($newCapaian);
-
+          
         }
         $pegawai->update($validatedData);
         return response()->json($validatedData);

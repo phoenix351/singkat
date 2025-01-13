@@ -26,7 +26,6 @@ const KelolaUnitKerja = ({ auth, unitKerja, search }) => {
         setIsEditModalOpen(true);
     };
     const handleDelete = (id) => {
-        console.log(id);
         router.delete(route("singkat.admin.unit-kerja.destroy",{unitKerja:id})).then(() => {
             // Refresh the page or handle post-delete actions here
         });

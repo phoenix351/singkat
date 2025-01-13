@@ -21,7 +21,7 @@ class AbkController extends Controller
         // dd($search);
 
         // Join dengan unitkerja dan jabatan 
-        $abk = Jabatan::select('unit_kerja.nama as unit_kerja', 'jabatan.nama as jabatan', 'abk.abk', 'abk.eksisting', 'abk.kebutuhan_pegawai')
+        $abk = Jabatan::select('unit_kerja.nama as unit_kerja', 'unit_kerja.id as unit_kerja_id', 'jabatan.nama as jabatan', 'jabatan.id as jabatan_id', 'abk.id as id', 'abk.abk', 'abk.eksisting', 'abk.kebutuhan_pegawai')
             ->crossJoin('unit_kerja')
             ->leftJoin('abk', function ($join) {
                 $join->on('abk.unit_kerja_id', 'unit_kerja.id')
@@ -32,24 +32,9 @@ class AbkController extends Controller
             ->orWhere(DB::raw("CAST(abk.abk AS CHAR)"), '=', $search)
             ->orWhere(DB::raw("CAST(abk.eksisting AS CHAR)"), '=', $search)
             ->orWhere(DB::raw("CAST(abk.kebutuhan_pegawai AS CHAR)"), '=', $search)
-            // ->orWhere('abk.eksisting', '=',   $search)
-            // ->orWhere('abk.kebutuhan_pegawai','=',  $search)
             ->orderByRaw("CASE WHEN unit_kerja.nama = 'BPS Prov. Sulawesi Utara' THEN 0 ELSE 1 END, unit_kerja.nama")
             ->paginate();
-        // $abk = Abk::select('abk.*', 'unit_kerja.nama as unit_kerja', 'jabatan.nama as jabatan')
-        //     ->leftJoin('unit_kerja', 'abk.unit_kerja_id', '=', 'unit_kerja.id')
-        //     ->leftJoin('jabatan', 'abk.jabatan_id', '=', 'jabatan.id')
-        //     ->where('jabatan.nama', 'like', '%' . $search . '%')
-        //     ->orWhere('unit_kerja.nama', 'like', '%' . $search . '%')
-        //     ->orWhere(DB::raw("CAST(abk.abk AS CHAR)"), '=', $search)
-        //     ->orWhere(DB::raw("CAST(abk.eksisting AS CHAR)"), '=', $search)
-        //     ->orWhere(DB::raw("CAST(abk.kebutuhan_pegawai AS CHAR)"), '=', $search)
-        //     // ->orWhere('abk.eksisting', '=',   $search)
-        //     // ->orWhere('abk.kebutuhan_pegawai','=',  $search)
-        //     ->orderByRaw("CASE WHEN unit_kerja.nama = 'BPS Prov. Sulawesi Utara' THEN 0 ELSE 1 END, unit_kerja.nama")
-        //     ->paginate();
-        // $queries = DB::getQueryLog($abk); 
-        // dd($abk);
+
         return Inertia::render('Singkat/ABK/KelolaABK', [
             'abk' => $abk,
             'search' => $search,
@@ -62,9 +47,7 @@ class AbkController extends Controller
     {
         $unitKerjaId = $request->input('unit_kerja_id');
         $existingJabatanIds = Abk::where('unit_kerja_id', $unitKerjaId)->pluck('jabatan_id')->toArray();
-
         $jabatanList = Jabatan::whereNotIn('id', $existingJabatanIds)->get();
-
         return response()->json($jabatanList);
     }
 
@@ -72,21 +55,16 @@ class AbkController extends Controller
     {
         $unitKerjaId = $request->input('unit_kerja_id');
         $abkId = $request->input('abk_id');
-
         $existingJabatanIds = Abk::where('unit_kerja_id', $unitKerjaId)
             ->where('id', '!=', $abkId)
             ->pluck('jabatan_id')
             ->toArray();
-
         $jabatanList = Jabatan::whereNotIn('id', $existingJabatanIds)->get();
-
         return response()->json($jabatanList);
     }
 
-
     public function store(Request $request)
     {
-
         $validatedData = $request->validate([
             'jabatan_id' => 'required',
             'unit_kerja_id' => 'required',
@@ -98,37 +76,36 @@ class AbkController extends Controller
             'abk.required' => 'ABK harus diisi',
             'eksisting.required' => 'Eksisting harus diisi',
         ]);
-
         $validatedData['kebutuhan_pegawai'] = $validatedData['abk'] - $validatedData['eksisting'];
-
-
-
         Abk::create($validatedData);
-
-        return redirect()->route('abk.index')->with('success', 'Data ABK berhasil ditambahkan.');
+        return response()->json(['message' => 'Data ABK berhasil ditambahkan.'], 200);
     }
 
     public function update(Request $request, Abk $abk)
     {
-        $validatedData = $request->validate([
-            'jabatan_id' => 'required',
-            'unit_kerja_id' => 'required',
-            'abk' => 'required',
-            'eksisting' => 'required',
-        ]);
+        try {
+            //code...
+            $validatedData = $request->validate([
+                'jabatan_id' => 'required',
+                'unit_kerja_id' => 'required',
+                'abk' => 'required',
+                'eksisting' => 'required',
+            ]);
 
-        $validatedData['kebutuhan_pegawai'] = $validatedData['abk'] - $validatedData['eksisting'];
+            $validatedData['kebutuhan_pegawai'] = $validatedData['abk'] - $validatedData['eksisting'];
 
-        $abk->update($validatedData);
-
-        return redirect()->route('abk.index')->with('success', 'Data ABK berhasil diubah.');
+            $abk->update($validatedData);
+            return response()->json(['message' => 'data berhasil diupdate'], 200);
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
     public function destroy(Abk $abk)
     {
         $abk->delete();
 
-        return redirect()->route('abk.index')->with('success', 'Data ABK berhasil dihapus.');
+        return response()->json(['message' => 'Data ABK berhasil dihapus.'], 200);
     }
 
     public function getAbkSummary()
@@ -183,7 +160,7 @@ class AbkController extends Controller
         // dd($search);
 
         // Join dengan unitkerja dan jabatan 
-        $abk = Jabatan::select('unit_kerja.kode as unit_kerja_id', 'nomor_urut_kepka','jabatan.nama as jabatan','unit_kerja.nama as unit_kerja', 'abk.abk', 'abk.eksisting', 'abk.kebutuhan_pegawai')
+        $abk = Jabatan::select('unit_kerja.kode as unit_kerja_id', 'nomor_urut_kepka', 'jabatan.nama as jabatan', 'unit_kerja.nama as unit_kerja', 'abk.abk', 'abk.eksisting', 'abk.kebutuhan_pegawai')
             ->crossJoin('unit_kerja')
             ->leftJoin('abk', function ($join) {
                 $join->on('abk.unit_kerja_id', 'unit_kerja.id')
@@ -198,20 +175,7 @@ class AbkController extends Controller
             // ->orWhere('abk.kebutuhan_pegawai','=',  $search)
             ->orderBy('nomor_urut_kepka')
             ->get();
-        // $abk = Abk::select('abk.*', 'unit_kerja.nama as unit_kerja', 'jabatan.nama as jabatan')
-        //     ->leftJoin('unit_kerja', 'abk.unit_kerja_id', '=', 'unit_kerja.id')
-        //     ->leftJoin('jabatan', 'abk.jabatan_id', '=', 'jabatan.id')
-        //     ->where('jabatan.nama', 'like', '%' . $search . '%')
-        //     ->orWhere('unit_kerja.nama', 'like', '%' . $search . '%')
-        //     ->orWhere(DB::raw("CAST(abk.abk AS CHAR)"), '=', $search)
-        //     ->orWhere(DB::raw("CAST(abk.eksisting AS CHAR)"), '=', $search)
-        //     ->orWhere(DB::raw("CAST(abk.kebutuhan_pegawai AS CHAR)"), '=', $search)
-        //     // ->orWhere('abk.eksisting', '=',   $search)
-        //     // ->orWhere('abk.kebutuhan_pegawai','=',  $search)
-        //     ->orderBy('nomor_urut_kepka')
-        //     ->get();
-        // $queries = DB::getQueryLog($abk); 
-        // dd($abk);
+
         return response()->json($abk, 200);
     }
 }
