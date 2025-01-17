@@ -12,6 +12,7 @@ import { Form, message } from "antd";
 import axios from "axios";
 import PegawaiForm from "./PegawaiForm";
 import dayjs from "dayjs";
+import { PercentageOutlined, PlusOutlined } from "@ant-design/icons";
 
 const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
     const [editForm] = Form.useForm();
@@ -21,21 +22,36 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [currentPegawai, setCurrentPegawai] = useState(null);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     const openModal = () => setIsModalOpen(true);
-    const closeModal = () => setIsModalOpen(false);
+    const closeModal = () => {
+        setIsModalOpen(false);
+        createForm.resetFields();
+    };
 
     const openExportModal = () => setIsExportModalOpen(true);
     const closeExportModal = () => setIsExportModalOpen(false);
 
     const openEditModal = (pegawai) => {
-        setCurrentPegawai(pegawai);
+        if (pegawai) {
+            if (pegawai.bulan_mulai) {
+                pegawai.bulan = [
+                    dayjs(pegawai.bulan_mulai),
+                    dayjs(pegawai.bulan_selesai),
+                ];
+            } else {
+                pegawai.bulan = [null, null];
+            }
+        }
+        editForm.setFieldsValue(pegawai);
         setIsEditModalOpen(true);
     };
 
-    const closeEditModal = () => setIsEditModalOpen(false);
+    const closeEditModal = () => {
+        setIsEditModalOpen(false);
+        editForm.resetFields();
+    };
 
     const handleDelete = async (id) => {
         try {
@@ -59,7 +75,6 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 content: "Gagal menghapus, periksa kembali !",
                 key: "handle-delete",
             });
-            
         } finally {
             // setIsEditModalOpen(false);
             router.reload({
@@ -67,6 +82,7 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 preserveScroll: true,
                 method: "get",
             });
+            editForm.resetFields();
         }
     };
 
@@ -86,9 +102,11 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 content: "Menyimpan perubahan",
                 key: "handle-save",
             });
-            values["bulan_mulai"] = values["bulan"][0];
-            values["bulan_selesai"] = values["bulan"][1];
-            delete values["bulan"];
+            if (values["bulan"]) {
+                values["bulan_mulai"] = values["bulan"][0];
+                values["bulan_selesai"] = values["bulan"][1];
+                delete values["bulan"];
+            }
             const response = axios.put(
                 route("singkat.admin.pegawai.update", { pegawai: values.id }),
                 values,
@@ -103,12 +121,13 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 key: "handle-save",
             });
         } catch (error) {
+            console.log({ error });
+
             messageApi.open({
                 type: "error",
                 content: "Gagal menyimpan, hubungi pengembang web!",
                 key: "handle-save",
             });
-            
         } finally {
             setIsEditModalOpen(false);
             router.reload({
@@ -227,7 +246,7 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                             }}
                             className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
                         >
-                            Tambah Pegawai
+                            <PlusOutlined /> Tambah Pegawai
                         </button>
                     )}
                 </div>
@@ -270,7 +289,6 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 unitKerja={unitKerja}
                 visible={isEditModalOpen}
                 onCancel={closeEditModal}
-                pegawai={currentPegawai}
                 role={auth.user.role}
                 onFinish={handleSave}
                 type="edit"

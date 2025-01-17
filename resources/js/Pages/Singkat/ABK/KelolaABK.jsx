@@ -10,6 +10,7 @@ import EditAbkForm from "./EditAbkForm";
 import Alert from "@/Components/Alert";
 import * as XLSX from "xlsx";
 import { Form, message } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 const contentType = "application/json"
 const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,6 +25,8 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
     const closeEditModal = () => setIsEditModalOpen(false);
+
+ 
 
     const openEditModal = (abk) => {
         setCurrentABK(abk);
@@ -275,7 +278,7 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
                             onClick={openModal}
                             className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"
                         >
-                            Tambah ABK
+                           <PlusOutlined/> Tambah ABK
                         </button>
                     )}
                 </div>
@@ -287,7 +290,7 @@ const KelolaABK = ({ auth, abk, search, jabatan, unitKerja }) => {
                     onEdit={openEditModal}
                     onDelete={handleDelete}
                     role={auth.user.role}
-                />
+                />   
 
                 <Pagination
                     links={abk.links}

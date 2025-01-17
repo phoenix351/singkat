@@ -17,6 +17,17 @@ const EditAbkForm = ({ visible, onCancel, handleSave,abk, jabatan, unitKerja, ro
             }
         }
     }, [abk, form]);
+    useEffect(() => {
+        async function getToken() {
+            try {
+                const { data } = await axios.get(route("api.token.csrf"));
+                form.setFieldValue("_token", data);
+            } catch (error) {
+                console.log("error get token");
+            }
+        }
+        getToken();
+    }, []);
 
     const checkEksisting = (_, value) => {
         const abk = form.getFieldValue("abk");

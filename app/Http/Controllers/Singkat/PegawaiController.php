@@ -66,7 +66,7 @@ class PegawaiController extends Controller
         //     $query->with('tambahan');
         // }])->get();
         // dd($pegawai);
-        $currentHistories = Capaian::with(['jabatan','jenis_sk'])
+        $currentHistories = Capaian::with(['jabatan', 'jenis_sk'])
             ->where('pegawai_id', $pegawai["id"])
             ->where('jabatan_id', $pegawai['jabatan_id'])
             // ->orderBy('tahun',)
@@ -186,12 +186,13 @@ class PegawaiController extends Controller
             'pangkat_golongan_ruang' => 'required|string|max:255',
             'angka_kredit_konvensional' => 'nullable',
             'angka_kredit_integrasi' => 'nullable',
+            'angka_kredit_dasar' => 'nullable',
             'tambahan_ijazah' => 'nullable|string|max:255',
             'akumulasi_ak' => 'nullable',
             'ijazah_terakhir' => 'nullable|string|max:255',
-            'bulan_mulai' => 'required',
-            'bulan_selesai' => 'required',
-            'predikat_id' => 'required|numeric',
+            'bulan_mulai' => 'nullable',
+            'bulan_selesai' => 'nullable',
+            'predikat_id' => 'nullable|numeric',
 
 
         ]);
@@ -199,13 +200,15 @@ class PegawaiController extends Controller
 
         // $tanggal_lahir = $this->calculateTanggalLahir($request->nip);
         $validatedData["tanggal_lahir"] = $this->calculateTanggalLahir($validatedData['nip']);
-        $validatedData['bulan_mulai'] = Carbon::parse($validatedData['bulan_mulai']);
-        $validatedData['bulan_selesai'] = Carbon::parse($validatedData['bulan_selesai']);
-
-        if ($validatedData['jabatan_id'] != $pegawai->jabatan_id) {
-            $validatedData['akumulasi_ak'] = 0;
-          
+        if (isset($validatedData['bulan_mulai']) && isset($validatedData['bulan_selesai'])) {
+            $validatedData['bulan_mulai'] = Carbon::parse($validatedData['bulan_mulai']);
+            $validatedData['bulan_selesai'] = Carbon::parse($validatedData['bulan_selesai']);
+        } else {
+            $validatedData['bulan_mulai'] = null;
+            $validatedData['bulan_selesai'] = null;
         }
+
+        
         $pegawai->update($validatedData);
         return response()->json($validatedData);
     }

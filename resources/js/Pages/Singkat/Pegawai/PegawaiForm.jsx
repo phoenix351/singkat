@@ -7,6 +7,7 @@ import {
     InputNumber,
     DatePicker,
     Switch,
+    Divider,
 } from "antd";
 import dayjs from "dayjs";
 import axios from "axios";
@@ -54,7 +55,18 @@ const PegawaiForm = ({
         const angka_kredit_dasar =
             Number(form.getFieldValue("angka_kredit_dasar")) || 0;
         const selectedJabatan = form.getFieldValue("jabatan_id");
+        const ijazah_terakhir = form.getFieldValue("ijazah_terakhir");
+        const isIjazahCalculated = form.getFieldValue("is_ijazah_calculated");
+        if(!selectedJabatan|| !ijazah_terakhir || !form.getFieldValue("bulan") ){
+            form.setFieldValue("akumulasi_ak", angka_kredit_dasar);
+            
+            return
 
+        }
+        const { fromDate, toDate } = {
+            fromDate: new Date(form.getFieldValue("bulan")[0]),
+            toDate: new Date(form.getFieldValue("bulan")[1]),
+        };
         const { data } = await axios.get(`/api/jabatans/${selectedJabatan}`);
 
         const angkaKreditTahunan = data.angka_kredit || 0;
@@ -70,9 +82,7 @@ const PegawaiForm = ({
             S3: 1,
         };
 
-        const ijazah_terakhir = form.getFieldValue("ijazah_terakhir");
         let tambahan_ijazah = 0;
-        let isIjazahCalculated = form.getFieldValue("is_ijazah_calculated");
 
         if (
             ijazah_terakhir &&
@@ -82,10 +92,7 @@ const PegawaiForm = ({
             tambahan_ijazah =
                 angkaKreditTahunan * ijazahKeAngkaKredit[ijazah_terakhir];
         }
-        const { fromDate, toDate } = {
-            fromDate: new Date(form.getFieldValue("bulan")[0]),
-            toDate: new Date(form.getFieldValue("bulan")[1]),
-        };
+        
         const fromMonth = fromDate.getMonth();
         const toMonth = toDate.getMonth();
         const yearDiff = toDate.getFullYear() - fromDate.getFullYear();
@@ -107,10 +114,10 @@ const PegawaiForm = ({
     };
 
     const [predikats, setPredikats] = useState([]);
+    const [jabatanChanged, setJabatanChanged] = useState(false);
     const fetchPredikats = async () => {
         try {
             const { data } = await axios.get("/api/predikats");
-            // console.log({ data });
             setPredikats(data);
         } catch (error) {
             console.error("Error when get predikat data");
@@ -130,19 +137,6 @@ const PegawaiForm = ({
         getToken();
     }, []);
 
-    useEffect(() => {
-        if (pegawai) {
-            if (pegawai.bulan_mulai) {
-                pegawai.bulan = [
-                    dayjs(pegawai.bulan_mulai),
-                    dayjs(pegawai.bulan_selesai),
-                ];
-            } else {
-                pegawai.bulan = [null, null];
-            }
-            form.setFieldsValue(pegawai);
-        }
-    }, [pegawai]);
     const daftarPangkat = [
         {
             label: "Juru Muda/Ia",
@@ -211,8 +205,14 @@ const PegawaiForm = ({
             )}  (${form.getFieldValue("nip_bps")})`}
             open={visible}
             style={{ top: 20 }}
-            onCancel={onCancel}
-            onOk={() => form.submit()}
+            onCancel={() => {
+                setJabatanChanged(false);
+                onCancel();
+            }}
+            onOk={() => {
+                form.submit();
+                setJabatanChanged(false);
+            }}
             width={600}
             okText="Simpan"
             cancelText="Batal"
@@ -311,13 +311,18 @@ const PegawaiForm = ({
                                         <OkBtn />
                                     </>
                                 ),
+                                onOk: () => {
+                                    form.setFieldValue("angka_kredit_dasar", 0);
+                                    form.setFieldValue("akumulasi_ak", 0);
+                                    setJabatanChanged(true);
+                                },
                             });
                             calculateAkumulasi();
                         }}
                         // {...(role === "admin" ? {} : { disabled: true })}
                         options={jabatan.map((item) => ({
                             label: item.nama,
-                            value: item.id,
+                            value: String(item.id),
                         }))}
                     />
                 </Form.Item>
@@ -358,9 +363,16 @@ const PegawaiForm = ({
                     <InputNumber className="border border-slate-400 rounded-md" />
                 </Form.Item>
 
-                <Form.Item name="ijazah_terakhir" label="Ijazah Terakhir">
+                <Form.Item
+                    name="ijazah_terakhir"
+                    label="Ijazah Terakhir"
+                    hidden={jabatanChanged}
+                >
                     <Select
-                        onSelect={() => calculateAkumulasi()}
+                        onSelect={() => {
+                            form.setFieldValue("is_ijazah_calculated", true);
+                            calculateAkumulasi();
+                        }}
                         placeholder="Pilih Ijazah yang Ditamatkan"
                         options={[
                             { label: "SD/sederajat", value: "SD/sederajat" },
@@ -384,13 +396,14 @@ const PegawaiForm = ({
                 <Form.Item
                     name="is_ijazah_calculated"
                     label="Tambahkan sebagai angka kredit"
+                    hidden={jabatanChanged}
                 >
                     <Switch onChange={calculateAkumulasi} />
                 </Form.Item>
                 <Form.Item
                     name={"bulan"}
                     label="Bulan Penilaian"
-                    rules={[{ required: true }]}
+                    hidden={jabatanChanged}
                 >
                     <RangePicker
                         picker="month"
@@ -404,6 +417,7 @@ const PegawaiForm = ({
                     name="predikat_id"
                     label="Predikat Kinerja"
                     className="focus:border-none"
+                    hidden={jabatanChanged}
                 >
                     <Select
                         placeholder="Pilih Predikat"
@@ -413,10 +427,11 @@ const PegawaiForm = ({
                         onChange={calculateAkumulasi}
                         options={predikats.map((predikat) => ({
                             label: predikat.nama,
-                            value: predikat.id,
+                            value: String(predikat.id),
                         }))}
                     />
                 </Form.Item>
+                <Divider />
                 <Form.Item name="akumulasi_ak" label="Akumulasi Angka Kredit">
                     <InputNumber
                         readOnly
