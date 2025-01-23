@@ -7,7 +7,6 @@ import { id } from "date-fns/locale";
 
 const Detail = ({ auth, capaian, pegawai }) => {
     // const { pegawai } = usePage().props;
-    console.log({ pegawai, capaian });
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="Detail CKP" />

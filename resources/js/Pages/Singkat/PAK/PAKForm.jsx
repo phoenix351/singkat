@@ -34,9 +34,9 @@ const PAKForm = ({
     const [pegawais, setPegawais] = useState([]);
     const [file, setFile] = useState(null);
     const [daftarJenisSk, setDaftarJenisSK] = useState([]);
+    const [csrfToken, setCsrfToken] = useState("");
 
     // define message
-    const [messageApi, contextHolder] = message.useMessage();
 
     const fetchPredikats = async () => {
         try {
@@ -70,12 +70,12 @@ const PAKForm = ({
         async function getToken() {
             try {
                 const { data } = await axios.get(route("api.token.csrf"));
-                form.setFieldValue("_token", data);
+                setCsrfToken(data);
             } catch (error) {
-                console.log("error get token");
+                console.log("failed to get csrf token!");
             }
         }
-        getToken();
+        getToken()
     }, []);
 
     useEffect(() => {
@@ -84,7 +84,6 @@ const PAKForm = ({
 
     return (
         <>
-            {contextHolder}
             <Modal
                 title={title}
                 open={visible}
@@ -106,9 +105,6 @@ const PAKForm = ({
                     autoComplete="off"
                     size="large"
                 >
-                    <Form.Item name="_token" hidden>
-                        <Input />
-                    </Form.Item>
                     <Form.Item
                         name="id"
                         label="ID"
@@ -117,7 +113,9 @@ const PAKForm = ({
                     >
                         <Input />
                     </Form.Item>
-
+                    <Form.Item name={"_token"} initialValue={csrfToken} hidden>
+                        <Input />
+                    </Form.Item>
                     <Form.Item
                         name="pegawai_id"
                         label="Pegawai"
@@ -131,7 +129,7 @@ const PAKForm = ({
                             optionFilterProp="label"
                             options={pegawais.map((pegawai) => ({
                                 label: pegawai.nama,
-                                value: pegawai.id,
+                                value: String(pegawai.id),
                             }))}
                         />
                     </Form.Item>
@@ -208,7 +206,10 @@ const PAKForm = ({
                         <InputNumber />
                     </Form.Item>
 
-                    <Form.Item name={"file"} label="Dokumen PAK" required>
+                    <Form.Item
+                        name={"file"}
+                        label="Dokumen PAK (upload apabila ingin diubah)"
+                    >
                         <UploadPAK setFile={setFile} />
                     </Form.Item>
                 </Form>

@@ -218,30 +218,30 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                         <button
                             onClick={() => {
                                 createForm.resetFields();
-                                createForm.setFieldsValue({
-                                    id: 340060268,
-                                    nip_bps: "340060268",
-                                    nip: "199810132021041001",
-                                    nama: "Ponimin, S.Tr.Stat.",
-                                    jabatan_id: "39",
-                                    unit_kerja: "BPS P",
-                                    pangkat_golongan_ruang:
-                                        "Penata Tk.I / IIId",
-                                    angka_kredit_konvensional: "313.898",
-                                    angka_kredit_integrasi: "113.898",
-                                    predikat_kinerja: "Sangat Baik",
-                                    tambahan_ijazah: null,
-                                    akumulasi_ak: "151.398",
-                                    ijazah_terakhir: "S1/DIV/Sederajat",
-                                    tanggal_lahir: "1971-02-05",
-                                    nama_jabatan: "Statistisi Ahli Muda",
-                                    angka_kredit_akumulasi: 151.398,
-                                    tambahan_ijazah: "Baik",
-                                    bulan: [dayjs(), dayjs()],
-                                    predikat_id: "1",
-                                    angka_kredit_dasar: 40,
-                                    akumulasi_ak: 47.125,
-                                });
+                                // createForm.setFieldsValue({
+                                //     id: 340060268,
+                                //     nip_bps: "340060268",
+                                //     nip: "199810132021041001",
+                                //     nama: "Ponimin, S.Tr.Stat.",
+                                //     jabatan_id: "39",
+                                //     unit_kerja: "BPS P",
+                                //     pangkat_golongan_ruang:
+                                //         "Penata Tk.I / IIId",
+                                //     angka_kredit_konvensional: "313.898",
+                                //     angka_kredit_integrasi: "113.898",
+                                //     predikat_kinerja: "Sangat Baik",
+                                //     tambahan_ijazah: null,
+                                //     akumulasi_ak: "151.398",
+                                //     ijazah_terakhir: "S1/DIV/Sederajat",
+                                //     tanggal_lahir: "1971-02-05",
+                                //     nama_jabatan: "Statistisi Ahli Muda",
+                                //     angka_kredit_akumulasi: 151.398,
+                                //     tambahan_ijazah: "Baik",
+                                //     bulan: [dayjs(), dayjs()],
+                                //     predikat_id: "1",
+                                //     angka_kredit_dasar: 40,
+                                //     akumulasi_ak: 47.125,
+                                // });
                                 openModal();
                             }}
                             className=" gap-2.5 rounded-md    inline-flex items-center justify-center bg-meta-3 py-2 px-5  text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-5 mr-4"

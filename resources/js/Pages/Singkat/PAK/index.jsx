@@ -27,13 +27,16 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
         adjustedBulanSelesai.setDate(adjustedBulanSelesai.getDate() + 1);
         const adjustedBulanMulai = new Date(bulan_mulai);
         adjustedBulanMulai.setDate(adjustedBulanMulai.getDate() + 1);
+        const adjustedTMT = new Date(values.tmt_sk);
+        adjustedTMT.setDate(adjustedTMT.getDate() + 1);
         values["bulan_mulai"] = new Date(adjustedBulanMulai)
             .toISOString()
             .slice(0, 10);
         values["bulan_selesai"] = new Date(adjustedBulanSelesai)
             .toISOString()
             .slice(0, 10);
-        values["tmt_sk"] = new Date(values["tmt_sk"])
+            
+        values["tmt_sk"] = new Date(adjustedTMT)
             .toISOString()
             .slice(0, 10);
 
@@ -43,25 +46,15 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
         }
         return values;
     }
+   
     const openModal = () => {
-        const pak = {
-            pegawai_id: 340011442,
-            nomor_sk: "0428054/KPG TAHUN 2017",
-            jenis_sk: 1,
-            angka_kredit: 18.75,
-            tmt_sk: dayjs("2017-05-01", "YYYY-MM-DD"),
-            bulan: [
-                dayjs("2016-05-01", "YYYY-MM-DD"),
-                dayjs("2017-12-01", "YYYY-MM-DD"),
-            ],
-            predikat_id: 1,
-        };
-        addForm.setFieldsValue(pak);
+        addForm.resetFields();
         setIsModalOpen(true);
     };
     const closeModal = () => setIsModalOpen(false);
 
     const openEditModal = (capaian) => {
+        editForm.resetFields()
         const bulan_mulai = dayjs(capaian.bulan_mulai, "YYYY-MM-DD");
         const bulan_selesai = dayjs(capaian.bulan_selesai, "YYYY-MM-DD");
         capaian.bulan = [bulan_mulai, bulan_selesai];
@@ -73,7 +66,12 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             capaian.jenis_sk = Number(capaian.jenis_sk);
         }
 
+        // capaian["id"] = String(capaian["id"]);
+        capaian["pegawai_id"] = String(capaian["pegawai_id"]);
+        // console.log({capaian});
+        
         editForm.setFieldsValue(capaian);
+
         setIsEditModalOpen(true);
     };
 
@@ -88,7 +86,10 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             });
             // return
             const response = await axios.delete(
-                route("singkat.admin.pak.destroy", { pak: id,_token:editForm.getFieldValue('_token') })
+                route("singkat.admin.pak.destroy", {
+                    pak: id,
+                    _token: editForm.getFieldValue("_token"),
+                })
             );
             messageApi.open({
                 key: "submit-form",
@@ -117,7 +118,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
     const handleSave = async (values) => {
         values = preparePAK(values);
         const contentType = values.hasOwnProperty("file")
-            ?  "multipart/form-data"
+            ? "multipart/form-data"
             : "application/json";
         try {
             messageApi.open({
@@ -125,10 +126,12 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
                 type: "loading",
                 content: "menyimpan perubahan...",
             });
+            const { data } = await axios.get(route("api.token.csrf"));
 
             const response = await axios.post(
-                route("singkat.admin.pak.update",{pak:values.id}),
-                values,
+                route("singkat.admin.pak.update", { pak: values.id }),
+                {...values,_token:data},
+                
                 {
                     headers: { "Content-Type": contentType },
                 }
@@ -141,7 +144,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             setIsEditModalOpen(false);
         } catch (error) {
             console.log(error);
-            
+
             messageApi.open({
                 key: "submit-form",
                 type: "error",
@@ -176,7 +179,7 @@ const KelolaPak = ({ auth, capaian, search, jabatan, unitKerja }) => {
             });
 
             const response = await axios.post(
-                route("singkat.admin.pak.store") ,
+                route("singkat.admin.pak.store"),
                 values,
                 {
                     headers: { "Content-Type": "multipart/form-data" },

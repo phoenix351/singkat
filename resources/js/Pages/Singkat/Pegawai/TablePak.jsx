@@ -2,7 +2,13 @@ import { Link } from "@inertiajs/react";
 import { Empty, Popconfirm, Tooltip } from "antd";
 
 const TablePak = ({ pegawai, onEdit, onDelete, role }) => {
-
+    const formatNumber = (number) => {
+        try {
+            return parseFloat(Number(number).toFixed(3));
+        } catch (error) {
+            return "-";
+        }
+    };
     return (
         <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
             <div className="max-w-full overflow-x-auto">
@@ -95,7 +101,9 @@ const TablePak = ({ pegawai, onEdit, onDelete, role }) => {
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
-                                                {data.jabatan? data.jabatan.nama:'null'}
+                                                {data.jabatan
+                                                    ? data.jabatan.nama
+                                                    : "null"}
                                             </p>
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
@@ -110,25 +118,23 @@ const TablePak = ({ pegawai, onEdit, onDelete, role }) => {
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
-                                                {data.angka_kredit_konvensional ??
-                                                    "-"}
+                                                {formatNumber(
+                                                    data.angka_kredit_konvensional
+                                                ) ?? "-"}
                                             </p>
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
-                                                {data.angka_kredit_integrasi ??
-                                                    "-"}
+                                                {formatNumber(
+                                                    data.angka_kredit_integrasi
+                                                ) ?? "-"}
                                             </p>
                                         </td>
                                         <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
-                                                {Number(data.akumulasi_ak) +
-                                                    data.capaian.filter(capaian=>capaian.jabatan_id==data.jabatan_id).reduce(
-                                                        (add, cap) =>
-                                                            add +
-                                                            cap.angka_kredit,
-                                                        0
-                                                    )}
+                                                {formatNumber(
+                                                    data.akumulasi_ak
+                                                )}
                                             </p>
                                         </td>
 

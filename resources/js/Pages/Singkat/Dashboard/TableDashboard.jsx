@@ -46,9 +46,9 @@ const TableDashboard = () => {
                             <th className="min-w-[120px] py-4 px-4 font-bold text-black dark:text-white">
                                 Jumlah Kebutuhan Pegawai
                             </th>
-                            <th className="min-w-[120px] py-4 px-4 font-bold text-black dark:text-white">
+                            {/* <th className="min-w-[120px] py-4 px-4 font-bold text-black dark:text-white">
                                 Total
-                            </th>
+                            </th> */}
                         </tr>
                     </thead>
                     <tbody className="">
@@ -91,11 +91,11 @@ const TableDashboard = () => {
                                             </p>
                                         </td>
 
-                                        <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                                        {/* <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                                             <p className="text-black dark:text-white">
                                                 {item.total}
                                             </p>
-                                        </td>
+                                        </td> */}
                                     </tr>
                                 ))}
                             </>

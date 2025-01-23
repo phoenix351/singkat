@@ -134,7 +134,7 @@ class PAKController extends Controller
             DB::beginTransaction();
             $validatedData = $request->validated();
 
-            if ($request->file('file')->isValid()) {
+            if ($request->file('file')) {
                 // ...\
                 Log::info("writing file");
                 $path = $request->file('file')->storeAs('filePak', $validatedData['pegawai_id'] . $validatedData['id'] . ".pdf");
