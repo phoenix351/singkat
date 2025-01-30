@@ -60,8 +60,11 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 content: "Menghapus data pegawai",
                 key: "handle-delete",
             });
+
+            const { data } = await axios.get(route("api.token.csrf"));
+
             const response = axios.delete(
-                route("singkat.admin.pegawai.destroy", { pegawai: id })
+                route("singkat.admin.pegawai.destroy", { pegawai: id,_token:{data} })
             );
 
             messageApi.open({
@@ -94,8 +97,7 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
         );
     };
     const handleSave = async (values) => {
-        // console.log({values});
-        // return;
+        const { data } = await axios.get(route("api.token.csrf"));
         try {
             messageApi.open({
                 type: "loading",
@@ -107,6 +109,7 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
                 values["bulan_selesai"] = values["bulan"][1];
                 delete values["bulan"];
             }
+            values["_token"] = data;
             const response = axios.put(
                 route("singkat.admin.pegawai.update", { pegawai: values.id }),
                 values,
@@ -137,7 +140,7 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
         }
     };
     const handleCreate = async (values) => {
-        // console.log({ values });
+        const { data } = await axios.get(route("api.token.csrf"));
         // return;
         try {
             messageApi.open({
@@ -148,6 +151,7 @@ const KelolaPak = ({ auth, pegawai, search, jabatan, unitKerja }) => {
             values["bulan_mulai"] = values["bulan"][0];
             values["bulan_selesai"] = values["bulan"][1];
             delete values["bulan"];
+            values["_token"] = data;
             const response = await axios.post(
                 route("singkat.admin.pegawai.store"),
                 values,
