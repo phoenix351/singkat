@@ -45,3 +45,4 @@ Route::get('/api/abk-summary', [AbkController::class, 'getAbkSummary']);
 require __DIR__ . '/auth.php';
 require __DIR__ .'/singkat.php';
 require __DIR__ .'/simple.php';
+require __DIR__ . '/meeting.php';

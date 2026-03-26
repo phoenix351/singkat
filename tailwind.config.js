@@ -7,7 +7,7 @@ export default {
         "./vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php",
         "./storage/framework/views/*.php",
         "./resources/views/**/*.blade.php",
-        "./resources/js/**/*.jsx",
+        "./resources/js/**/*.{ts,tsx,vue,jsx}",
     ],
 
     darkMode: "class",
@@ -20,6 +20,13 @@ export default {
             xsm: "425px",
             "3xl": "2000px",
             ...defaultTheme.screens,
+        },
+        container: {
+            center: true,
+            padding: "2rem",
+            screens: {
+                "2xl": "1400px",
+            },
         },
         extend: {
             colors: {
@@ -58,6 +65,40 @@ export default {
                 success: "#219653",
                 danger: "#D34053",
                 warning: "#FFA70B",
+                //meeting
+                border: "hsl(var(--border))",
+                input: "hsl(var(--input))",
+                ring: "hsl(var(--ring))",
+                background: "hsl(var(--background))",
+                foreground: "hsl(var(--foreground))",
+                primary: {
+                    DEFAULT: "hsl(var(--primary))",
+                    foreground: "hsl(var(--primary-foreground))",
+                },
+                secondary: {
+                    DEFAULT: "hsl(var(--secondary))",
+                    foreground: "hsl(var(--secondary-foreground))",
+                },
+                destructive: {
+                    DEFAULT: "hsl(var(--destructive))",
+                    foreground: "hsl(var(--destructive-foreground))",
+                },
+                muted: {
+                    DEFAULT: "hsl(var(--muted))",
+                    foreground: "hsl(var(--muted-foreground))",
+                },
+                accent: {
+                    DEFAULT: "hsl(var(--accent))",
+                    foreground: "hsl(var(--accent-foreground))",
+                },
+                popover: {
+                    DEFAULT: "hsl(var(--popover))",
+                    foreground: "hsl(var(--popover-foreground))",
+                },
+                card: {
+                    DEFAULT: "hsl(var(--card))",
+                    foreground: "hsl(var(--card-foreground))",
+                },
             },
             fontSize: {
                 "title-xxl": ["44px", "55px"],
@@ -68,6 +109,12 @@ export default {
                 "title-md2": ["26px", "30px"],
                 "title-sm": ["20px", "26px"],
                 "title-xsm": ["18px", "24px"],
+            },
+            borderRadius: {
+                xl: "calc(var(--radius) + 4px)",
+                lg: "var(--radius)",
+                md: "calc(var(--radius) - 2px)",
+                sm: "calc(var(--radius) - 4px)",
             },
             spacing: {
                 4.5: "1.125rem",
@@ -247,6 +294,22 @@ export default {
                     "0%, 100%": { transform: "rotate(360deg)" },
                     "50%": { transform: "rotate(0deg)" },
                 },
+                "accordion-down": {
+                    from: { height: 0 },
+                    to: { height: "var(--radix-accordion-content-height)" },
+                },
+                "accordion-up": {
+                    from: { height: "var(--radix-accordion-content-height)" },
+                    to: { height: 0 },
+                },
+                "collapsible-down": {
+                    from: { height: 0 },
+                    to: { height: 'var(--radix-collapsible-content-height)' },
+                },
+                "collapsible-up": {
+                    from: { height: 'var(--radix-collapsible-content-height)' },
+                    to: { height: 0 },
+                },
             },
             animation: {
                 "ping-once": "ping 5s cubic-bezier(0, 0, 0.2, 1)",
@@ -254,6 +317,10 @@ export default {
                 "spin-1.5": "spin 1.5s linear infinite",
                 "spin-2": "spin 2s linear infinite",
                 "spin-3": "spin 3s linear infinite",
+                "accordion-down": "accordion-down 0.2s ease-out",
+                "accordion-up": "accordion-up 0.2s ease-out",
+                "collapsible-down": "collapsible-down 0.2s ease-in-out",
+                "collapsible-up": "collapsible-up 0.2s ease-in-out",
             },
         },
     },

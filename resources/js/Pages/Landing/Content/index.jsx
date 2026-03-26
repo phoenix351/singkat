@@ -9,6 +9,12 @@ const Content = () => {
             link: route("singkat"),
         },
         {
+            imagePath: route('index')+"/images/logo/MeetSulut-Zoom-Logo.png",
+            name: <span className="text-nowrap">MeetSulut</span>,
+            description: "Pengajuan dan Pengelolaan Zoom Meeting",
+            link: route("meeting.dashboard"),
+        },
+        {
             imagePath: route('index')+"/images/logo/Simple-Logo.png",
             name: <span className="text-nowrap">SIMPLE</span>,
             description: "Pengajuan dan Pengelolaan Lembur",
