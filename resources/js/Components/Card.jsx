@@ -1,22 +1,27 @@
 import { router } from "@inertiajs/react";
 
-const Card = ({ imagePath, name, description, link }) => {
+const Card = ({ imagePath, name, description, link, navMode }) => {
+    const handleClick = () => {
+        if (navMode == 'reload') {
+            window.location.href = link
+            return
+        }
+        router.get(
+            link,
+            {},
+            {
+                preserveState: true,
+            }
+        )
+    }
     return (
         <div
             className="w-full flex flex-col cursor-pointer bg-slate-100  shadow-slate-400 items-center dark:hover:text-slate-900 dark:bg-boxdark hover:bg-slate-100 dark:hover:bg-slate-100   rounded-xl p-2 py-4 md:hover:scale-110  transition ease-in-out delay-150"
-            onClick={() =>
-                router.get(
-                    link,
-                    {},
-                    {
-                        preserveState: true,
-                    }
-                )
-            }
+            onClick={handleClick}
         >
             <img
                 onError={(event) => {
-                    event.target.src = route('index')+"/images/logo/logo-bps.png";
+                    event.target.src = route('index') + "/images/logo/logo-bps.png";
                 }}
                 src={imagePath}
                 // src={"/images/logo-bps.png"}

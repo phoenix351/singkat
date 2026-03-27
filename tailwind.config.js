@@ -2,12 +2,14 @@ import defaultTheme from "tailwindcss/defaultTheme";
 import forms from "@tailwindcss/forms";
 
 /** @type {import('tailwindcss').Config} */
+const colors = require("tailwindcss/colors");
 export default {
     content: [
         "./vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php",
         "./storage/framework/views/*.php",
         "./resources/views/**/*.blade.php",
         "./resources/js/**/*.{ts,tsx,vue,jsx}",
+        "./node_modules/vue-tailwind-datepicker/**/*.js",
     ],
 
     darkMode: "class",
@@ -99,6 +101,8 @@ export default {
                     DEFAULT: "hsl(var(--card))",
                     foreground: "hsl(var(--card-foreground))",
                 },
+                "vtd-primary": colors.sky, // Light mode Datepicker color
+                "vtd-secondary": colors.gray, // Dark mode Datepicker color
             },
             fontSize: {
                 "title-xxl": ["44px", "55px"],
@@ -322,8 +326,9 @@ export default {
                 "collapsible-down": "collapsible-down 0.2s ease-in-out",
                 "collapsible-up": "collapsible-up 0.2s ease-in-out",
             },
+
         },
     },
 
-    plugins: [forms],
+    plugins: [forms, require("@tailwindcss/forms")],
 };

@@ -293,7 +293,6 @@ const props = defineProps({
     default: () => ({}),
   },
 });
-console.log(props);
 </script>
 
 <style scoped></style>

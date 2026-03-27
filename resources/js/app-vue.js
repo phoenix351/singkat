@@ -5,6 +5,7 @@ import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
+import VueTailwindDatepicker from "vue-tailwind-datepicker";
 
 // const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 const appName = 'MeetSulut';
@@ -20,6 +21,7 @@ createInertiaApp({
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
+            .use(VueTailwindDatepicker)
             .mount(el);
     },
     progress: {

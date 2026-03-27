@@ -41,7 +41,7 @@ class ZoomController extends Controller
             // dd($meeting, $invitation);
         }
 
-        return Inertia::render('Zoom/Index', [
+        return Inertia::render('Meeting/Index', [
             'user_meetings' => $user_meetings,
             'meeting' => $meeting ?? null,
             'invitation' => $invitation ?? null,
@@ -61,6 +61,7 @@ class ZoomController extends Controller
      */
     public function store(Request $request)
     {
+        dd($request);
         $type = 2;
         $start_date = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
         $end_date = null;
@@ -145,7 +146,7 @@ class ZoomController extends Controller
         }
 
         $start_time = date('Y-m-d\TH:i:s', strtotime($start_date . ' ' . $request->time . ' ' . $request->period));
-
+        
         if ($type == 8) {
             $meetings = Zoom::createMeeting([
                 "agenda" => $request->topic,

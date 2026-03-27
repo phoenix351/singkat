@@ -9,17 +9,17 @@ import { router } from "@inertiajs/vue3";
     <Link
       :href="route('meeting.dashboard')"
       class="text-sm font-medium transition-colors hover:text-primary"
-      :class="{ 'text-muted-foreground': !route().current('dashboard') }"
+      :class="{ 'text-muted-foreground': !route().current('meeting.dashboard') }"
     >
       Dashboard
     </Link>
-    <!-- <Link
-      :href="route('zoom.index')"
+    <Link
+      :href="route('meeting.index')"
       class="text-sm font-medium transition-colors hover:text-primary"
-      :class="{ 'text-muted-foreground': !route().current('zoom.index') }"
+      :class="{ 'text-muted-foreground': !route().current('meeting.index') }"
     >
       Pengajuan
-    </Link> -->
+    </Link>
     <!-- <a
             href="/examples/dashboard"
             class="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
