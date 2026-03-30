@@ -61,21 +61,25 @@ class ZoomController extends Controller
      */
     public function store(Request $request)
     {
-        dd($request);
         $type = 2;
-        $start_date = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
+        // $start_date = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
+        $start_date = $request->datepicker['startDate'];
         $end_date = null;
-        if ($request->end_date) {
-            $end_date = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
+        // if ($request->end_date) {
+        if ($request->input('datepicker.endDate')) {
+            // $end_date = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
+            $end_date = $request->datepicker['endDate'];
             $type = 8;
         }
 
-        if ($request->end_date) {
-            $start_date_string = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
-            $end_date_string = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
+        if ($request->input('datepicker.endDate')) {
+            // $start_date_string = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
+            // $end_date_string = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
 
-            $start_date = new \DateTime($start_date_string . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
-            $end_date = new \DateTime($end_date_string . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
+            // $start_date = new \DateTime($start_date_string . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
+            // $end_date = new \DateTime($end_date_string . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
+            $start_date = new \DateTime($start_date . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
+            $end_date = new \DateTime($end_date . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
 
             $start_date->setTimezone(new \DateTimeZone('UTC'));
             $end_date->setTimezone(new \DateTimeZone('UTC'));
@@ -103,7 +107,7 @@ class ZoomController extends Controller
                 }
 
                 if ($conflict_count >= 2) {
-                    return Redirect::route('zoom.index')->with('error', 'Gagal membuat meeting karena sudah ada 2 zoom meeting di waktu yang sama');
+                    return Redirect::route('meeting.index')->with('error', 'Gagal membuat meeting karena sudah ada 2 zoom meeting di waktu yang sama');
                 }
             }
         } else {
@@ -132,14 +136,16 @@ class ZoomController extends Controller
             }
 
             if ($conflict_count >= 2) {
-                return Redirect::route('zoom.index')->with('error', 'Gagal membuat meeting karena sudah ada 2 zoom meeting di waktu yang sama');
+                return Redirect::route('meeting.index')->with('error', 'Gagal membuat meeting karena sudah ada 2 zoom meeting di waktu yang sama');
             }
         }
 
-        $start_date = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
+        // $start_date = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
+        $start_date = $request->datepicker['startDate'];
         $recurrence = 0;
         if ($end_date !== null) {
-            $end_date = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
+            // $end_date = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
+            $end_date = $request->datepicker['endDate'];
             $start = strtotime($start_date);
             $end = strtotime($end_date);
             $recurrence = floor(($end - $start) / (60 * 60 * 24)) + 1;
@@ -208,9 +214,9 @@ class ZoomController extends Controller
             $meeting->period = $request->period;
             $meeting->duration = $request->duration;
             $meeting->save();
-            return Redirect::route('zoom.index')->with('success', 'Meeting telah dibuat');
+            return Redirect::route('meeting.index')->with('success', 'Meeting telah dibuat');
         } else {
-            return Redirect::route('zoom.index')->with('error', 'Gagal membuat meeting');
+            return Redirect::route('meeting.index')->with('error', 'Gagal membuat meeting');
         }
     }
 
@@ -248,9 +254,9 @@ class ZoomController extends Controller
         $delete = Zoom::deleteMeeting($id);
         if ($delete['status'] == true) {
             $meeting->delete();
-            return Redirect::route('zoom.index')->with('success', 'Meeting berhasil dihapus');
+            return Redirect::route('meeting.index')->with('success', 'Meeting berhasil dihapus');
         } else {
-            return Redirect::route('zoom.index')->with('error', 'Gagal menghapus meeting');
+            return Redirect::route('meeting.index')->with('error', 'Gagal menghapus meeting');
         }
     }
 }

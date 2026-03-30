@@ -39,7 +39,9 @@ Route::get('/api/jenis-sk', [SKController::class, 'fetchAll']);
 Route::get('/api/jenis-sk/{sk}', [SKController::class, 'fetchOne']);
 
 Route::get('/api/abk-summary', [AbkController::class, 'getAbkSummary']);
-
+Route::get('/token', function () {
+    return csrf_token();
+})->name('token');
 // Ekspor ABK
 
 require __DIR__ . '/auth.php';

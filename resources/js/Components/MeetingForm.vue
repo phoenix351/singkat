@@ -3,88 +3,89 @@ import { reactive, ref, watchEffect } from "vue";
 import { router } from "@inertiajs/vue3";
 import { Input } from "@/Components/ui/input";
 import {
-    CalendarDate,
-    type DateValue,
-    DateFormatter,
-    getLocalTimeZone,
-    today,
+  CalendarDate,
+  type DateValue,
+  DateFormatter,
+  getLocalTimeZone,
+  today,
 } from "@internationalized/date";
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
 } from "@/Components/ui/select";
 import { CalendarIcon } from "@radix-icons/vue";
 import { Label } from "@/Components/ui/label";
 import { RangeCalendar } from "@/Components/ui/range-calendar";
 import { Button } from "@/Components/ui/button";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/Components/ui/popover";
 import { cn } from "@/lib/utils";
 
 const df = new DateFormatter("id-ID", {
-    dateStyle: "long",
+  dateStyle: "long",
 });
 
 const placeholder = ref();
 
 const value = ref({
-    start: null,
-    end: null,
+  start: null,
+  end: null,
 }) as any;
 
 const currentDate = ref(today(getLocalTimeZone())) as any;
 
 const form = reactive({
-    topic: "",
-    datepicker: {
-        startDate: '',
-        endDate: '',
-    },
-    start_date: "",
-    end_date: "",
-    time: "",
-    period: "",
-    duration: "",
-    password: "",
-    participant: "",
-    host: "",
-    bidang: "",
+  _token: null,
+  topic: "",
+  datepicker: {
+    startDate: '',
+    endDate: '',
+  },
+  start_date: "",
+  end_date: "",
+  time: "",
+  period: "",
+  duration: "",
+  password: "",
+  participant: "",
+  host: "",
+  bidang: "",
 });
 
 watchEffect(() => {
-    form.start_date = value.value.start;
-    form.end_date = value.value.end;
+  form.start_date = value.value.start;
+  form.end_date = value.value.end;
 });
 
 const validateNumericInput = (event: any) => {
-    let value = event.target.value.replace(/[^0-9]/g, "");
-    if (value < 1) value = 1;
-    if (value > 100) value = 100;
-    event.target.value = value;
+  let value = event.target.value.replace(/[^0-9]/g, "");
+  if (value < 1) value = 1;
+  if (value > 100) value = 100;
+  event.target.value = value;
 };
 
 function submit() {
-    router.post(route('meeting.store'), form, {
-        preserveState: false,
-        preserveScroll: false,
-    });
+  router.post(route('meeting.store'), form, {
+    preserveState: false,
+    preserveScroll: false,
+  });
 }
 const formatter = ref({
-    date: 'YYYY-MM-DD',
-    month: 'MMM',
+  date: 'YYYY-MM-DD',
+  month: 'MMM',
 })
 const recurring = ref(true)
 const changeRecurring = () => {
-    form.datepicker = { startDate: null, endDate: null }
-    recurring.value = !recurring.value
+  form.datepicker = { startDate: null, endDate: null }
+  recurring.value = !recurring.value
 }
 </script>
 
