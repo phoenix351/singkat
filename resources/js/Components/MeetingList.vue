@@ -22,9 +22,9 @@ const props = defineProps({
 const { toast } = useToast();
 
 function edit_meeting(id: number) {
-  toast({
-    title: "Pengumuman",
-    description: "Mohon maaf, fitur ini masih dalam pengembangan.",
+  router.get(route("meeting.update", id), {
+    preserveState: true,
+    preserveScroll: true,
   });
 }
 
@@ -86,7 +86,6 @@ function delete_meeting(id: number) {
               strokeWidth="2"
               class="h-4 w-4 text-muted-foreground"
             >
-              <!-- <path fill="none" d="M0 0h24v24H0z" /> -->
               <path
                 d="M12.809,238.52L0,306.637l68.118-12.809l184.277-184.277l-55.309-55.309L12.809,238.52z M60.79,279.943l-41.992,7.896
 			l7.896-41.992L197.086,75.455l34.096,34.096L60.79,279.943z"
@@ -97,7 +96,7 @@ function delete_meeting(id: number) {
               />
             </svg>
           </button>
-          <button class="mr-2" @click="view_meeting(meeting.meeting_id)">
+          <!-- <button class="mr-2" @click="view_meeting(meeting.meeting_id)">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 32 32"
@@ -107,12 +106,11 @@ function delete_meeting(id: number) {
               strokeWidth="2"
               class="h-4 w-4 text-muted-foreground"
             >
-              <!-- <path fill="none" d="M0 0h24v24H0z" /> -->
               <path
                 d="M0 16q0.064 0.128 0.16 0.352t0.48 0.928 0.832 1.344 1.248 1.536 1.664 1.696 2.144 1.568 2.624 1.344 3.136 0.896 3.712 0.352 3.712-0.352 3.168-0.928 2.592-1.312 2.144-1.6 1.664-1.632 1.248-1.6 0.832-1.312 0.48-0.928l0.16-0.352q-0.032-0.128-0.16-0.352t-0.48-0.896-0.832-1.344-1.248-1.568-1.664-1.664-2.144-1.568-2.624-1.344-3.136-0.896-3.712-0.352-3.712 0.352-3.168 0.896-2.592 1.344-2.144 1.568-1.664 1.664-1.248 1.568-0.832 1.344-0.48 0.928zM10.016 16q0-2.464 1.728-4.224t4.256-1.76 4.256 1.76 1.76 4.224-1.76 4.256-4.256 1.76-4.256-1.76-1.728-4.256zM12 16q0 1.664 1.184 2.848t2.816 1.152 2.816-1.152 1.184-2.848-1.184-2.816-2.816-1.184-2.816 1.184l2.816 2.816h-4z"
               ></path>
             </svg>
-          </button>
+          </button> -->
           <button @click="delete_meeting(meeting.meeting_id)">
             <svg
               xmlns="http://www.w3.org/2000/svg"

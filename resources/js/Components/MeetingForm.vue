@@ -1,34 +1,31 @@
 <script setup lang="ts">
-import { reactive, ref, watchEffect } from "vue";
+import { onMounted, reactive, ref, watchEffect } from "vue";
 import { router } from "@inertiajs/vue3";
 import { Input } from "@/Components/ui/input";
-import {
-  CalendarDate,
-  type DateValue,
-  DateFormatter,
-  getLocalTimeZone,
-  today,
-} from "@internationalized/date";
+import { DateFormatter, getLocalTimeZone, today } from "@internationalized/date";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/Components/ui/select";
-import { CalendarIcon } from "@radix-icons/vue";
 import { Label } from "@/Components/ui/label";
-import { RangeCalendar } from "@/Components/ui/range-calendar";
 import { Button } from "@/Components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/Components/ui/popover";
-import { cn } from "@/lib/utils";
 
+const props = defineProps({
+  meeting: {
+    type: Object,
+    default: () => ({}),
+    required: false,
+  },
+  meeting_zoom: {
+    type: Object,
+    default: () => ({}),
+    required: false,
+  },
+});
 const df = new DateFormatter("id-ID", {
   dateStyle: "long",
 });
@@ -44,20 +41,21 @@ const currentDate = ref(today(getLocalTimeZone())) as any;
 
 const form = reactive({
   _token: null,
-  topic: "",
+  meeting_id: props?.meeting?.meeting_id || null,
+  topic: props?.meeting?.topic || "",
   datepicker: {
-    startDate: '',
-    endDate: '',
+    startDate: props?.meeting?.start_date || "",
+    endDate: props?.meeting?.end_date || "",
   },
   start_date: "",
   end_date: "",
-  time: "",
-  period: "",
-  duration: "",
-  password: "",
-  participant: "",
-  host: "",
-  bidang: "",
+  time: props?.meeting?.time || "",
+  period: props?.meeting?.period || "",
+  duration: props?.meeting?.duration || "",
+  password: props?.meeting_zoom?.password || "",
+  participant: props?.meeting?.jumlah_peserta || "",
+  host: props?.meeting?.co_host || "",
+  bidang: props?.meeting?.bidang || "",
 });
 
 watchEffect(() => {
@@ -73,20 +71,32 @@ const validateNumericInput = (event: any) => {
 };
 
 function submit() {
-  router.post(route('meeting.store'), form, {
+  if (form.meeting_id) {
+    router.patch(route("meeting.update-meeting", { id: form.meeting_id }), form, {
+      preserveState: false,
+      preserveScroll: false,
+    });
+    return;
+  }
+  router.post(route("meeting.store"), form, {
     preserveState: false,
     preserveScroll: false,
   });
 }
 const formatter = ref({
-  date: 'YYYY-MM-DD',
-  month: 'MMM',
-})
-const recurring = ref(true)
+  date: "YYYY-MM-DD",
+  month: "MMM",
+});
+const recurring = ref(true);
 const changeRecurring = () => {
-  form.datepicker = { startDate: null, endDate: null }
-  recurring.value = !recurring.value
-}
+  form.datepicker = { startDate: null, endDate: null };
+  recurring.value = !recurring.value;
+};
+onMounted(() => {
+  if (props?.meeting?.end_date) {
+    recurring.value = true;
+  } else recurring.value = false;
+});
 </script>
 
 <template>
