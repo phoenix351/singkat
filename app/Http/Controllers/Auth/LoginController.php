@@ -17,11 +17,11 @@ class LoginController extends Controller
     {
         $request->session()->put('state', $state = Str::random(40));
         $query = http_build_query([
-            'client_id' => env("SSO_CLIENT_ID"),
-            'client_secret' => env("SSO_CLIENT_SECRET"),
+            'client_id' => config("services.sso.client_id"),
+            'client_secret' => config("services.sso.client_secret"),
             // 'realm' => 'pegawai-bps',
             'scope' => 'profile-pegawai email',
-            'redirect_uri' => env("SSO_REDIRECT_URI"),
+            'redirect_uri' => config("services.sso.redirect_uri"),
             'response_type' => 'code',
             'state' => $state,
             'approval_prompt' => 'auto',
@@ -48,9 +48,9 @@ class LoginController extends Controller
 
         $response = Http::asForm()->post('https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/token', [
             'grant_type' => 'authorization_code',
-            'client_id' => env("SSO_CLIENT_ID"),
-            'client_secret' => env("SSO_CLIENT_SECRET"),
-            'redirect_uri' => env("SSO_REDIRECT_URI"),
+            'client_id' => config("services.sso.client_id"),
+            'client_secret' => config("services.sso.client_secret"),
+            'redirect_uri' => config("services.sso.redirect_uri"),
             'code_verifier' => $codeVerifier,
             'code' => $request->code,
         ]);
