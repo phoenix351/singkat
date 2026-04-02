@@ -13,6 +13,7 @@ import {
 } from "@/lib/registry/new-york/ui/dropdown-menu";
 import { computed, ref } from "vue";
 import { usePage, Link, router } from "@inertiajs/vue3";
+import axios from "axios";
 const page = usePage();
 
 const user = ref(page.props.auth.user);
@@ -28,9 +29,13 @@ const userInitials = computed(() => {
   }
   return "";
 });
-const meetingLogout = () => {
+const meetingLogout = async () => {
+  const { data } = await axios.get(route("api.token.csrf"));
   router.visit(route("logout"), {
     method: "post",
+    data: {
+      _token: data,
+    },
   });
 };
 </script>

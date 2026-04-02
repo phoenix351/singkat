@@ -11,6 +11,7 @@ import {
 import { router } from "@inertiajs/vue3";
 import { useToast } from "@/Components/ui/toast/use-toast";
 import { Toaster } from "@/Components/ui/toast";
+import axios from "axios";
 
 const props = defineProps({
   user_meetings: {
@@ -35,8 +36,12 @@ function view_meeting(id: number) {
   });
 }
 
-function delete_meeting(id: number) {
+async function delete_meeting(id: number) {
+  const { data } = await axios.get(route("api.token.csrf"));
   router.delete(route("meeting.destroy", id), {
+    data: {
+      _token: data,
+    },
     onBefore: () => confirm("Are you sure you want to delete this meeting?"),
     preserveState: false,
     preserveScroll: false,
