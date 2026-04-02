@@ -37,8 +37,8 @@ class ZoomController extends Controller
 
         if ($id !== null) {
             $meeting = Zoom::getMeeting($id);
-            $invitation = Zoom::getMeetingInvitation($id);
-            // dd($meeting, $invitation);
+            // dd($meeting);
+            // $invitation = Zoom::getMeetingInvitation($id);
         }
 
         return Inertia::render('Meeting/Index', [
@@ -62,22 +62,14 @@ class ZoomController extends Controller
     public function store(Request $request)
     {
         $type = 2;
-        // $start_date = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
         $start_date = $request->datepicker['startDate'];
         $end_date = null;
-        // if ($request->end_date) {
         if ($request->input('datepicker.endDate')) {
-            // $end_date = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
             $end_date = $request->datepicker['endDate'];
             $type = 8;
         }
 
         if ($request->input('datepicker.endDate')) {
-            // $start_date_string = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
-            // $end_date_string = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
-
-            // $start_date = new \DateTime($start_date_string . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
-            // $end_date = new \DateTime($end_date_string . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
             $start_date = new \DateTime($start_date . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
             $end_date = new \DateTime($end_date . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
 
@@ -101,7 +93,8 @@ class ZoomController extends Controller
 
                     if (($start_time >= $meeting_start_time && $start_time < $meeting_end_time) ||
                         ($end_time > $meeting_start_time && $end_time <= $meeting_end_time) ||
-                        ($start_time <= $meeting_start_time && $end_time >= $meeting_end_time)) {
+                        ($start_time <= $meeting_start_time && $end_time >= $meeting_end_time)
+                    ) {
                         $conflict_count++;
                     }
                 }
@@ -130,7 +123,8 @@ class ZoomController extends Controller
 
                 if (($start_time >= $meeting_start_time && $start_time < $meeting_end_time) ||
                     ($end_time > $meeting_start_time && $end_time <= $meeting_end_time) ||
-                    ($start_time <= $meeting_start_time && $end_time >= $meeting_end_time)) {
+                    ($start_time <= $meeting_start_time && $end_time >= $meeting_end_time)
+                ) {
                     $conflict_count++;
                 }
             }
@@ -140,11 +134,9 @@ class ZoomController extends Controller
             }
         }
 
-        // $start_date = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
         $start_date = $request->datepicker['startDate'];
         $recurrence = 0;
         if ($end_date !== null) {
-            // $end_date = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
             $end_date = $request->datepicker['endDate'];
             $start = strtotime($start_date);
             $end = strtotime($end_date);
@@ -152,7 +144,7 @@ class ZoomController extends Controller
         }
 
         $start_time = date('Y-m-d\TH:i:s', strtotime($start_date . ' ' . $request->time . ' ' . $request->period));
-        
+
         if ($type == 8) {
             $meetings = Zoom::createMeeting([
                 "agenda" => $request->topic,
@@ -246,21 +238,104 @@ class ZoomController extends Controller
         if ($request->isMethod('patch')) {
             $meeting_id = $request->input('meeting_id');
             if (!$meeting_id) return Redirect::route('meeting.index')->with('error', 'Gagal update meeting');
-            $payload = $this->preparationToStore($request);
             $meetings = ['status' => false];
-            if ($payload['type'] == 8) {
+            $type = 2;
+            $start_date = $request->datepicker['startDate'];
+            $end_date = null;
+            if ($request->input('datepicker.endDate')) {
+                $end_date = $request->datepicker['endDate'];
+                $type = 8;
+            }
+
+            if ($request->input('datepicker.endDate')) {
+                $start_date = new \DateTime($start_date . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
+                $end_date = new \DateTime($end_date . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
+
+                $start_date->setTimezone(new \DateTimeZone('UTC'));
+                $end_date->setTimezone(new \DateTimeZone('UTC'));
+
+                $upcoming_meetings = Zoom::getUpcomingMeeting();
+
+                for ($date = clone $start_date; $date <= $end_date; $date->modify('+1 day')) {
+                    $start_time = $date->format('Y-m-d\TH:i:s');
+                    $end_time = (clone $date)->modify('+' . $request->duration * 60 . ' minutes')->format('Y-m-d\TH:i:s');
+
+                    $conflict_count = 0;
+
+                    foreach ($upcoming_meetings['data']['meetings'] as $meeting) {
+                        $meeting_start_time = new \DateTime($meeting['start_time'], new \DateTimeZone('UTC'));
+                        $meeting_start_time = $meeting_start_time->format('Y-m-d\TH:i:s');
+
+                        $meeting_end_time = new \DateTime($meeting_start_time . ' + ' . $meeting['duration'] . ' minutes', new \DateTimeZone('UTC'));
+                        $meeting_end_time = $meeting_end_time->format('Y-m-d\TH:i:s');
+
+                        if (($start_time >= $meeting_start_time && $start_time < $meeting_end_time) ||
+                            ($end_time > $meeting_start_time && $end_time <= $meeting_end_time) ||
+                            ($start_time <= $meeting_start_time && $end_time >= $meeting_end_time)
+                        ) {
+                            $conflict_count++;
+                        }
+                    }
+
+                    if ($conflict_count >= 2) {
+                        return Redirect::route('meeting.index')->with('error', 'Gagal membuat meeting karena sudah ada 2 zoom meeting di waktu yang sama');
+                    }
+                }
+            } else {
+                $start_time_dt = new \DateTime($start_date . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
+                $start_time_dt->setTimezone(new \DateTimeZone('UTC'));
+                $start_time = $start_time_dt->format('Y-m-d\TH:i:s');
+
+                $end_time_dt = new \DateTime($start_time . ' + ' . $request->duration * 60 . ' minutes', new \DateTimeZone('UTC'));
+                $end_time = $end_time_dt->format('Y-m-d\TH:i:s');
+
+                $upcoming_meetings = Zoom::getUpcomingMeeting();
+                $conflict_count = 0;
+
+                foreach ($upcoming_meetings['data']['meetings'] as $meeting) {
+                    $meeting_start_time = new \DateTime($meeting['start_time'], new \DateTimeZone('UTC'));
+                    $meeting_start_time = $meeting_start_time->format('Y-m-d\TH:i:s');
+
+                    $meeting_end_time = new \DateTime($meeting_start_time . ' + ' . $meeting['duration'] . ' minutes', new \DateTimeZone('UTC'));
+                    $meeting_end_time = $meeting_end_time->format('Y-m-d\TH:i:s');
+
+                    if (($start_time >= $meeting_start_time && $start_time < $meeting_end_time) ||
+                        ($end_time > $meeting_start_time && $end_time <= $meeting_end_time) ||
+                        ($start_time <= $meeting_start_time && $end_time >= $meeting_end_time)
+                    ) {
+                        $conflict_count++;
+                    }
+                }
+
+                if ($conflict_count >= 2) {
+                    return Redirect::route('meeting.index')->with('error', 'Gagal membuat meeting karena sudah ada 2 zoom meeting di waktu yang sama');
+                }
+            }
+
+            $start_date = $request->datepicker['startDate'];
+            $recurrence = 0;
+            if ($end_date !== null) {
+                $end_date = $request->datepicker['endDate'];
+                $start = strtotime($start_date);
+                $end = strtotime($end_date);
+                $recurrence = floor(($end - $start) / (60 * 60 * 24)) + 1;
+            }
+
+            $start_time = date('Y-m-d\TH:i:s', strtotime($start_date . ' ' . $request->time . ' ' . $request->period));
+
+            if ($type == 8) {
                 $meetings = Zoom::updateMeeting($meeting_id, [
                     "agenda" => $request->topic,
                     "topic" => $request->topic,
-                    "type" => $payload['type'],
+                    "type" => $type,
                     "duration" => $request->duration * 60,
                     "password" => $request->password,
                     "timezone" => 'Asia/Singapore',
-                    "start_time" => $payload['start_time'],
+                    "start_time" => $start_time,
                     "recurrence" => [
                         'type' => 1,
                         'repeat_interval' => 1,
-                        'end_times' => $payload['recurrence'],
+                        'end_times' => $recurrence,
                     ],
                     "settings" => [
                         'join_before_host' => true,
@@ -277,11 +352,11 @@ class ZoomController extends Controller
                 $meetings = Zoom::updateMeeting($meeting_id, [
                     "agenda" => $request->topic,
                     "topic" => $request->topic,
-                    "type" => $payload['type'],
+                    "type" => $type,
                     "duration" => $request->duration * 60,
                     "password" => $request->password,
                     "timezone" => 'Asia/Singapore',
-                    "start_time" => $payload['start_time'],
+                    "start_time" => $start_time,
                     "settings" => [
                         'join_before_host' => true,
                         'host_video' => false,
@@ -296,20 +371,18 @@ class ZoomController extends Controller
             }
 
             if ($meetings['status'] == true) {
-                $meeting = new ZoomModel();
-                $meeting->user_id = Auth::user()->id;
-                $meeting->meeting_id = $meetings['data']['id'];
-                $meeting->topic = $meetings['data']['topic'];
+                $meeting = ZoomModel::where('meeting_id', $meeting_id)->first();
+                $meeting->topic = $request->topic;
                 $meeting->jumlah_peserta = $request->participant;
                 $meeting->bidang = $request->bidang;
                 $meeting->co_host = $request->host;
-                $meeting->start_date = $payload['start_date'];
-                $meeting->end_date = $payload['end_date'];
+                $meeting->start_date = $start_date;
+                $meeting->end_date = $end_date;
                 $meeting->time = $request->time;
                 $meeting->period = $request->period;
                 $meeting->duration = $request->duration;
                 $meeting->save();
-                return Redirect::route('meeting.update', ['id' => $meeting_id])->with('success', 'Meeting sudah diupdate');
+                return Redirect::route('meeting.index')->with('success', 'Meeting sudah diupdate');
             } else {
                 return Redirect::route('meeting.update', ['id' => $meeting_id])->with('error', 'Gagal update meeting');
             }
@@ -339,109 +412,5 @@ class ZoomController extends Controller
         } else {
             return Redirect::route('meeting.index')->with('error', 'Gagal menghapus meeting');
         }
-    }
-
-    private function preparationToStore(Object $request)
-    {
-        $type = 2;
-        // $start_date = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
-        $start_date = $request->datepicker['startDate'];
-        $end_date = null;
-        // if ($request->end_date) {
-        if ($request->input('datepicker.endDate')) {
-            // $end_date = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
-            $end_date = $request->datepicker['endDate'];
-            $type = 8;
-        }
-
-        if ($request->input('datepicker.endDate')) {
-            // $start_date_string = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
-            // $end_date_string = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
-
-            // $start_date = new \DateTime($start_date_string . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
-            // $end_date = new \DateTime($end_date_string . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
-            $start_date = new \DateTime($start_date . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
-            $end_date = new \DateTime($end_date . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
-
-            $start_date->setTimezone(new \DateTimeZone('UTC'));
-            $end_date->setTimezone(new \DateTimeZone('UTC'));
-
-            $upcoming_meetings = Zoom::getUpcomingMeeting();
-
-            for ($date = clone $start_date; $date <= $end_date; $date->modify('+1 day')) {
-                $start_time = $date->format('Y-m-d\TH:i:s');
-                $end_time = (clone $date)->modify('+' . $request->duration * 60 . ' minutes')->format('Y-m-d\TH:i:s');
-
-                $conflict_count = 0;
-
-                foreach ($upcoming_meetings['data']['meetings'] as $meeting) {
-                    $meeting_start_time = new \DateTime($meeting['start_time'], new \DateTimeZone('UTC'));
-                    $meeting_start_time = $meeting_start_time->format('Y-m-d\TH:i:s');
-
-                    $meeting_end_time = new \DateTime($meeting_start_time . ' + ' . $meeting['duration'] . ' minutes', new \DateTimeZone('UTC'));
-                    $meeting_end_time = $meeting_end_time->format('Y-m-d\TH:i:s');
-
-                    if (($start_time >= $meeting_start_time && $start_time < $meeting_end_time) ||
-                        ($end_time > $meeting_start_time && $end_time <= $meeting_end_time) ||
-                        ($start_time <= $meeting_start_time && $end_time >= $meeting_end_time)
-                    ) {
-                        $conflict_count++;
-                    }
-                }
-
-                if ($conflict_count >= 2) {
-                    return Redirect::route('meeting.index')->with('error', 'Gagal membuat meeting karena sudah ada 2 zoom meeting di waktu yang sama');
-                }
-            }
-        } else {
-            $start_time_dt = new \DateTime($start_date . ' ' . $request->time . ' ' . $request->period, new \DateTimeZone('Asia/Singapore'));
-            $start_time_dt->setTimezone(new \DateTimeZone('UTC'));
-            $start_time = $start_time_dt->format('Y-m-d\TH:i:s');
-
-            $end_time_dt = new \DateTime($start_time . ' + ' . $request->duration * 60 . ' minutes', new \DateTimeZone('UTC'));
-            $end_time = $end_time_dt->format('Y-m-d\TH:i:s');
-
-            $upcoming_meetings = Zoom::getUpcomingMeeting();
-            $conflict_count = 0;
-
-            foreach ($upcoming_meetings['data']['meetings'] as $meeting) {
-                $meeting_start_time = new \DateTime($meeting['start_time'], new \DateTimeZone('UTC'));
-                $meeting_start_time = $meeting_start_time->format('Y-m-d\TH:i:s');
-
-                $meeting_end_time = new \DateTime($meeting_start_time . ' + ' . $meeting['duration'] . ' minutes', new \DateTimeZone('UTC'));
-                $meeting_end_time = $meeting_end_time->format('Y-m-d\TH:i:s');
-
-                if (($start_time >= $meeting_start_time && $start_time < $meeting_end_time) ||
-                    ($end_time > $meeting_start_time && $end_time <= $meeting_end_time) ||
-                    ($start_time <= $meeting_start_time && $end_time >= $meeting_end_time)
-                ) {
-                    $conflict_count++;
-                }
-            }
-
-            if ($conflict_count >= 2) {
-                return Redirect::route('meeting.index')->with('error', 'Gagal membuat meeting karena sudah ada 2 zoom meeting di waktu yang sama');
-            }
-        }
-
-        // $start_date = $request->start_date['year'] . '-' . $request->start_date['month'] . '-' . $request->start_date['day'];
-        $start_date = $request->datepicker['startDate'];
-        $recurrence = 0;
-        if ($end_date !== null) {
-            // $end_date = $request->end_date['year'] . '-' . $request->end_date['month'] . '-' . $request->end_date['day'];
-            $end_date = $request->datepicker['endDate'];
-            $start = strtotime($start_date);
-            $end = strtotime($end_date);
-            $recurrence = floor(($end - $start) / (60 * 60 * 24)) + 1;
-        }
-
-        $start_time = date('Y-m-d\TH:i:s', strtotime($start_date . ' ' . $request->time . ' ' . $request->period));
-        return [
-            'type' => $type,
-            'start_time' => $start_time,
-            'start_date' => $start_date,
-            'end_date' => $end_date,
-            'recurrence' => $recurrence,
-        ];
     }
 }

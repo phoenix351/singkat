@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/lib/registry/new-york/ui/dropdown-menu";
 import { computed, ref } from "vue";
-import { usePage, Link } from "@inertiajs/vue3";
+import { usePage, Link, router } from "@inertiajs/vue3";
 const page = usePage();
 
 const user = ref(page.props.auth.user);
@@ -28,6 +28,11 @@ const userInitials = computed(() => {
   }
   return "";
 });
+const meetingLogout = () => {
+  router.visit(route("logout"), {
+    method: "post",
+  });
+};
 </script>
 
 <template>
@@ -69,7 +74,7 @@ const userInitials = computed(() => {
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
       <DropdownMenuItem>
-        <Link :href="route('logout')" method="post" as="button"> Log out </Link>
+        <div @click="meetingLogout" as="button">Log out</div>
       </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
