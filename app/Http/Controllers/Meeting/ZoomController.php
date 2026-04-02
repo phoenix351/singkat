@@ -18,7 +18,7 @@ class ZoomController extends Controller
         $upcoming_meetings = Zoom::getUpcomingMeeting();
         $previous_meetings = Zoom::getPreviousMeeting();
         $live_meetings = Zoom::getLiveMeeting();
-        $all_meetings = Zoom::getAllMeeting();
+        $all_meetings = Zoom::getAllMeeting(300);
 
         $meetings = ZoomModel::with('user')->orderBy('created_at', 'desc')->get();
 
@@ -195,7 +195,7 @@ class ZoomController extends Controller
         if ($meetings['status'] == true) {
             $meeting = new ZoomModel();
             $meeting->user_id = Auth::user()->id;
-            $meeting->meeting_id = $meetings['data']['id'];
+            $meeting->meeting_id = (string) $meetings['data']['id'];
             $meeting->topic = $meetings['data']['topic'];
             $meeting->jumlah_peserta = $request->participant;
             $meeting->bidang = $request->bidang;
