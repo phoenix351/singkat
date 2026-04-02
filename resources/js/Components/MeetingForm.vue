@@ -13,6 +13,7 @@ import {
 } from "@/Components/ui/select";
 import { Label } from "@/Components/ui/label";
 import { Button } from "@/Components/ui/button";
+import axios from "axios";
 
 const props = defineProps({
   meeting: {
@@ -70,7 +71,9 @@ const validateNumericInput = (event: any) => {
   event.target.value = value;
 };
 
-function submit() {
+async function submit() {
+  const { data } = await axios.get(route("api.token.csrf"));
+  form._token = data;
   if (form.meeting_id) {
     router.patch(route("meeting.update-meeting", { id: form.meeting_id }), form, {
       preserveState: false,

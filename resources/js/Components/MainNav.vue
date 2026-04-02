@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { cn } from "@/lib/utils";
 import { Link } from "@inertiajs/vue3";
-import { router } from "@inertiajs/vue3";
 </script>
 
 <template>
@@ -9,7 +8,10 @@ import { router } from "@inertiajs/vue3";
     <Link
       :href="route('meeting.dashboard')"
       class="text-sm font-medium transition-colors hover:text-primary"
-      :class="{ 'text-muted-foreground': !route().current('meeting.dashboard') }"
+      :class="{
+        'text-muted-foreground':
+          !route().current('meeting.dashboard') && !route().current('meeting.home'),
+      }"
     >
       Dashboard
     </Link>
