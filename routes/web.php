@@ -48,3 +48,4 @@ require __DIR__ . '/auth.php';
 require __DIR__ .'/singkat.php';
 require __DIR__ .'/simple.php';
 require __DIR__ . '/meeting.php';
+require __DIR__ . '/mmanagement.php';
