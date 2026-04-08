@@ -1,49 +1,56 @@
 <template>
   <Head title="Home" />
-  <GeneralLayout>
+  <AppLayout>
     <div class="mb-2 flex flex-wrap items-center justify-between">
       <div class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0">
-        Daftar Pegawai
+        Daftar Pengguna
       </div>
       <div class="flex items-center w-full md:w-full lg:w-auto">
-        <button
-          class="btn-manment bg-[#1d845b] text-[whitesmoke] mr-2 mb-2 lg:mb-0"
-          title="Download"
-        >
-          <font-awesome-icon icon="fa-solid fa-circle-down" />
-        </button>
-        <button
-          @click="uploadPegawai"
-          class="btn-manment bg-[#2754ce] text-[whitesmoke] mb-2 lg:mb-0"
-        >
-          <font-awesome-icon icon="fa-solid fa-plus" /> Tambah Pegawai Baru
-        </button>
+        <Button
+          icon="pi pi-download"
+          rounded
+          aria-label="Download"
+          severity="success"
+          class="mr-2 mb-2 lg:mb-0"
+        />
+        <Button severity="info" rounded class="mb-2 lg:mb-0">
+          <i class="pi pi-plus"></i>
+          Tambah Pengguna Baru
+        </Button>
       </div>
     </div>
-  </GeneralLayout>
+    <div class="card">
+      <DataTable :value="pegawai" class="w-full" paginator :rows="10">
+        <Column field="nip_lama" header="NIP Lama" sortable />
+      </DataTable>
+    </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { Head } from "@inertiajs/vue3";
-import GeneralLayout from "@/Layouts/ManManagement/GeneralLayout.vue";
+import AppLayout from "@/Layouts/ManManagement/AppLayout.vue";
 
+const props = defineProps({
+  pegawai: {
+    type: Array,
+  },
+});
 const uploadPegawai = async () => {
   const { data } = await axios.get(route("man-management.get-current-pegawai"));
-  if (data) {
-    for (const n of data) {
-      const { data: check, status: status } = await axios.get(
-        route("man-management.check-pegawai", n)
-      );
-      if (check?.message == "not found") {
-        await axios
-          .post(route("man-management.upload-pegawai"), {
-            nip: n,
-          })
-          .then((response) => {
-            console.log(response);
-          });
-        console.log(n);
-      } else continue;
+  const { data: check } = await axios.get(route("man-management.check-pegawai"));
+  const setCheck = new Set(check);
+  const toUpload = data.filter((item) => !setCheck.has(item));
+  if (toUpload.length > 0) {
+    for (const n of toUpload) {
+      await axios
+        .post(route("man-management.upload-pegawai"), {
+          nip: n,
+        })
+        .then((response) => {
+          console.log(response);
+        });
+      console.log(n);
     }
   }
 };

@@ -17,10 +17,9 @@ class PegawaiController extends Controller
         return response()->json($pegawai);
     }
 
-    public function checkPegawai(String $nip)
+    public function checkPegawai()
     {
-        $pegawai = ManManagementPegawai::where('nip_lama', $nip)->first();
-        if (!$pegawai) return response()->json(['message' => 'not found']);
+        $pegawai = ManManagementPegawai::pluck('nip_lama')->unique()->toArray();
         return response()->json($pegawai);
     }
 

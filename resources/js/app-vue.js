@@ -1,5 +1,5 @@
 import "./bootstrap";
-import "../css/app.css";
+// import "../css/app.css";
 import "@fontsource/poppins/400.css";
 import "@fontsource/poppins/500.css";
 import "@fontsource/poppins/600.css";
@@ -9,177 +9,17 @@ import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
-import VueTailwindDatepicker from "vue-tailwind-datepicker";
-import { library, config } from "@fortawesome/fontawesome-svg-core";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { faSearchengin } from "@fortawesome/free-brands-svg-icons";
-import {
-    faAngleLeft,
-    faAngleUp,
-    faAngleDown,
-    faArrowsToDot,
-    faArrowTrendUp,
-    faArrowTrendDown,
-    faBan,
-    faBars,
-    faBarsStaggered,
-    faMoneyBillTrendUp,
-    faBook,
-    faBookBookmark,
-    faBuilding,
-    faBuildingCircleCheck,
-    faCheck,
-    faChartPie,
-    faChartLine,
-    faCheckDouble,
-    faChevronLeft,
-    faChevronUp,
-    faChevronDown,
-    faCircle,
-    faCircleChevronLeft,
-    faCircleDown,
-    faCircleXmark,
-    faComputer,
-    faCoins,
-    faCopy,
-    faDiagramSuccessor,
-    faDiceD6,
-    faDisplay,
-    faEye,
-    faEyeSlash,
-    faFile,
-    faFileCircleQuestion,
-    faFlagCheckered,
-    faGraduationCap,
-    faHome,
-    faIndustry,
-    faHourglassHalf,
-    faKey,
-    faList,
-    faListOl,
-    faLock,
-    faMagnifyingGlass,
-    faMagnifyingGlassChart,
-    faMeteor,
-    faMicrochip,
-    faPaperPlane,
-    faPercent,
-    faPen,
-    faPenNib,
-    faPencil,
-    faPlus,
-    faPlusCircle,
-    faRecycle,
-    faRightToBracket,
-    faRotateLeft,
-    faRotateRight,
-    faSave,
-    faScrewdriverWrench,
-    faServer,
-    faSignOutAlt,
-    faSort,
-    faSquarePen,
-    faStar,
-    faSunPlantWilt,
-    faTable,
-    faTachometerAlt,
-    faTags,
-    faThList,
-    faTrashCan,
-    faUser,
-    faUserTie,
-    faUsers,
-    faXmark
-} from "@fortawesome/free-solid-svg-icons";
-library.add(
-    faAngleLeft,
-    faAngleUp,
-    faAngleDown,
-    faArrowsToDot,
-    faArrowTrendUp,
-    faArrowTrendDown,
-    faBan,
-    faBars,
-    faBarsStaggered,
-    faMoneyBillTrendUp,
-    faBook,
-    faBookBookmark,
-    faBuilding,
-    faBuildingCircleCheck,
-    faCheck,
-    faChartPie,
-    faChartLine,
-    faCheckDouble,
-    faChevronLeft,
-    faChevronUp,
-    faChevronDown,
-    faCircle,
-    faCircleChevronLeft,
-    faCircleDown,
-    faCircleXmark,
-    faComputer,
-    faCoins,
-    faCopy,
-    faDiagramSuccessor,
-    faDiceD6,
-    faDisplay,
-    faEye,
-    faEyeSlash,
-    faFile,
-    faFileCircleQuestion,
-    faFlagCheckered,
-    faGraduationCap,
-    faHome,
-    faIndustry,
-    faHourglassHalf,
-    faKey,
-    faList,
-    faListOl,
-    faLock,
-    faMagnifyingGlass,
-    faMagnifyingGlassChart,
-    faMeteor,
-    faMicrochip,
-    faPaperPlane,
-    faPercent,
-    faPen,
-    faPenNib,
-    faPencil,
-    faPlus,
-    faPlusCircle,
-    faRecycle,
-    faRightToBracket,
-    faRotateLeft,
-    faRotateRight,
-    faSave,
-    faScrewdriverWrench,
-    faServer,
-    faSignOutAlt,
-    faSort,
-    faSquarePen,
-    faStar,
-    faSunPlantWilt,
-    faSearchengin,
-    faTable,
-    faTachometerAlt,
-    faTags,
-    faThList,
-    faTrashCan,
-    faUser,
-    faUserTie,
-    faUsers,
-    faXmark
-);
-config.autoAddCss = false;
 
 // const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 // const appName = 'MeetSulut';
-
-const setNameApp = () => {
+const getPrefix = () => {
     const currentRoute = route().current()
     const prefix = currentRoute.split('.')[0]
+    return prefix
+}
+const setNameApp = () => {
     let result = 'superapp'
-    switch (prefix) {
+    switch (getPrefix()) {
         case 'man-management':
             result = 'ManMent'
             break;
@@ -193,10 +33,8 @@ const setNameApp = () => {
     return result;
 }
 const colornProgress = () => {
-    const currentRoute = route().current()
-    const prefix = currentRoute.split('.')[0]
     let result = "#4B5563"
-    switch (prefix) {
+    switch (getPrefix()) {
         case 'man-management':
             result = "#8B1E3F"
             break;
@@ -216,12 +54,42 @@ createInertiaApp({
             `./Pages/${name}.vue`,
             import.meta.glob("./Pages/**/*.vue")
         ),
-    setup({ el, App, props, plugin }) {
+    async setup({ el, App, props, plugin }) {
         const vueApp = createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(ZiggyVue)
-            .use(VueTailwindDatepicker)
-            .component("font-awesome-icon", FontAwesomeIcon)
+        const prefix = getPrefix()
+        vueApp.use(plugin)
+        vueApp.use(ZiggyVue)
+        if (prefix === 'meeting') {
+            await import('../css/app.css')
+            const { default: VueTailwindDatepicker } = await import("vue-tailwind-datepicker")
+            vueApp.use(VueTailwindDatepicker)
+        }
+        if (prefix === "man-management") {
+            await import('../css/manment/styles.scss')
+            await import('../css/manment/tailwind.css')
+            const { default: PrimeVue } = await import("primevue/config");
+            const { default: Aura } = await import("@primeuix/themes/aura");
+
+            vueApp.use(PrimeVue, {
+                theme: {
+                    preset: Aura,
+                    options: {
+                        darkModeSelector: ".app-dark",
+                    },
+                },
+            });
+        }
+        //     .use(plugin)
+        //     .use(ZiggyVue)
+        //     .use(VueTailwindDatepicker)
+        //     .use(PrimeVue, {
+        //         theme: {
+        //             preset: Aura,
+        //             options: {
+        //                 darkModeSelector: '.app-dark'
+        //             }
+        //         }
+        //     })
         return vueApp.mount(el)
     },
     progress: {

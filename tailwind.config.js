@@ -1,5 +1,6 @@
 import defaultTheme from "tailwindcss/defaultTheme";
 import forms from "@tailwindcss/forms";
+import PrimeUI from 'tailwindcss-primeui';
 
 /** @type {import('tailwindcss').Config} */
 const colors = require("tailwindcss/colors");
@@ -12,7 +13,7 @@ export default {
         "./node_modules/vue-tailwind-datepicker/**/*.js",
     ],
 
-    darkMode: "class",
+    darkMode: ['class', 'selector', 'class~="my-app-dark"'],
     theme: {
         fontFamily: {
             satoshi: ["Satoshi", "sans-serif"],
@@ -330,5 +331,5 @@ export default {
         },
     },
 
-    plugins: [forms, require("@tailwindcss/forms")],
+    plugins: [forms, require("@tailwindcss/forms"), PrimeUI],
 };
