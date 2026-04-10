@@ -1,11 +1,11 @@
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { useLayout } from "./Composables/layout";
 import AppTopbar from "./AppTopbar.vue";
 import AppSidebar from "./AppSidebar.vue";
 import AppFooter from "./AppFooter.vue";
 
-const { layoutConfig, layoutState, hideMobileMenu } = useLayout();
+const { layoutConfig, layoutState, hideMobileMenu, initTheme } = useLayout();
 
 const containerClass = computed(() => {
   return {
@@ -15,6 +15,9 @@ const containerClass = computed(() => {
     "layout-mobile-active": layoutState.mobileMenuActive,
     "layout-static-inactive": layoutState.staticMenuInactive,
   };
+});
+onMounted(() => {
+  initTheme();
 });
 </script>
 

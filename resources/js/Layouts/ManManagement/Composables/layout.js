@@ -30,9 +30,21 @@ export function useLayout() {
         document.startViewTransition(() => executeDarkModeToggle(event));
     };
 
+    const initTheme = () => {
+        const saved = localStorage.getItem('darkTheme');
+
+        if (saved !== null) {
+            layoutConfig.darkTheme = saved === 'true';
+        } else {
+            layoutConfig.darkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.classList.toggle('app-dark');
+        }
+    };
+
     const executeDarkModeToggle = () => {
         layoutConfig.darkTheme = !layoutConfig.darkTheme;
         document.documentElement.classList.toggle('app-dark');
+        localStorage.setItem('darkTheme', layoutConfig.darkTheme);
     };
 
     const toggleMenu = () => {
@@ -81,6 +93,7 @@ export function useLayout() {
         hideMobileMenu,
         changeMenuMode,
         isDesktop,
-        hasOpenOverlay
+        hasOpenOverlay, 
+        initTheme
     };
 }
