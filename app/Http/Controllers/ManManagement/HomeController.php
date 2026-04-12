@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\ManManagement;
 
 use App\Http\Controllers\Controller;
+use App\Models\ManManagement\Golongan;
 use App\Models\ManManagement\Pegawai;
+use App\Models\ManManagement\Satker;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Concerns\ToArray;
 
 class HomeController extends Controller
 {
@@ -46,6 +49,17 @@ class HomeController extends Controller
                 }
             });
         }
+        $satker = Satker::select(['kode_satker', 'nama_satker'])
+            ->orderBy('kode_satker', 'asc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'label' => $item->kode_satker . ' - ' . $item->nama_satker,
+                    'value' => $item->nama_satker,
+                ];
+            })
+            ->toArray();
+        $golongan = Golongan::get()->toArray();
         $pegawai = $query
             ->paginate($paginated, ['*'], 'page', $currentPage)
             ->through(function ($item) {
@@ -54,6 +68,10 @@ class HomeController extends Controller
                 $data['satker'] = $kode_satker . ' - ' . $data['kabupaten'];
                 return $data;
             });
-        return Inertia::render('ManManagement/Index', ['pegawai' => $pegawai]);
+        return Inertia::render('ManManagement/Index', [
+            'pegawai' => $pegawai,
+            'satker' => $satker,
+            'golongan' => $golongan,
+        ]);
     }
 }

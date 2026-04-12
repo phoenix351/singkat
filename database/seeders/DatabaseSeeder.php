@@ -17,13 +17,14 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         $this->call([
-            UnitKerjaSeeder::class,
-            JabatanSeeder::class,
-            UserSeeder::class,
-            PegawaiSeeder::class,
-            PredikatSeeder::class,
-            CapaianSeeder::class,
-            HistorySeeder::class
+            // UnitKerjaSeeder::class,
+            // JabatanSeeder::class,
+            // UserSeeder::class,
+            // PegawaiSeeder::class,
+            // PredikatSeeder::class,
+            // CapaianSeeder::class,
+            // HistorySeeder::class
+            ManMent_SatkerSeeder::class,
         ]);
     }
 }

@@ -90,13 +90,57 @@
               autofocus
               fluid
               placeholder="Isikan Nama Pegawai"
+              disabled
             />
-            <!-- :invalid="submitted && !product.name" -->
-            <!-- <small v-if="submitted && !product.name" class="text-red-500"
-              >Name is required.</small
-            > -->
+          </div>
+          <div>
+            <label for="satker" class="block font-bold mb-3">Satuan Kerja</label>
+            <InputText
+              id="satker"
+              v-model.trim="editedPegawai.satker"
+              required="true"
+              autofocus
+              fluid
+              placeholder="Isikan Satuan Kerja"
+              disabled
+            />
+          </div>
+          <div>
+            <label for="golongan" class="block font-bold mb-3">Golongan</label>
+            <InputText
+              id="golongan"
+              v-model.trim="editedPegawai.golongan"
+              required="true"
+              autofocus
+              fluid
+              placeholder="Isikan Golongan"
+              disabled
+            />
+          </div>
+          <div>
+            <label for="jabatan" class="block font-bold mb-3">Jabatan</label>
+            <InputText
+              id="jabatan"
+              v-model.trim="editedPegawai.jabatan"
+              required="true"
+              autofocus
+              fluid
+              placeholder="Isikan Jabatan"
+              disabled
+            />
           </div>
         </div>
+        <template #footer>
+          <Button
+            label="Update dari SSO"
+            @click="fetchFromSSO(editedPegawai.nip_lama)"
+            text
+            severity="info"
+            autofocus
+          />
+          <Button label="Cancel" text severity="danger" autofocus />
+          <Button label="Save" text severity="success" autofocus />
+        </template>
       </Dialog>
     </div>
   </AppLayout>
@@ -113,6 +157,12 @@ import { watch } from "vue";
 const props = defineProps({
   pegawai: {
     type: Object,
+  },
+  satker: {
+    type: Array,
+  },
+  golongan: {
+    type: Array,
   },
 });
 const allColumns = [
@@ -164,6 +214,26 @@ const updatePegawai = (data) => {
   updateDialog.value = true;
   editedPegawai.value = { ...data };
 };
+
+//update dari sso
+const fetchFromSSO = async ($nip_lama) => {
+  const { data } = await axios.get(route("sso-api", { nip_lama: $nip_lama }));
+  Object.entries(editedPegawai.value).forEach(([key, value]) => {
+    if (key != "id" && key != "satker") {
+      editedPegawai.value[key] =
+        data?.[0]?.attributes?.["attribute-" + key]?.[0] ?? "not found";
+      if (key == "name") {
+        editedPegawai.value[key] =
+          data?.[0]?.attributes?.["attribute-nama"]?.[0] ?? "not found";
+      }
+      if (key == "nip_lama") {
+        editedPegawai.value[key] =
+          data?.[0]?.attributes?.["attribute-nip-lama"]?.[0] ?? "not found";
+      }
+    }
+  });
+};
+//upload pegawai
 const uploadPegawai = async () => {
   const { data } = await axios.get(route("man-management.get-current-pegawai"));
   const { data: check } = await axios.get(route("man-management.check-pegawai"));

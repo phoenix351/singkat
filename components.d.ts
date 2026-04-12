@@ -19,6 +19,7 @@ declare module 'vue' {
     InputIcon: typeof import('primevue/inputicon')['default']
     InputText: typeof import('primevue/inputtext')['default']
     MultiSelect: typeof import('primevue/multiselect')['default']
+    Select: typeof import('primevue/select')['default']
     SelectButton: typeof import('primevue/selectbutton')['default']
   }
   export interface GlobalDirectives {
