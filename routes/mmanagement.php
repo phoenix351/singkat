@@ -10,4 +10,6 @@ Route::prefix('man-management')->name('man-management.')->middleware(['auth', 'u
     Route::get('/check-pegawai', [PegawaiController::class, 'checkPegawai'])->name('check-pegawai');
     Route::get('/get-current-pegawai', [PegawaiController::class, 'getCurrentPegawai'])->name('get-current-pegawai');
     Route::post('/upload-pegawai', [PegawaiController::class, 'uploadPegawai'])->name('upload-pegawai');
+
+    Route::get('/tim-kerja', [HomeController::class, 'tkIndex'])->name('tim-kerja.index');
 });

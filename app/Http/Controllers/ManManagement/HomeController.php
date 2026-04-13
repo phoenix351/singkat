@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ManManagement\Golongan;
 use App\Models\ManManagement\Pegawai;
 use App\Models\ManManagement\Satker;
+use App\Models\TimKerja;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Concerns\ToArray;
@@ -73,5 +74,17 @@ class HomeController extends Controller
             'satker' => $satker,
             'golongan' => $golongan,
         ]);
+    }
+
+    public function tkIndex(Request $request)
+    {
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+
+        $query = TimKerja::query();
+        $tim_kerja = $query->paginate($paginated, ['*'], 'page', $currentPage);
+        return Inertia::render('ManManagement/TimKerja', ['tim_kerja' => $tim_kerja]);
     }
 }

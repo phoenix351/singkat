@@ -64,4 +64,5 @@ class PegawaiController extends Controller
 
         return response()->json(['message' => 'success']);
     }
+    
 }

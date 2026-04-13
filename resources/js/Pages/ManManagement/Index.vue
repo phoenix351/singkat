@@ -158,12 +158,6 @@ const props = defineProps({
   pegawai: {
     type: Object,
   },
-  satker: {
-    type: Array,
-  },
-  golongan: {
-    type: Array,
-  },
 });
 const allColumns = [
   { field: "nip_lama", header: "NIP Lama" },

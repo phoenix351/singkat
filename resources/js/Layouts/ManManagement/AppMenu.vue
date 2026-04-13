@@ -1,7 +1,31 @@
-<script setup></script>
+<script setup>
+import { ref } from "vue";
+import AppMenuItem from "./AppMenuItem.vue";
+
+const menu = ref([
+  {
+    items: [
+      {
+        label: "Daftar Pegawai",
+        icon: "pi pi-fw pi-users",
+        route: route("man-management.index"),
+        isActive: "man-management.index",
+      },
+      {
+        label: "Tim Kerja",
+        icon: "pi pi-fw pi-slack",
+        route: route("man-management.tim-kerja.index"),
+        isActive: "man-management.tim-kerja.index",
+      },
+    ],
+  },
+]);
+</script>
 
 <template>
-  <ul class="layout-menu"></ul>
+  <ul class="layout-menu">
+    <app-menu-item v-for="item in menu" :item="item" />
+  </ul>
 </template>
 
-<style lang="scss" scoped></style>
+<style scoped></style>
