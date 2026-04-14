@@ -1,9 +1,11 @@
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, nextTick, onMounted, watch } from "vue";
+import { ConfirmDialog, Toast, useToast } from "primevue";
 import { useLayout } from "./Composables/layout";
 import AppTopbar from "./AppTopbar.vue";
 import AppSidebar from "./AppSidebar.vue";
 import AppFooter from "./AppFooter.vue";
+import { usePage } from "@inertiajs/vue3";
 
 const { layoutConfig, layoutState, hideMobileMenu, initTheme } = useLayout();
 
@@ -19,6 +21,31 @@ const containerClass = computed(() => {
 onMounted(() => {
   initTheme();
 });
+const page = usePage();
+const toast = useToast();
+watch(
+  () => page.props.flash,
+  async (flash) => {
+    await nextTick();
+    if (flash?.success) {
+      toast.add({
+        severity: "success",
+        summary: "Berhasil",
+        detail: flash.success,
+        life: 3000,
+      });
+    }
+    if (flash?.error) {
+      toast.add({
+        severity: "error",
+        summary: "Gagal",
+        detail: flash.error,
+        life: 3000,
+      });
+    }
+  },
+  { deep: true, immediate: true }
+);
 </script>
 
 <template>
@@ -27,6 +54,8 @@ onMounted(() => {
     <AppSidebar />
     <div class="layout-main-container">
       <div class="layout-main">
+        <Toast />
+        <ConfirmDialog />
         <slot />
       </div>
       <AppFooter />

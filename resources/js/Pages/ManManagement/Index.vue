@@ -24,6 +24,7 @@
           />
           <Button
             icon="pi pi-download"
+            @click="exportPegawai"
             rounded
             aria-label="Download"
             severity="success"
@@ -134,12 +135,12 @@
           <Button
             label="Update dari SSO"
             @click="fetchFromSSO(editedPegawai.nip_lama)"
-            text
+            size="small"
             severity="info"
             autofocus
           />
-          <Button label="Cancel" text severity="danger" autofocus />
-          <Button label="Save" text severity="success" autofocus />
+          <Button label="Cancel" size="small" severity="danger" autofocus />
+          <Button label="Save" size="small" severity="success" autofocus />
         </template>
       </Dialog>
     </div>
@@ -245,6 +246,13 @@ const uploadPegawai = async () => {
       console.log(n);
     }
   }
+};
+const exportPegawai = () => {
+  const url =
+    route("man-management.export-pegawai") +
+    "?" +
+    new URLSearchParams({ kabupaten: searchField.value }).toString();
+  window.location.href = url;
 };
 </script>
 

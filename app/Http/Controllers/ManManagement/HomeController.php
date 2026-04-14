@@ -84,6 +84,18 @@ class HomeController extends Controller
         else $currentPage = 1;
 
         $query = TimKerja::query();
+        if ($request->sortOrder) {
+            $order = $request->sortOrder == 1 ? 'asc' : 'desc';
+            $query->orderBy($request->sortField, $order);
+        } else
+            $query->orderBy('tahun', 'desc')
+                ->orderBy('label', 'asc');
+        if ($request->searchField) {
+            $query->where(function ($q) use ($request) {
+                $q->where('tahun', 'like', '%' . $request->searchField . '%')
+                    ->orWhere('label', 'like', '%' . $request->searchField . '%');
+            });
+        }
         $tim_kerja = $query->paginate($paginated, ['*'], 'page', $currentPage);
         return Inertia::render('ManManagement/TimKerja', ['tim_kerja' => $tim_kerja]);
     }

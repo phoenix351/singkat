@@ -69,15 +69,20 @@ createInertiaApp({
             await import('../css/manment/tailwind.css')
             const { default: PrimeVue } = await import("primevue/config");
             const { default: Aura } = await import("@primeuix/themes/aura");
+            const { default: ToastService } = await import("primevue/toastservice");
+            const { default: ConfirmationService } = await import("primevue/confirmationservice");
 
-            vueApp.use(PrimeVue, {
-                theme: {
-                    preset: Aura,
-                    options: {
-                        darkModeSelector: ".app-dark",
+            vueApp
+                .use(PrimeVue, {
+                    theme: {
+                        preset: Aura,
+                        options: {
+                            darkModeSelector: ".app-dark",
+                        },
                     },
-                },
-            });
+                })
+                .use(ConfirmationService)
+                .use(ToastService);
         }
         //     .use(plugin)
         //     .use(ZiggyVue)
