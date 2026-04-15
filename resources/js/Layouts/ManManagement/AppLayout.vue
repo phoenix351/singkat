@@ -6,6 +6,8 @@ import AppTopbar from "./AppTopbar.vue";
 import AppSidebar from "./AppSidebar.vue";
 import AppFooter from "./AppFooter.vue";
 import { usePage } from "@inertiajs/vue3";
+import SpinnerBorder from "@/Components/ManManagement/SpinnerBorder.vue";
+import { triggerSpinner } from "./Composables/axiosSetup";
 
 const { layoutConfig, layoutState, hideMobileMenu, initTheme } = useLayout();
 
@@ -18,9 +20,9 @@ const containerClass = computed(() => {
     "layout-static-inactive": layoutState.staticMenuInactive,
   };
 });
-onMounted(() => {
-  initTheme();
-});
+// onMounted(() => {
+//   initTheme();
+// });
 const page = usePage();
 const toast = useToast();
 watch(
@@ -55,6 +57,7 @@ watch(
     <div class="layout-main-container">
       <div class="layout-main">
         <Toast />
+        <SpinnerBorder v-if="triggerSpinner" />
         <ConfirmDialog />
         <slot />
       </div>

@@ -32,12 +32,9 @@ export function useLayout() {
 
     const initTheme = () => {
         const saved = localStorage.getItem('darkTheme');
-
-        if (saved !== null) {
-            layoutConfig.darkTheme = saved === 'true';
-        } else {
-            layoutConfig.darkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.documentElement.classList.toggle('app-dark');
+        if (saved == 'true') {
+            layoutConfig.darkTheme = false;
+            executeDarkModeToggle()
         }
     };
 
@@ -80,9 +77,15 @@ export function useLayout() {
 
     const isDarkTheme = computed(() => layoutConfig.darkTheme);
     const isDesktop = () => window.innerWidth > 991;
-
     const hasOpenOverlay = computed(() => layoutState.overlayMenuActive);
 
+    const isLocalTheme = localStorage.getItem('darkTheme');
+    if (isLocalTheme !== null) {
+        if (isLocalTheme == 'true') {
+            layoutConfig.darkTheme = true
+            document.documentElement.classList.add('app-dark');
+        }
+    }
     return {
         layoutConfig,
         layoutState,
@@ -93,7 +96,7 @@ export function useLayout() {
         hideMobileMenu,
         changeMenuMode,
         isDesktop,
-        hasOpenOverlay, 
+        hasOpenOverlay,
         initTheme
     };
 }

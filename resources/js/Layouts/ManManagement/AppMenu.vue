@@ -17,6 +17,12 @@ const menu = ref([
         route: route("man-management.tim-kerja.index"),
         isActive: "man-management.tim-kerja.index",
       },
+      {
+        label: "Keanggotaan Tim Kerja",
+        icon: "pi pi-fw pi-list",
+        route: route("man-management.anggota.index"),
+        isActive: "man-management.anggota.index",
+      },
     ],
   },
 ]);

@@ -14,6 +14,7 @@
             <InputText v-model.trim="searchField" placeholder="Cari Tim Kerja" />
           </IconField>
           <Button
+            @click="exportTimKerja"
             icon="pi pi-download"
             rounded
             aria-label="Download"
@@ -300,13 +301,15 @@ const submit = async ({ updated = false, fileupload = null }) => {
           onSuccess: () => {
             const flash = page.props.flash;
             if (flash?.notification ?? null) {
-              for (const n of flash.notification) {
-                toast.add({
-                  severity: n.type,
-                  summary: n.type == "success" ? "Berhasil" : "Gagal",
-                  detail: n.message,
-                  life: 3000,
-                });
+              for (const [i, n] of flash.notification.entries()) {
+                setTimeout(() => {
+                  toast.add({
+                    severity: n.type,
+                    summary: n.type == "success" ? "Berhasil" : "Gagal",
+                    detail: n.message,
+                    life: 3000,
+                  });
+                }, i * 500);
               }
             }
           },
@@ -326,7 +329,7 @@ const submit = async ({ updated = false, fileupload = null }) => {
       return;
     }
     form._token = tokens;
-    await form.post(route("man-management.tim-kerja.store"), {
+    form.post(route("man-management.tim-kerja.store"), {
       preserveState: false,
       preserveScroll: false,
       onSuccess: (response) => {
@@ -392,6 +395,13 @@ watch(createDialog, () => {
     selectedFile.value = null;
   }
 });
+const exportTimKerja = () => {
+  const url =
+    route("man-management.export-tim-kerja") +
+    "?" +
+    new URLSearchParams({ tahun: searchField.value }).toString();
+  window.location.href = url;
+};
 </script>
 
 <style scoped></style>

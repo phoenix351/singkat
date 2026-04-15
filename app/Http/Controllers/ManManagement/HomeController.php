@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\ManManagement;
 
 use App\Http\Controllers\Controller;
+use App\Models\ManManagement\AnggotaTimKerja;
 use App\Models\ManManagement\Golongan;
 use App\Models\ManManagement\Pegawai;
 use App\Models\ManManagement\Satker;
-use App\Models\TimKerja;
+use App\Models\ManManagement\TimKerja;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Maatwebsite\Excel\Concerns\ToArray;
 
 class HomeController extends Controller
 {
@@ -98,5 +98,30 @@ class HomeController extends Controller
         }
         $tim_kerja = $query->paginate($paginated, ['*'], 'page', $currentPage);
         return Inertia::render('ManManagement/TimKerja', ['tim_kerja' => $tim_kerja]);
+    }
+
+    public function atIndex(Request $request)
+    {
+        if ($request->paginated) $paginated = $request->paginated;
+        else $paginated = 10;
+        if ($request->currentPage) $currentPage = $request->currentPage;
+        else $currentPage = 1;
+
+        $query = AnggotaTimKerja::query()->from('man_management.keanggotaan_timkerja as mmktk');
+        $query->join('man_management.pegawai as mmp', 'mmp.id', '=', 'mmktk.pegawai_id');
+        $query->join('man_management.timkerja as mmtk', 'mmtk.id', '=', 'mmktk.tim_id');
+
+        $query->orderBy('mmtk.label', 'asc')->orderBy('mmktk.keanggotaan', 'desc')->orderBy('mmp.name', 'asc');
+        $query->with(['tim', 'pegawai']);
+        $query->select(['mmktk.*']);
+        $anggota = $query->paginate($paginated, ['*'], 'page', $currentPage);
+
+        $tim = TimKerja::select(['id as value', 'label'])->orderBy('label', 'asc')->get()->toArray();
+        $pegawai = Pegawai::select(['id as value', 'name as label'])->orderBy('name', 'asc')->get()->toArray();
+        return Inertia::render('ManManagement/Anggota', [
+            'anggota' => $anggota,
+            'tim' => $tim,
+            'pegawai' => $pegawai
+        ]);
     }
 }

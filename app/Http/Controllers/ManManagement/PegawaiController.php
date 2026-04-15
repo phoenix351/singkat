@@ -4,9 +4,10 @@ namespace App\Http\Controllers\ManManagement;
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Controller;
+use App\Models\ManManagement\AnggotaTimKerja;
 use App\Models\ManManagement\Pegawai as ManManagementPegawai;
+use App\Models\ManManagement\TimKerja;
 use App\Models\Pegawai;
-use App\Models\TimKerja;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -31,7 +32,7 @@ class PegawaiController extends Controller
         $lc = app(LoginController::class);
         $result = $lc->ssoAPI($request->nip);
         $data = $result[0]['attributes'] ?? null;
-        if (!$data) return response()->json(['message' => 'failed']);
+        if (!$data) return redirect()->route('man-management.index')->with('error', 'Data tidak ditemukan');
         $payload = [
             'nip_lama'   => $data['attribute-nip-lama'][0] ?? null,
             'nip'        => $data['attribute-nip'][0] ?? null,
@@ -55,17 +56,17 @@ class PegawaiController extends Controller
             !$payload['provinsi'] ||
             !$payload['kabupaten']
         ) {
-            return response()->json(['message' => 'failed']);
+            return redirect()->route('man-management.index')->with('error', 'Data NIP : ' . $request->nip . ' tolong diperiksa lagi');
         }
         if ($payload['provinsi'] !== 'Sulawesi Utara') {
-            return response()->json(['message' => 'failed']);
+            return redirect()->route('man-management.index')->with('error', 'Data NIP : ' . $request->nip . ' bukan pegawai Sulawesi Utara');
         }
         ManManagementPegawai::updateOrCreate(
             ['nip_lama' => $payload['nip_lama']],
             $payload
         );
 
-        return response()->json(['message' => 'success']);
+        return redirect()->route('man-management.index')->with('success', 'Pegawai NIP : ' . $request->nip . ' berhasil ditambahkan');
     }
 
     public function tkStore(Request $request)
@@ -95,9 +96,8 @@ class PegawaiController extends Controller
                         'label.string' => "Baris ke-" . ($key + 1) . " label harus berupa teks.",
                     ]);
                     if ($validator->fails()) {
-                        return redirect()
-                            ->route('man-management.tim-kerja.index')
-                            ->with('error', $validator->errors()->first());
+                        $notification[] = ['type' => 'error', 'message' => $validator->errors()->first()];
+                        continue;
                     }
                     $check = TimKerja::where('tahun', $result['tahun'])
                         ->where('label', $result['label'])->first();
@@ -148,6 +148,81 @@ class PegawaiController extends Controller
             //throw $th;
             DB::rollBack();
             return redirect()->route('man-management.tim-kerja.index')->with('error', 'Terjadi kesalahan dalam data');
+        }
+    }
+
+    public function atStore(Request $request)
+    {
+        if ($request->input('fileUpload')) {
+            $fileData = $request->input('fileUpload');
+            if ($fileData[0][0] != 'nama_tim' && $fileData[0][1] != 'nama_pegawai' && $fileData[0][2] != 'keanggotaan_tim') {
+                return redirect()->route('man-management.anggota.index')->with('error', 'File yang diupload tidak sesuai template');
+            }
+            $notification = [];
+            $total = count($fileData) - 1;
+            foreach ($fileData as $key => $value) {
+                # code...
+                if ($key === 0) continue;
+                if (!empty($value) && count($value) > 0) {
+                    $tim = TimKerja::where('label', $value[0])->value('id');
+                    if (!$tim)  $notification[] = ['type' => 'error', 'message' => 'Tim Kerja ' . $value[0] . ' tidak ada'];
+                    $pegawai = ManManagementPegawai::where('name', $value[1])->value('id');
+                    if (!$pegawai) $notification[] = ['type' => 'error', 'message' => 'Pegawai ' . $value[1] . ' tidak ada'];
+                    $check_keanggotaan = false;
+                    if ($value[2] == 'anggota' || $value[2] == 'ketua') $check_keanggotaan = true;
+                    if (!$check_keanggotaan) $notification[] = ['type' => 'error', 'message' => 'Pegawai ' . $value[1] . ' keanggotaannya tidak ada di format'];
+
+                    $result = [
+                        'tim_id' => $tim ?? null,
+                        'pegawai_id' => $pegawai ?? null,
+                        'keanggotaan' => $value[2]
+                    ];
+                    $validator = Validator::make($result, [
+                        'tim_id' => ['required'],
+                        'pegawai_id' => ['required'],
+                        'keanggotaan' => ['required']
+                    ], [
+                        'tim_id.required' => "Baris ke-" . ($key + 1) . " kolom tim wajib diisi.",
+                        'pegawai_id.required' => "Baris ke-" . ($key + 1) . " kolom pegawai wajib diisi.",
+                        'keanggotaan.required' => "Baris ke-" . ($key + 1) . " kolom keanggotaan wajib diisi.",
+                    ]);
+                    if ($validator->fails()) {
+                        $notification[] = ['type' => 'error', 'message' => $validator->errors()->first()];
+                        continue;
+                    }
+
+                    $check = AnggotaTimKerja::where('tim_id', $result['tim_id'])
+                        ->where('pegawai_id', $result['pegawai_id'])
+                        ->first();
+                    if ($check) {
+                        $notification[] = ['type' => 'error', 'message' => 'Pegawai ' . $value[1] . ' sudah ada di tim tersebut'];
+                    } else
+                        AnggotaTimKerja::create($result);
+                }
+            }
+            if (count($notification) < $total) $notification[] = ['type' => 'success', 'message' => 'Keanggotaan tim berhasil di upload'];
+            return redirect()->route('man-management.anggota.index')->with('notification', $notification);
+        } else {
+            $validated = $request->validate([
+                'tim_id' => ['required', 'integer'],
+                'pegawai_id' => ['required', 'integer'],
+                'keanggotaan' => ['required', 'string']
+            ]);
+            $check = AnggotaTimKerja::where('tim_id', $validated['tim_id'])
+                ->where('pegawai_id', $validated['pegawai_id'])
+                ->first();
+            if ($check) return redirect()->route('man-management.anggota.index')->with('error', 'Pegawai tersebut sudah ada di tim tersebut');
+            try {
+                //code...
+                DB::beginTransaction();
+                AnggotaTimKerja::create($validated);
+                DB::commit();
+                return redirect()->route('man-management.anggota.index')->with('success', 'Pegawai sudah ditambahkan ke tim tersebut');
+            } catch (\Throwable $th) {
+                //throw $th;
+                DB::rollBack();
+                return redirect()->route('man-management.anggota.index')->with('error', 'Terjadi kesalahan di server');
+            }
         }
     }
 

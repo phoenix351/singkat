@@ -30,7 +30,12 @@
             severity="success"
             class="mr-2 mb-2 lg:mb-0"
           />
-          <Button severity="info" rounded class="mb-2 lg:mb-0">
+          <Button
+            @click="createDialog = true"
+            severity="info"
+            rounded
+            class="mb-2 lg:mb-0"
+          >
             <i class="pi pi-plus"></i>
             Tambah Pengguna Baru
           </Button>
@@ -53,6 +58,9 @@
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} pegawai"
       >
+        <template #empty>
+          <div class="text-center">Pegawai tidak ada</div>
+        </template>
         <Column
           v-for="item in selectedColumns"
           :key="item.field"
@@ -143,16 +151,114 @@
           <Button label="Save" size="small" severity="success" autofocus />
         </template>
       </Dialog>
+      <Dialog
+        v-model:visible="createDialog"
+        modal
+        header="Tambah Pegawai Baru"
+        class="min-w-[30vw]"
+      >
+        <div class="flex flex-col gap-6">
+          <div>
+            <label class="block font-bold mb-3">Upload/Manual</label>
+            <Select
+              :options="[
+                { label: 'Manual', value: 'manual' },
+                { label: 'Upload', value: 'upload' },
+              ]"
+              class="w-full"
+              showClear
+              option-label="label"
+              option-value="value"
+              v-model="form.tipe"
+              placeholder="Pilih Mode"
+            />
+          </div>
+          <template v-if="form.tipe == 'manual'">
+            <div>
+              <label for="nip_lama" class="block font-bold mb-3">NIP Lama</label>
+              <div class="flex flex-row space-x-2">
+                <InputText
+                  v-model="searchNIP"
+                  id="nip_lama"
+                  required="true"
+                  placeholder="Isikan NIP lama (full)"
+                  autofocus
+                  fluid
+                />
+                <Button severity="success" @click="getPegawai">
+                  <i class="pi pi-search"></i>
+                </Button>
+              </div>
+            </div>
+            <div>
+              <label for="name" class="block font-bold mb-3">Nama Pegawai</label>
+              <InputText
+                id="name"
+                v-model="form.pegawai.nama"
+                required="true"
+                autofocus
+                fluid
+                disabled
+              />
+            </div>
+            <div>
+              <label for="satker" class="block font-bold mb-3">Satuan Kerja</label>
+              <InputText
+                id="satker"
+                v-model="form.pegawai.kabupaten"
+                required="true"
+                autofocus
+                fluid
+                disabled
+              />
+            </div>
+          </template>
+          <template v-if="form.tipe == 'upload'">
+            <div class="flex flex-row space-x-2">
+              <Button @click="downloadTemplate" severity="info" class="mb-2 lg:mb-0">
+                <i class="pi pi-file"></i>
+                Template
+              </Button>
+              <FileUpload
+                ref="fileupload"
+                mode="basic"
+                name="file"
+                accept=".xlsx,.xls,.csv"
+                :maxFileSize="1000000"
+                @select="onSelectFile"
+              />
+            </div>
+          </template>
+        </div>
+        <template #footer>
+          <Button
+            label="Cancel"
+            @click="createDialog = false"
+            size="small"
+            severity="danger"
+            autofocus
+          />
+          <Button
+            @click="uploadPegawai"
+            label="Tambah"
+            size="small"
+            severity="success"
+            autofocus
+          />
+        </template>
+      </Dialog>
     </div>
   </AppLayout>
 </template>
 
 <script setup>
-import { Head, router } from "@inertiajs/vue3";
+import { Head, router, useForm } from "@inertiajs/vue3";
 import AppLayout from "@/Layouts/ManManagement/AppLayout.vue";
 import { ref } from "vue";
 import { debounce } from "@/Layouts/ManManagement/Composables/debounce";
 import { watch } from "vue";
+import * as XLSX from "xlsx";
+import axios from "axios";
 
 //props data defined
 const props = defineProps({
@@ -209,7 +315,28 @@ const updatePegawai = (data) => {
   updateDialog.value = true;
   editedPegawai.value = { ...data };
 };
-
+//submit biasa
+const searchNIP = ref(null);
+const getPegawai = async () => {
+  try {
+    const { data } = await axios.get(route("sso-api", { nip_lama: searchNIP.value }));
+    if (data?.[0]?.attributes ?? null) {
+      form.pegawai.nama =
+        data?.[0]?.attributes?.["attribute-nama"]?.[0] ?? "Tidak ditemukan";
+      form.pegawai.kabupaten =
+        data?.[0]?.attributes?.["attribute-kabupaten"]?.[0] ?? "Tidak ditemukan";
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+const form = useForm({
+  tipe: null,
+  pegawai: {
+    nama: null,
+    kabupaten: null,
+  },
+});
 //update dari sso
 const fetchFromSSO = async ($nip_lama) => {
   const { data } = await axios.get(route("sso-api", { nip_lama: $nip_lama }));
@@ -229,21 +356,29 @@ const fetchFromSSO = async ($nip_lama) => {
   });
 };
 //upload pegawai
+const createDialog = ref(false);
 const uploadPegawai = async () => {
-  const { data } = await axios.get(route("man-management.get-current-pegawai"));
+  // const { data } = await axios.get(route("man-management.get-current-pegawai"));
+  const data = !searchNIP.value
+    ? selectedFile.value.map((item) => item[0]).slice(1)
+    : [searchNIP.value];
   const { data: check } = await axios.get(route("man-management.check-pegawai"));
+  const { data: tokens } = await axios.get(route("api.token.csrf"));
   const setCheck = new Set(check);
   const toUpload = data.filter((item) => !setCheck.has(item));
   if (toUpload.length > 0) {
     for (const n of toUpload) {
-      await axios
-        .post(route("man-management.upload-pegawai"), {
+      router.post(
+        route("man-management.upload-pegawai"),
+        {
+          _token: tokens,
           nip: n,
-        })
-        .then((response) => {
-          console.log(response);
-        });
-      console.log(n);
+        },
+        {
+          preserveScroll: false,
+          preserveState: false,
+        }
+      );
     }
   }
 };
@@ -254,6 +389,36 @@ const exportPegawai = () => {
     new URLSearchParams({ kabupaten: searchField.value }).toString();
   window.location.href = url;
 };
+const downloadTemplate = () => {
+  window.location.href = "/man-management/download-template/pegawai";
+};
+const selectedFile = ref(null);
+const onSelectFile = (e) => {
+  let fileS = e?.files?.[0] ?? null;
+  if (fileS) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      /* Parse data */
+      const bstr = e.target.result;
+      const wb = XLSX.read(bstr, { type: "binary" });
+      /* Get first worksheet */
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+      /* Convert array of arrays */
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      selectedFile.value = data;
+    };
+    reader.readAsBinaryString(fileS);
+    // console.log(result)
+  }
+};
+watch(createDialog, () => {
+  if (createDialog.value == false) {
+    form.reset();
+    searchNIP.value = null;
+    selectedFile.value = null;
+  }
+});
 </script>
 
 <style scoped></style>

@@ -1,0 +1,297 @@
+<template>
+  <Head title="Keanggotaan" />
+  <AppLayout>
+    <div class="card">
+      <div class="mb-4 flex flex-wrap items-center justify-between">
+        <div class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0">
+          Keanggotaan Tim Kerja
+        </div>
+        <div class="flex space-x-2 items-center w-full md:w-full lg:w-auto">
+          <IconField>
+            <InputIcon>
+              <i class="pi pi-search" />
+            </InputIcon>
+            <InputText v-model.trim="searchField" placeholder="Cari Tim Kerja" />
+          </IconField>
+          <Button
+            icon="pi pi-download"
+            rounded
+            aria-label="Download"
+            severity="success"
+            class="mr-2 mb-2 lg:mb-0"
+          />
+          <!-- @click="showToast" -->
+          <Button
+            @click="createDialog = true"
+            severity="info"
+            rounded
+            class="mb-2 lg:mb-0"
+          >
+            <i class="pi pi-plus"></i>
+            Tambah Anggota Tim Baru
+          </Button>
+        </div>
+      </div>
+      <DataTable
+        :value="anggota.data"
+        class="w-full"
+        lazy
+        paginator
+        :rows="anggota.per_page"
+        :first="(anggota.current_page - 1) * anggota.per_page"
+        :total-records="anggota.total"
+        :rows-per-page-options="[10, 20, 50, 100]"
+        :removable-sort="true"
+        :sort-field="sortField"
+        :sort-order="sortOrder"
+        @page="fetchData"
+        @sort="fetchData"
+        paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} tim kerja"
+      >
+        <Column
+          v-for="item in allColumns"
+          :key="item.field"
+          :field="item.field"
+          :header="item.header"
+          sortable
+        />
+        <template #empty>
+          <div class="text-center">Data tidak ada</div>
+        </template>
+      </DataTable>
+    </div>
+    <Dialog
+      v-model:visible="createDialog"
+      modal
+      header="Tambah Tim Kerja"
+      class="min-w-[30vw]"
+    >
+      <div class="flex flex-col gap-6">
+        <div>
+          <label class="block font-bold mb-3">Upload/Manual</label>
+          <Select
+            :options="[
+              { label: 'Manual', value: 'manual' },
+              { label: 'Upload', value: 'upload' },
+            ]"
+            class="w-full"
+            showClear
+            option-label="label"
+            option-value="value"
+            v-model="form.tipe"
+            placeholder="Pilih Mode"
+          />
+        </div>
+        <template v-if="form.tipe == 'manual'">
+          <div>
+            <label for="tim" class="block font-bold mb-3">Nama Tim Kerja</label>
+            <Select
+              :options="tim"
+              class="w-full"
+              showClear
+              filter
+              option-label="label"
+              option-value="value"
+              v-model="form.tim_id"
+              placeholder="Pilih Tim"
+            />
+          </div>
+          <div>
+            <label for="pegawai" class="block font-bold mb-3">Nama Pegawai</label>
+            <Select
+              :options="pegawai"
+              class="w-full"
+              showClear
+              filter
+              option-label="label"
+              option-value="value"
+              v-model="form.pegawai_id"
+              placeholder="Pilih Pegawai"
+            />
+          </div>
+          <div>
+            <label for="keanggotaan" class="block font-bold mb-3">Keanggotaan</label>
+            <Select
+              :options="[
+                { label: 'Anggota', value: 'anggota' },
+                { label: 'Ketua', value: 'ketua' },
+              ]"
+              class="w-full"
+              showClear
+              filter
+              option-label="label"
+              option-value="value"
+              v-model="form.keanggotaan"
+              placeholder="Pilih Keanggotaan"
+            />
+          </div>
+        </template>
+        <template v-if="form.tipe == 'upload'">
+          <div class="flex flex-row space-x-2">
+            <Button @click="downloadTemplate" severity="info" class="mb-2 lg:mb-0">
+              <i class="pi pi-file"></i>
+              Template
+            </Button>
+            <FileUpload
+              ref="fileupload"
+              mode="basic"
+              name="file"
+              accept=".xlsx,.xls,.csv"
+              :maxFileSize="1000000"
+              @select="onSelectFile"
+            />
+          </div>
+        </template>
+      </div>
+      <template #footer>
+        <Button
+          label="Cancel"
+          @click="createDialog = false"
+          size="small"
+          severity="danger"
+          autofocus
+        />
+        <Button
+          @click="submit({ fileupload: selectedFile })"
+          label="Simpan"
+          size="small"
+          severity="success"
+          autofocus
+        />
+      </template>
+    </Dialog>
+  </AppLayout>
+</template>
+
+<script setup>
+import AppLayout from "@/Layouts/ManManagement/AppLayout.vue";
+import { debounce } from "@/Layouts/ManManagement/Composables/debounce";
+import { Head, router, useForm, usePage } from "@inertiajs/vue3";
+import { ref, watch } from "vue";
+import { useToast } from "primevue";
+import * as XLSX from "xlsx";
+
+const toast = useToast();
+const page = usePage();
+const props = defineProps({
+  anggota: { type: Object },
+  tim: { type: Array },
+  pegawai: { type: Array },
+});
+const allColumns = [
+  { field: "tim.label", header: "Tim Kerja" },
+  { field: "pegawai.name", header: "Nama Pegawai" },
+  { field: "keanggotaan", header: "Keanggotaan" },
+];
+const searchField = ref(null);
+//paginated and search
+const currentPage = ref((props.anggota.current_page - 1) * props.anggota.per_page);
+const paginated = ref(props?.anggota?.per_page ?? 10);
+const sortField = ref(null);
+const sortOrder = ref(null);
+const fetchData = (event = null) => {
+  currentPage.value = event ? Math.floor(event.first / event.rows) + 1 : 1;
+  paginated.value = event?.rows ?? paginated.value;
+  router.get(
+    route("man-management.anggota.index"),
+    {
+      currentPage: currentPage.value,
+      paginated: paginated.value,
+      sortField: event?.sortField ?? sortField.value,
+      sortOrder: event?.sortOrder ?? sortOrder.value,
+      searchField: searchField.value,
+    },
+    {
+      preserveState: true,
+      preserveScroll: true,
+      replace: true,
+    }
+  );
+};
+const delayedFetchData = debounce(() => {
+  fetchData();
+});
+watch(searchField, () => {
+  delayedFetchData();
+});
+//submit and update
+const createDialog = ref(false);
+const form = useForm({
+  _token: null,
+  tipe: null,
+  tim_id: null,
+  pegawai_id: null,
+  keanggotaan: null,
+});
+const selectedFile = ref(null);
+const onSelectFile = (e) => {
+  let fileS = e?.files?.[0] ?? null;
+  if (fileS) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      /* Parse data */
+      const bstr = e.target.result;
+      const wb = XLSX.read(bstr, { type: "binary" });
+      /* Get first worksheet */
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+      /* Convert array of arrays */
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      selectedFile.value = data;
+    };
+    reader.readAsBinaryString(fileS);
+    // console.log(result)
+  }
+};
+const submit = async ({ fileupload = null }) => {
+  try {
+    const { data: tokens } = await axios.get(route("api.token.csrf"));
+    if (fileupload) {
+      if (!selectedFile.value) return;
+      router.post(
+        route("man-management.anggota.store"),
+        {
+          _token: tokens,
+          fileUpload: selectedFile.value,
+        },
+        {
+          preserveScroll: false,
+          preserveState: false,
+          onSuccess: () => {
+            const flash = page.props.flash;
+            if (flash?.notification ?? null) {
+              for (const [i, n] of flash.notification.entries()) {
+                setTimeout(() => {
+                  toast.add({
+                    severity: n.type,
+                    summary: n.type == "success" ? "Berhasil" : "Gagal",
+                    detail: n.message,
+                    life: 3000,
+                  });
+                }, i * 500);
+              }
+            }
+          },
+        }
+      );
+    } else {
+      form._token = tokens;
+      form.post(route("man-management.anggota.store"), {
+        preserveScroll: false,
+        preserveState: false,
+        onSuccess: () => {
+          form.reset();
+        },
+      });
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+const downloadTemplate = () => {
+  window.location.href = "/man-management/download-template/keanggotaan";
+};
+</script>
+
+<style scoped></style>
