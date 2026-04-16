@@ -107,9 +107,9 @@ class HomeController extends Controller
         if ($request->currentPage) $currentPage = $request->currentPage;
         else $currentPage = 1;
 
-        $query = AnggotaTimKerja::query()->from('man_management.keanggotaan_timkerja as mmktk');
-        $query->join('man_management.pegawai as mmp', 'mmp.id', '=', 'mmktk.pegawai_id');
-        $query->join('man_management.timkerja as mmtk', 'mmtk.id', '=', 'mmktk.tim_id');
+        $query = AnggotaTimKerja::query()->from('sulutweb_man_management.keanggotaan_timkerja as mmktk');
+        $query->join('sulutweb_man_management.pegawai as mmp', 'mmp.id', '=', 'mmktk.pegawai_id');
+        $query->join('sulutweb_man_management.timkerja as mmtk', 'mmtk.id', '=', 'mmktk.tim_id');
 
         $query->orderBy('mmtk.label', 'asc')->orderBy('mmktk.keanggotaan', 'desc')->orderBy('mmp.name', 'asc');
         $query->with(['tim', 'pegawai']);

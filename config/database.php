@@ -59,7 +59,7 @@ return [
             ]) : [],
         ],
 
-        'man_management' => [
+        'sulutweb_man_management' => [
             'driver' => 'mysql',
             'url' => env('DB_MMANAGEMENT_URL'),
             'host' => env('DB_MMANAGEMENT_HOST', '127.0.0.1'),

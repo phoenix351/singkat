@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Satker extends Model
 {
     //
-    protected $connection = 'man_management';
+    protected $connection = 'sulutweb_man_management';
     protected $table = 'satker';
 
     public $timestamps = false;

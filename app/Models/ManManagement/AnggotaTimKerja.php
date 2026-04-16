@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AnggotaTimKerja extends Model
 {
     //
-    protected $connection = 'man_management';
+    protected $connection = 'sulutweb_man_management';
     protected $table = 'keanggotaan_timkerja';
 
     public $timestamps = true;
