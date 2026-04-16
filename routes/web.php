@@ -13,6 +13,7 @@ use App\Http\Controllers\TokenController;
 // ROute SSO 
 Route::get('/sso-login', [LoginController::class, 'sso_redirect'])->name('sso-login');
 Route::get('/sso-callback', [LoginController::class, 'sso_callback'])->name('sso-callback');
+Route::get('/sso-api/{nip_lama}', [LoginController::class, 'ssoAPI'])->name('sso-api');
 
 Route::get('/', function () {
     $user = Auth::user();
@@ -48,3 +49,4 @@ require __DIR__ . '/auth.php';
 require __DIR__ .'/singkat.php';
 require __DIR__ .'/simple.php';
 require __DIR__ . '/meeting.php';
+require __DIR__ . '/mmanagement.php';

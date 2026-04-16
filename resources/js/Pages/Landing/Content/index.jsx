@@ -27,6 +27,13 @@ const Content = () => {
             isMaintenance: true,
             maintenanceMessage: "Aplikasi sedang dalam proses migrasi"
         },
+        {
+            imagePath: route('index') + "/images/logo/Man-Management-Logo.png",
+            name: <span className="text-nowrap">MANMENT</span>,
+            description: "Pengelolaan Pegawai dalam Aplikasi",
+            link: route("man-management.index"),
+            navMode: 'reload',
+        },
     ];
     return (
         <div className="mt-16">

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -29,16 +30,19 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $route = Route::currentRouteName();
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
             ],
+            'route' => $route,
             "flash" => [
-                "success" => fn () => $request->session()->get("success"),
-                "error" => fn () => $request->session()->get("error"),
-                "warning" => fn () => $request->session()->get("warning"),
-                "info" => fn () => $request->session()->get("info"),
+                "success" => fn() => $request->session()->get("success"),
+                "error" => fn() => $request->session()->get("error"),
+                "warning" => fn() => $request->session()->get("warning"),
+                "info" => fn() => $request->session()->get("info"),
+                'notification' => fn() => $request->session()->get("notification")
             ],
 
         ];
