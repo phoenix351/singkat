@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Golongan extends Model
 {
     //
-    protected $connection = 'man_management';
+    protected $connection = 'sulutweb_man_management';
     protected $table = 'golongan';
 
     public $timestamps = false;

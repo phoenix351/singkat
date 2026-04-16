@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    protected $connection = 'man_management';
+    protected $connection = 'sulutweb_man_management';
 
     public function up(): void
     {
