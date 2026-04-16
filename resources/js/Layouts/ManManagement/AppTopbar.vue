@@ -1,8 +1,20 @@
 <script setup>
+import { ref } from "vue";
+import { router } from "@inertiajs/vue3";
 import AppConfigurator from "../AppConfigurator.vue";
 import { useLayout } from "./Composables/layout";
 
 const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
+const dropdown = ref(false);
+const manmentLogout = async () => {
+  const { data } = await axios.get(route("api.token.csrf"));
+  router.visit(route("logout"), {
+    method: "post",
+    data: {
+      _token: data,
+    },
+  });
+};
 </script>
 
 <template>
@@ -62,18 +74,32 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
 
       <div class="layout-topbar-menu hidden lg:block">
         <div class="layout-topbar-menu-content">
-          <button type="button" class="layout-topbar-action">
-            <i class="pi pi-calendar"></i>
-            <span>Calendar</span>
-          </button>
-          <button type="button" class="layout-topbar-action">
-            <i class="pi pi-inbox"></i>
-            <span>Messages</span>
-          </button>
-          <button type="button" class="layout-topbar-action">
-            <i class="pi pi-user"></i>
-            <span>Profile</span>
-          </button>
+          <div class="relative">
+            <button
+              @click="dropdown = !dropdown"
+              type="button"
+              class="layout-topbar-action"
+            >
+              <i class="pi pi-user"></i>
+              <span>Profile</span>
+            </button>
+
+            <template v-if="dropdown">
+              <div class="fixed inset-0 z-40" @click="dropdown = false"></div>
+              <div
+                @click.stop
+                class="absolute config-panel p-2 hover:bg-red-100 dark:hover:bg-red-800 z-50 right-0 mt-2 w-40 bg-surface-0 dark:bg-surface-900 border border-surface rounded-border origin-top shadow-[0px_3px_5px_rgba(0,0,0,0.02),0px_0px_2px_rgba(0,0,0,0.05),0px_1px_4px_rgba(0,0,0,0.08)]"
+              >
+                <div class="flex flex-col gap-2">
+                  <span
+                    @click.stop="manmentLogout"
+                    class="text text-black font-semibold cursor-pointer px-2 py-1 rounded hover:bg-red-100 dark:hover:bg-red-800"
+                    >Logout</span
+                  >
+                </div>
+              </div>
+            </template>
+          </div>
         </div>
       </div>
     </div>

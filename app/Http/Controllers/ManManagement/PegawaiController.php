@@ -128,7 +128,7 @@ class PegawaiController extends Controller
             try {
                 //code...
                 DB::beginTransaction();
-                $timkerja_to_updated = TimKerja::find($validated['id']);
+                $timkerja_to_updated = TimKerja::findOrFail($validated['id']);
                 if ($timkerja_to_updated) $timkerja_to_updated->update($validated);
                 DB::commit();
                 return redirect()->route('man-management.tim-kerja.index')->with('success', 'Tim Kerja berhasil diedit');
@@ -202,27 +202,46 @@ class PegawaiController extends Controller
             }
             if (count($notification) < $total) $notification[] = ['type' => 'success', 'message' => 'Keanggotaan tim berhasil di upload'];
             return redirect()->route('man-management.anggota.index')->with('notification', $notification);
-        } else {
-            $validated = $request->validate([
-                'tim_id' => ['required', 'integer'],
-                'pegawai_id' => ['required', 'integer'],
-                'keanggotaan' => ['required', 'string']
-            ]);
-            $check = AnggotaTimKerja::where('tim_id', $validated['tim_id'])
-                ->where('pegawai_id', $validated['pegawai_id'])
-                ->first();
-            if ($check) return redirect()->route('man-management.anggota.index')->with('error', 'Pegawai tersebut sudah ada di tim tersebut');
+        }
+        $validated = $request->validate([
+            'id' => ['sometimes', 'nullable'],
+            'tim_id' => ['required', 'integer'],
+            'pegawai_id' => ['required', 'integer'],
+            'keanggotaan' => ['required', 'string']
+        ]);
+        $id = $validated['id'] ?? null;
+        $check = AnggotaTimKerja::where('tim_id', $validated['tim_id'])
+            ->where('pegawai_id', $validated['pegawai_id'])
+            ->when($id, function ($query) use ($id) {
+                $query->where('id', '!=', $id);
+            })
+            ->first();
+        if ($check) return redirect()->route('man-management.anggota.index')->with('error', 'Pegawai tersebut sudah ada di tim tersebut');
+
+        if ($request->isMethod('patch')) {
             try {
                 //code...
                 DB::beginTransaction();
-                AnggotaTimKerja::create($validated);
+                $keanggotaan_tim_kerja_to_updated = AnggotaTimKerja::findOrFail($validated['id']);
+                if ($keanggotaan_tim_kerja_to_updated) $keanggotaan_tim_kerja_to_updated->update($validated);
                 DB::commit();
-                return redirect()->route('man-management.anggota.index')->with('success', 'Pegawai sudah ditambahkan ke tim tersebut');
+                return redirect()->route('man-management.anggota.index')->with('success', 'Keanggotaan pegawai ini di tim sudah diedit');
             } catch (\Throwable $th) {
                 //throw $th;
                 DB::rollBack();
-                return redirect()->route('man-management.anggota.index')->with('error', 'Terjadi kesalahan di server');
+                return redirect()->route('man-management.anggota.index')->with('error', 'Terjadi kesalahan dalam server');
             }
+        }
+        try {
+            //code...
+            DB::beginTransaction();
+            AnggotaTimKerja::create($validated);
+            DB::commit();
+            return redirect()->route('man-management.anggota.index')->with('success', 'Pegawai sudah ditambahkan ke tim tersebut');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->route('man-management.anggota.index')->with('error', 'Terjadi kesalahan di server');
         }
     }
 
@@ -241,6 +260,24 @@ class PegawaiController extends Controller
             DB::rollBack();
             return redirect()->route('man-management.tim-kerja.index')
                 ->with('error', 'Tim Kerja gagal dihapus');
+        }
+    }
+
+    public function atDestroy($id)
+    {
+        try {
+            //code...
+            DB::beginTransaction();
+            $keanggotaan_to_destroy = AnggotaTimKerja::findOrFail($id);
+            $keanggotaan_to_destroy->delete();
+            DB::commit();
+            return redirect()->route('man-management.anggota.index')
+                ->with('success', 'Keanggotaan berhasil dihapus');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->route('man-management.anggota.index')
+                ->with('error', 'Keanggotaan gagal dihapus');
         }
     }
 }
