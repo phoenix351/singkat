@@ -22,7 +22,6 @@ declare module 'vue' {
     MultiSelect: typeof import('primevue/multiselect')['default']
     Select: typeof import('primevue/select')['default']
     SelectButton: typeof import('primevue/selectbutton')['default']
-    Toast: typeof import('primevue/toast')['default']
   }
   export interface GlobalDirectives {
     StyleClass: typeof import('primevue/styleclass')['default']
