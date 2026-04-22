@@ -30,7 +30,7 @@ class RoleController extends Controller
         $validated = $request->validate([
             'label' => ['required', 'string', 'max:30'],
             'deskripsi' => ['required', 'string', 'max:100'],
-            'route_link' => ['required', 'string', 'max:30'],
+            'route_link' => ['required', 'string', 'max:100'],
             'navigation' => ['required', 'string', 'max:30'],
             'maintenance' => ['required', 'boolean'],
             'maintenance_message' => ['sometimes', 'nullable', 'max:100'],
