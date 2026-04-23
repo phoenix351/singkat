@@ -28,6 +28,7 @@ class RoleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'id' => ['sometimes', 'nullable'],
             'label' => ['required', 'string', 'max:30'],
             'deskripsi' => ['required', 'string', 'max:100'],
             'route_link' => ['required', 'string', 'max:100'],
@@ -37,8 +38,37 @@ class RoleController extends Controller
             'image' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:1024'],
         ]);
         $image = $request->file('image');
-
+        $id = $validated['id'] ?? null;
         $new_path = null;
+
+        if ($request->isMethod('patch')) {
+            try {
+                //code...
+                DB::beginTransaction();
+                $old_path = $request->input('image_path');
+                if ($image) {
+                    $ext      = $image->getClientOriginalExtension();
+                    $filename = Str::slug($validated['label'])  . '-logo-' . time() . '.' . $ext;
+                    $disk   = 'public';
+                    $folder = 'images/logo';
+                    $new_path = $image->storeAs($folder, $filename, $disk);
+                    $validated['image_path'] = $new_path;
+                    if ($old_path != $new_path && $old_path != 'images/logo/logo-bps.png' && Storage::disk('public')->exists($old_path)) {
+                        Storage::disk('public')->delete($old_path);
+                    }
+                }
+                unset($validated['image']);
+                if ($validated['maintenance'] == 0) $validated['maintenance_message'] = null;
+                $app_to_update = AppManagement::findOrFail($id);
+                if ($app_to_update) $app_to_update->update($validated);
+                DB::commit();
+                return redirect()->route('man-management.app-management.index')->with('success', 'Berhasil edit data');
+            } catch (\Throwable $th) {
+                //throw $th;
+                DB::rollBack();
+                return redirect()->route('man-management.app-management.index')->with('error', 'Gagal edit data, error : ' . $th->getMessage());
+            }
+        }
         try {
             //code...
             DB::beginTransaction();
@@ -61,6 +91,25 @@ class RoleController extends Controller
                 Storage::disk('public')->delete($new_path);
             }
             return redirect()->route('man-management.app-management.index')->with('error', 'Terjadi kesalahan');
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            //code...
+            DB::beginTransaction();
+            $app_to_delete = AppManagement::findOrFail($id);
+            if ($app_to_delete) {
+                if (Storage::disk('public')->exists($app_to_delete->image_path)) Storage::disk('public')->delete($app_to_delete->image_path);
+                $app_to_delete->delete();
+            }
+            DB::commit();
+            return redirect()->route('man-management.app-management.index')->with('success', 'aplikasi berhasil dihapus');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->route('man-management.app-management.index')->with('error', 'aplikasi gagal dihapus, error: ' . $th->getMessage());
         }
     }
 }
