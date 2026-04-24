@@ -53,7 +53,10 @@ const itemClick = (event, item) => {
       :class="{ 'active-route': page.props.route == item.isActive }"
       tabindex="0"
     >
-      <i :class="item.icon" class="layout-menuitem-icon" />
+      <i v-if="!item?.material ?? true" :class="item.icon" class="layout-menuitem-icon" />
+      <i v-if="item?.material" class="material-icons layout-menuitem-icon">{{
+        item?.material_icon ?? ""
+      }}</i>
       <span class="layout-menuitem-text">{{ item.label }}</span>
       <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items" />
     </Link>

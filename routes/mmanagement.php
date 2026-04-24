@@ -4,6 +4,7 @@ use App\Exports\ManmentPegawaiExport;
 use App\Exports\TimKerjaExport;
 use App\Http\Controllers\ManManagement\HomeController;
 use App\Http\Controllers\ManManagement\PegawaiController;
+use App\Http\Controllers\ManManagement\RoleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,11 @@ Route::prefix('man-management')->name('man-management.')->middleware(['auth', 'u
     Route::post('/anggota-tim-kerja/store', [PegawaiController::class, 'atStore'])->name('anggota.store');
     Route::patch('/anggota-tim-kerja/patch', [PegawaiController::class, 'atStore'])->name('anggota.patch');
     Route::delete('/anggota-tim-kerja/destroy/{id}', [PegawaiController::class, 'atDestroy'])->name('anggota.destroy');
+    
+    Route::get('/app-management', [RoleController::class, 'index'])->name('app-management.index');
+    Route::post('/app-management/store', [RoleController::class, 'store'])->name('app-management.store');
+    Route::patch('/app-management/patch', [RoleController::class, 'store'])->name('app-management.patch');
+    Route::delete('/app-management/destroy/{id}', [RoleController::class, 'destroy'])->name('app-management.destroy');
 
     Route::get('/download-template/tim-kerja', function () {
         $file_path = public_path('document/Tim Kerja Template.xlsx');
