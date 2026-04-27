@@ -4,6 +4,9 @@ namespace App\Http\Controllers\ManManagement;
 
 use App\Http\Controllers\Controller;
 use App\Models\ManManagement\AppManagement;
+use App\Models\ManManagement\Pegawai;
+use App\Models\ManManagement\Role;
+use App\Models\ManManagement\TimKerja;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -20,77 +23,63 @@ class RoleController extends Controller
         if ($request->currentPage) $currentPage = $request->currentPage;
         else $currentPage = 1;
 
-        $query = AppManagement::query();
-        $apps = $query->paginate($paginated, ['*'], 'page', $currentPage);
-        return Inertia::render('ManManagement/Aplikasi', ['apps' => $apps]);
+        $query = Role::query()->from('sulutweb_man_management.roles as mmr');
+        $query->join('sulutweb_man_management.application_management as mma', 'mma.id', '=', 'mmr.app_id');
+        $query->select(['mmr.*', 'mma.label as app']);
+        $roles = $query->paginate($paginated, ['*'], 'page', $currentPage)
+            ->through(function ($item) {
+                $data = $item->attributesToArray();
+                $toRoles = null;
+                if ($item->type == 'unit') {
+                    $to_search = Pegawai::findOrFail($item->to_role_id);
+                    $toRoles = $to_search->name;
+                } else if ($item->type == 'tim') {
+                    $to_search = TimKerja::findOrFail($item->to_role_id);
+                    $toRoles = $to_search->label;
+                }
+                $data['pengguna'] = $toRoles;
+                return $data;
+            });
+        $apps = AppManagement::select(['id as value', 'label'])->get();
+        return Inertia::render('ManManagement/Role', [
+            'roles' => $roles,
+            'apps' => $apps
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'id' => ['sometimes', 'nullable'],
-            'label' => ['required', 'string', 'max:30'],
-            'deskripsi' => ['required', 'string', 'max:100'],
-            'route_link' => ['required', 'string', 'max:100'],
-            'navigation' => ['required', 'string', 'max:30'],
-            'maintenance' => ['required', 'boolean'],
-            'maintenance_message' => ['sometimes', 'nullable', 'max:100'],
-            'image' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:1024'],
+            'type' => ['required', 'string', 'max:4'],
+            'to_role_id' => ['sometimes', 'nullable', 'integer'],
+            'app_id' => ['required', 'integer'],
+            'roles' => ['required', 'string', 'max:20'],
         ]);
-        $image = $request->file('image');
         $id = $validated['id'] ?? null;
-        $new_path = null;
 
         if ($request->isMethod('patch')) {
             try {
                 //code...
                 DB::beginTransaction();
-                $old_path = $request->input('image_path');
-                if ($image) {
-                    $ext      = $image->getClientOriginalExtension();
-                    $filename = Str::slug($validated['label'])  . '-logo-' . time() . '.' . $ext;
-                    $disk   = 'public';
-                    $folder = 'images/logo';
-                    $new_path = $image->storeAs($folder, $filename, $disk);
-                    $validated['image_path'] = $new_path;
-                    if ($old_path != $new_path && $old_path != 'images/logo/logo-bps.png' && Storage::disk('public')->exists($old_path)) {
-                        Storage::disk('public')->delete($old_path);
-                    }
-                }
-                unset($validated['image']);
-                if ($validated['maintenance'] == 0) $validated['maintenance_message'] = null;
-                $app_to_update = AppManagement::findOrFail($id);
-                if ($app_to_update) $app_to_update->update($validated);
                 DB::commit();
-                return redirect()->route('man-management.app-management.index')->with('success', 'Berhasil edit data');
+                return redirect()->route('man-management.role-management.index')->with('success', 'Berhasil edit data');
             } catch (\Throwable $th) {
                 //throw $th;
                 DB::rollBack();
-                return redirect()->route('man-management.app-management.index')->with('error', 'Gagal edit data, error : ' . $th->getMessage());
+                return redirect()->route('man-management.role-management.index')->with('error', 'Gagal edit data, error : ' . $th->getMessage());
             }
         }
         try {
             //code...
             DB::beginTransaction();
-            if ($image) {
-                $ext      = $image->getClientOriginalExtension();
-                $filename = Str::slug($validated['label'])  . '-logo-' . time() . '.' . $ext;
-                $disk   = 'public';
-                $folder = 'images/logo';
-                $new_path = $image->storeAs($folder, $filename, $disk);
-                $validated['image_path'] = $new_path;
-            }
-            unset($validated['image']);
-            AppManagement::create($validated);
+            Role::create($validated);
             DB::commit();
-            return redirect()->route('man-management.app-management.index')->with('success', 'Informasi aplikasi berhasil ditambahkan');
+            return redirect()->route('man-management.role-management.index')->with('success', 'Data berhasil ditambahkan');
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
-            if (isset($new_path) && Storage::disk('public')->exists($new_path)) {
-                Storage::disk('public')->delete($new_path);
-            }
-            return redirect()->route('man-management.app-management.index')->with('error', 'Terjadi kesalahan');
+            return redirect()->route('man-management.role-management.index')->with('error', 'Terjadi kesalahan, error : ' . $th->getMessage());
         }
     }
 
@@ -111,5 +100,23 @@ class RoleController extends Controller
             DB::rollBack();
             return redirect()->route('man-management.app-management.index')->with('error', 'aplikasi gagal dihapus, error: ' . $th->getMessage());
         }
+    }
+
+    public function fetchPegawai()
+    {
+        $this_pegawai = Pegawai::select(['name as label', 'id as value'])->get();
+        return response()->json($this_pegawai);
+    }
+
+    public function fetchTim()
+    {
+        $this_tim = TimKerja::select(['tahun', 'label', 'id as value'])->get()
+            ->map(function ($item) {
+                return [
+                    'label' => $item->tahun . ' - ' . $item->label,
+                    'value' => $item->value,
+                ];
+            });
+        return response()->json($this_tim);
     }
 }

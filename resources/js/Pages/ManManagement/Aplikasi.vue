@@ -11,7 +11,7 @@
             <InputIcon>
               <i class="pi pi-search" />
             </InputIcon>
-            <InputText v-model.trim="searchField" placeholder="Cari Tim Kerja" />
+            <InputText v-model.trim="searchField" placeholder="Cari Aplikasi" />
           </IconField>
           <Button
             icon="pi pi-download"
