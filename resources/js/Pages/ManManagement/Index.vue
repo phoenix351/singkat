@@ -147,8 +147,20 @@
             severity="info"
             autofocus
           />
-          <Button label="Cancel" size="small" severity="danger" autofocus />
-          <Button label="Save" size="small" severity="success" autofocus />
+          <Button
+            @click="updateDialog = false"
+            label="Cancel"
+            size="small"
+            severity="danger"
+            autofocus
+          />
+          <Button
+            @click="uploadPegawai({ update: true })"
+            label="Save"
+            size="small"
+            severity="success"
+            autofocus
+          />
         </template>
       </Dialog>
       <Dialog
@@ -172,6 +184,9 @@
               v-model="form.tipe"
               placeholder="Pilih Mode"
             />
+            <div v-if="form.errors?.tipe" class="text-red-500 text-sm mt-2">
+              {{ form.errors?.tipe }}
+            </div>
           </div>
           <template v-if="form.tipe == 'manual'">
             <div>
@@ -188,6 +203,9 @@
                 <Button severity="success" @click="getPegawai">
                   <i class="pi pi-search"></i>
                 </Button>
+              </div>
+              <div v-if="errorForm.nip" class="text-red-500 text-sm mt-2">
+                {{ errorForm.nip }}
               </div>
             </div>
             <div>
@@ -215,7 +233,7 @@
           </template>
           <template v-if="form.tipe == 'upload'">
             <div class="flex flex-row space-x-2">
-              <Button @click="downloadTemplate" severity="info" class="mb-2 lg:mb-0">
+              <Button @click="downloadTemplate" severity="info" class="lg:mb-0">
                 <i class="pi pi-file"></i>
                 Template
               </Button>
@@ -227,6 +245,9 @@
                 :maxFileSize="1000000"
                 @select="onSelectFile"
               />
+            </div>
+            <div v-if="errorForm.file" class="text-red-500 text-sm">
+              {{ errorForm.file }}
             </div>
           </template>
         </div>
@@ -357,28 +378,63 @@ const fetchFromSSO = async ($nip_lama) => {
 };
 //upload pegawai
 const createDialog = ref(false);
-const uploadPegawai = async () => {
-  // const { data } = await axios.get(route("man-management.get-current-pegawai"));
-  const data = !searchNIP.value
-    ? selectedFile.value.map((item) => item[0]).slice(1)
-    : [searchNIP.value];
-  const { data: check } = await axios.get(route("man-management.check-pegawai"));
+const errorForm = ref({ nip: null, file: null });
+const uploadPegawai = async ({ update = false }) => {
   const { data: tokens } = await axios.get(route("api.token.csrf"));
-  const setCheck = new Set(check);
-  const toUpload = data.filter((item) => !setCheck.has(item));
-  if (toUpload.length > 0) {
-    for (const n of toUpload) {
-      router.post(
-        route("man-management.upload-pegawai"),
-        {
-          _token: tokens,
-          nip: n,
+  if (update) {
+    router.patch(
+      route("man-management.patch-pegawai"),
+      {
+        _token: tokens,
+        ...editedPegawai.value,
+      },
+      {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          updateDialog.value = false;
+          fetchData();
         },
-        {
-          preserveScroll: false,
-          preserveState: false,
-        }
-      );
+        onError: () => {
+          updateDialog.value = true;
+        },
+      }
+    );
+  } else {
+    if (!form.tipe) {
+      form.errors.tipe = "Tipe belum diisi";
+      return;
+    } else form.errors.tipe = null;
+    if (form.tipe == "manual" && !searchNIP.value) {
+      errorForm.value.nip = "NIP belum diisi";
+      return;
+    } else errorForm.value.nip = null;
+    if (form.tipe == "upload" && !selectedFile.value) {
+      errorForm.value.file = "File belum diupload";
+      return;
+    } else errorForm.value.file = null;
+
+    const data = !searchNIP.value
+      ? selectedFile.value.map((item) => item[0]).slice(1)
+      : [searchNIP.value];
+    const { data: check } = await axios.get(route("man-management.check-pegawai"));
+    const setCheck = new Set(check);
+    const toUpload = data.filter((item) => !setCheck.has(item));
+    if (toUpload.length > 0) {
+      for (const n of toUpload) {
+        router.post(
+          route("man-management.upload-pegawai"),
+          {
+            _token: tokens,
+            nip: n,
+          },
+          {
+            preserveScroll: true,
+            preserveState: true,
+          }
+        );
+      }
+      createDialog.value = false;
     }
   }
 };
@@ -417,6 +473,7 @@ watch(createDialog, () => {
     form.reset();
     searchNIP.value = null;
     selectedFile.value = null;
+    errorForm.value = { nip: null, file: null };
   }
 });
 </script>

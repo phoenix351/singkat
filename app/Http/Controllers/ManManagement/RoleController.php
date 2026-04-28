@@ -25,6 +25,22 @@ class RoleController extends Controller
 
         $query = Role::query()->from('sulutweb_man_management.roles as mmr');
         $query->join('sulutweb_man_management.application_management as mma', 'mma.id', '=', 'mmr.app_id');
+        if ($request->sortOrder) {
+            $order = $request->sortOrder == 1 ? 'asc' : 'desc';
+            $query->orderBy($request->sortField, $order);
+        } else $query->orderBy('mma.label', 'asc');
+        if ($request->searchField) {
+            $tim = TimKerja::where('label', 'like', '%' . $request->searchField . '%')->pluck('id')->toArray();
+            $unit = Pegawai::where('name', 'like', '%' . $request->searchField . '%')->pluck('id')->toArray();
+             $query->where(function ($q) use ($request, $tim, $unit) {
+                $q->where('mma.label', 'like', '%' . $request->searchField . '%')
+                    ->orWhere('mmr.type', 'like', '%' . $request->searchField . '%')
+                    ->orWhere('mmr.roles', 'like', '%' . $request->searchField . '%')
+                    ->orWhereIn('mmr.to_role_id', $tim)
+                    ->orWhereIn('mmr.to_role_id', $unit);
+
+            });
+        }
         $query->select(['mmr.*', 'mma.label as app']);
         $roles = $query->paginate($paginated, ['*'], 'page', $currentPage)
             ->through(function ($item) {
@@ -52,7 +68,7 @@ class RoleController extends Controller
         $validated = $request->validate([
             'id' => ['sometimes', 'nullable'],
             'type' => ['required', 'string', 'max:4'],
-            'to_role_id' => ['sometimes', 'nullable', 'integer'],
+            'to_role_id' => ['required_unless:type,all', 'nullable', 'integer'],
             'app_id' => ['required', 'integer'],
             'roles' => ['required', 'string', 'max:20'],
         ]);
@@ -62,6 +78,8 @@ class RoleController extends Controller
             try {
                 //code...
                 DB::beginTransaction();
+                $role_to_update = Role::findOrFail($id);
+                if ($role_to_update) $role_to_update->update($validated);
                 DB::commit();
                 return redirect()->route('man-management.role-management.index')->with('success', 'Berhasil edit data');
             } catch (\Throwable $th) {
@@ -88,17 +106,14 @@ class RoleController extends Controller
         try {
             //code...
             DB::beginTransaction();
-            $app_to_delete = AppManagement::findOrFail($id);
-            if ($app_to_delete) {
-                if (Storage::disk('public')->exists($app_to_delete->image_path)) Storage::disk('public')->delete($app_to_delete->image_path);
-                $app_to_delete->delete();
-            }
+            $role_to_delete = Role::findOrFail($id);
+            if ($role_to_delete) $role_to_delete->delete();
             DB::commit();
-            return redirect()->route('man-management.app-management.index')->with('success', 'aplikasi berhasil dihapus');
+            return redirect()->route('man-management.role-management.index')->with('success', 'data berhasil dihapus');
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
-            return redirect()->route('man-management.app-management.index')->with('error', 'aplikasi gagal dihapus, error: ' . $th->getMessage());
+            return redirect()->route('man-management.role-management.index')->with('error', 'data gagal dihapus, error: ' . $th->getMessage());
         }
     }
 

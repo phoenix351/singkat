@@ -52,6 +52,11 @@
         <template #empty>
           <div class="text-center">Data tidak ada</div>
         </template>
+        <Column header="Tipe Role" field="type">
+          <template #body="{ data }">
+            <Badge severity="secondary" :value="data.type"></Badge>
+          </template>
+        </Column>
         <Column
           v-for="item in allColumns"
           :key="item.field"
@@ -59,18 +64,39 @@
           :header="item.header"
           sortable
         />
+        <Column :exportable="false">
+          <template #body="slotProps">
+            <div class="flex justify-end gap-2 w-full">
+              <Button
+                @click="updateData(slotProps.data)"
+                icon="pi pi-pencil"
+                variant="outlined"
+                rounded
+                class="mr-2"
+              />
+              <Button
+                @click="deleteData(slotProps.data)"
+                icon="pi pi-trash"
+                variant="outlined"
+                rounded
+                severity="danger"
+              />
+            </div>
+          </template>
+        </Column>
       </DataTable>
     </div>
     <Dialog
       v-model:visible="createDialog"
       modal
-      header="Tambah Data Baru"
+      :header="isUpdated ? 'Edit Data' : 'Tambah Data Baru'"
       class="min-w-[30vw]"
     >
       <div class="flex flex-col gap-6">
         <div>
           <label class="block font-bold mb-3">Tipe Role</label>
           <Select
+            v-if="!isUpdated"
             :options="[
               { label: 'Unit', value: 'unit' },
               { label: 'Tim', value: 'tim' },
@@ -83,11 +109,25 @@
             v-model="form.type"
             placeholder="Pilih Tipe Role"
           />
+          <Select
+            v-if="isUpdated"
+            :options="[
+              { label: 'Unit', value: 'unit' },
+              { label: 'Tim', value: 'tim' },
+              { label: 'Semua', value: 'all' },
+            ]"
+            class="w-full"
+            showClear
+            option-label="label"
+            option-value="value"
+            v-model="editedData.type"
+            placeholder="Pilih Tipe Role"
+          />
           <div v-if="page.props.errors.type" class="text-red-500 text-sm mt-2">
             {{ page.props.errors?.type }}
           </div>
         </div>
-        <div v-if="form.type != 'all'">
+        <div v-if="form.type != 'all' && !isUpdated">
           <label class="block font-bold mb-3">Pegawai/Tim</label>
           <Select
             :options="userDrop"
@@ -103,9 +143,26 @@
             {{ page.props.errors?.to_role_id }}
           </div>
         </div>
+        <div v-if="isUpdated && editedData.type != 'all'">
+          <label class="block font-bold mb-3">Pegawai/Tim</label>
+          <Select
+            :options="userUpdDrop"
+            class="w-full"
+            showClear
+            filter
+            option-label="label"
+            option-value="value"
+            v-model="editedData.to_role_id"
+            placeholder="Pilih Pegawai/Tim"
+          />
+          <div v-if="page.props.errors.to_role_id" class="text-red-500 text-sm mt-2">
+            {{ page.props.errors?.to_role_id }}
+          </div>
+        </div>
         <div>
           <label class="block font-bold mb-3">Aplikasi</label>
           <Select
+            v-if="!isUpdated"
             :options="apps"
             class="w-full"
             showClear
@@ -115,6 +172,17 @@
             v-model="form.app_id"
             placeholder="Pilih Aplikasi"
           />
+          <Select
+            v-if="isUpdated"
+            :options="apps"
+            class="w-full"
+            showClear
+            filter
+            option-label="label"
+            option-value="value"
+            v-model="editedData.app_id"
+            placeholder="Pilih Aplikasi"
+          />
           <div v-if="page.props.errors.app_id" class="text-red-500 text-sm mt-2">
             {{ page.props.errors?.app_id }}
           </div>
@@ -122,6 +190,22 @@
         <div>
           <label class="block font-bold mb-3">Role</label>
           <Select
+            v-if="!isUpdated"
+            :options="[
+              { label: 'Viewer', value: 'viewer' },
+              { label: 'Operator', value: 'operator' },
+              { label: 'Validator', value: 'validator' },
+              { label: 'Administrator', value: 'admin' },
+            ]"
+            class="w-full"
+            showClear
+            option-label="label"
+            option-value="value"
+            v-model="form.roles"
+            placeholder="Pilih Role"
+          />
+          <Select
+            v-if="isUpdated"
             :options="[
               { label: 'Viewer', value: 'viewer' },
               { label: 'Operator', value: 'operator' },
@@ -165,6 +249,7 @@ import AppLayout from "@/Layouts/ManManagement/AppLayout.vue";
 import { debounce } from "@/Layouts/ManManagement/Composables/debounce";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import axios from "axios";
+import { useConfirm } from "primevue";
 import { ref, watch } from "vue";
 
 const page = usePage();
@@ -186,7 +271,6 @@ const form = useForm({
   roles: "viewer",
 });
 const allColumns = [
-  { field: "type", header: "Tipe Role" },
   { field: "pengguna", header: "Pengguna" },
   { field: "app", header: "Aplikasi" },
   { field: "roles", header: "Role" },
@@ -243,18 +327,95 @@ watch(searchField, () => {
 const submit = async () => {
   try {
     const { data: tokens } = await axios.get(route("api.token.csrf"));
-    form._token = tokens;
-    form.post(route("man-management.role-management.store"), {
-      preserveScroll: true,
-      preserveState: true,
-      onSuccess: () => {
-        createDialog.value = false;
-        form.reset();
-      },
-    });
+    if (!isUpdated.value) {
+      form._token = tokens;
+      form.post(route("man-management.role-management.store"), {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          createDialog.value = false;
+          form.reset();
+        },
+      });
+      return;
+    }
+    if (isUpdated.value) {
+      router.patch(
+        route("man-management.role-management.patch"),
+        {
+          _token: tokens,
+          ...editedData.value,
+        },
+        {
+          preserveScroll: true,
+          preserveState: true,
+          onSuccess: () => {
+            createDialog.value = false;
+            fetchData();
+          },
+        }
+      );
+    }
   } catch (error) {
     console.error(error);
   }
+};
+const isUpdated = ref(false);
+const editedData = ref({});
+const updateData = (data) => {
+  isUpdated.value = true;
+  createDialog.value = true;
+  editedData.value = { ...data };
+};
+const userUpdDrop = ref([]);
+watch(editedData, async () => {
+  let data = null;
+  if (editedData.value?.type == "unit") {
+    const { data: unit } = await axios.get(route("man-management.fetch-pegawai"));
+    data = unit;
+  } else if (editedData.value?.type == "tim") {
+    const { data: tim } = await axios.get(route("man-management.fetch-tim"));
+    data = tim;
+  }
+  userUpdDrop.value = data;
+});
+watch(createDialog, () => {
+  if (createDialog.value == false) {
+    isUpdated.value = false;
+    editedData.value = {};
+  }
+});
+//delete
+const confirm = useConfirm();
+const deleteData = (data) => {
+  confirm.require({
+    message: "Apakah kamu yakin menghapus data ini?",
+    header: "Konfirmasi",
+    icon: "pi pi-info-circle",
+    rejectLabel: "Cancel",
+    acceptLabel: "Hapus",
+    rejectProps: {
+      label: "Cancel",
+      size: "small",
+      severity: "danger",
+    },
+    acceptProps: {
+      label: "Hapus",
+      size: "small",
+      severity: "success",
+    },
+    accept: async () => {
+      const { data: tokens } = await axios.get(route("api.token.csrf"));
+      router.delete(route("man-management.role-management.destroy", { id: data.id }), {
+        _token: tokens,
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          fetchData();
+        },
+      });
+    },
+  });
 };
 </script>
 

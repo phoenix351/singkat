@@ -18,6 +18,7 @@ Route::prefix('man-management')->name('man-management.')->middleware(['auth', 'u
     Route::get('/check-pegawai', [PegawaiController::class, 'checkPegawai'])->name('check-pegawai');
     Route::get('/get-current-pegawai', [PegawaiController::class, 'getCurrentPegawai'])->name('get-current-pegawai');
     Route::post('/upload-pegawai', [PegawaiController::class, 'uploadPegawai'])->name('upload-pegawai');
+    Route::patch('/patch-pegawai', [PegawaiController::class, 'uploadPegawai'])->name('patch-pegawai');
 
     Route::get('/tim-kerja', [HomeController::class, 'tkIndex'])->name('tim-kerja.index');
     Route::post('/tim-kerja/store', [PegawaiController::class, 'tkStore'])->name('tim-kerja.store');

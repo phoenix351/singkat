@@ -127,6 +127,9 @@
             placeholder="Isi nama aplikasi"
             class="w-full"
           />
+          <div v-if="page.props.errors.label" class="text-red-500 text-sm mt-2">
+            {{ page.props.errors?.label }}
+          </div>
         </div>
         <div>
           <label class="block font-bold mb-3">Deskripsi</label>
@@ -142,6 +145,9 @@
             placeholder="Isi deskripsi"
             class="w-full"
           />
+          <div v-if="page.props.errors.deskripsi" class="text-red-500 text-sm mt-2">
+            {{ page.props.errors?.deskripsi }}
+          </div>
         </div>
         <div>
           <label class="block font-bold mb-3">Link Aplikasi</label>
@@ -157,6 +163,9 @@
             placeholder="Isi link aplikasi"
             class="w-full"
           />
+          <div v-if="page.props.errors.route_link" class="text-red-500 text-sm mt-2">
+            {{ page.props.errors?.route_link }}
+          </div>
         </div>
         <div>
           <label class="block font-bold mb-3">Navigation</label>
@@ -186,6 +195,9 @@
             v-model="editedData.navigation"
             placeholder="Isi navigation"
           />
+          <div v-if="page.props.errors.navigation" class="text-red-500 text-sm mt-2">
+            {{ page.props.errors?.navigation }}
+          </div>
         </div>
         <div>
           <label class="block font-bold mb-3">Sedang maintenance</label>
@@ -225,6 +237,9 @@
               <label for="maintenance_false">Tidak</label>
             </div>
           </div>
+          <div v-if="page.props.errors.maintenance" class="text-red-500 text-sm mt-2">
+            {{ page.props.errors?.maintenance }}
+          </div>
         </div>
         <div v-if="form.maintenance == true || editedData.maintenance == true">
           <label class="block font-bold mb-3">Pesan Maintenance</label>
@@ -240,6 +255,12 @@
             placeholder="Isi pesan maintenance"
             class="w-full"
           />
+          <div
+            v-if="page.props.errors.maintenance_message"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.maintenance_message }}
+          </div>
         </div>
         <div>
           <label class="block font-bold mb-3">Upload Logo Aplikasi</label>
@@ -276,10 +297,11 @@
 <script setup>
 import AppLayout from "@/Layouts/ManManagement/AppLayout.vue";
 import { debounce } from "@/Layouts/ManManagement/Composables/debounce";
-import { Head, router, useForm } from "@inertiajs/vue3";
+import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import { useConfirm } from "primevue";
 import { computed, ref, watch } from "vue";
 
+const page = usePage();
 const searchField = ref(null);
 const createDialog = ref(false);
 const props = defineProps({
@@ -363,8 +385,13 @@ const submit = async () => {
     form._token = tokens;
     if (!isUpdated.value) {
       form.post(route("man-management.app-management.store"), {
-        preserveScroll: false,
-        preserveState: false,
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          form.reset();
+          fetchData();
+          createDialog.value = false;
+        },
       });
       return;
     }
@@ -378,8 +405,12 @@ const submit = async () => {
         formData.append(k, value);
       });
       router.post(route("man-management.app-management.patch"), formData, {
-        preserveScroll: false,
-        preserveState: false,
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          createDialog.value = false;
+          fetchData();
+        },
       });
       return;
     }
@@ -410,6 +441,11 @@ const deleteData = (data) => {
       const { data: tokens } = await axios.get(route("api.token.csrf"));
       router.delete(route("man-management.app-management.destroy", { id: data.id }), {
         _token: tokens,
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          fetchData();
+        },
       });
     },
   });

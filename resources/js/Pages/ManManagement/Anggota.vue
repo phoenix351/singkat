@@ -102,6 +102,9 @@
             v-model="form.tipe"
             placeholder="Pilih Mode"
           />
+          <div v-if="form.errors.tipe" class="text-red-500 text-sm mt-2">
+            {{ form.errors.tipe }}
+          </div>
         </div>
         <template v-if="form.tipe == 'manual'">
           <div>
@@ -116,6 +119,9 @@
               v-model="form.tim_id"
               placeholder="Pilih Tim"
             />
+            <div v-if="page.props.errors.tim_id" class="text-red-500 text-sm mt-2">
+              {{ page.props.errors?.tim_id }}
+            </div>
           </div>
           <div>
             <label for="pegawai" class="block font-bold mb-3">Nama Pegawai</label>
@@ -129,6 +135,9 @@
               v-model="form.pegawai_id"
               placeholder="Pilih Pegawai"
             />
+            <div v-if="page.props.errors.pegawai_id" class="text-red-500 text-sm mt-2">
+              {{ page.props.errors?.pegawai_id }}
+            </div>
           </div>
           <div>
             <label for="keanggotaan" class="block font-bold mb-3">Keanggotaan</label>
@@ -144,6 +153,9 @@
               v-model="form.keanggotaan"
               placeholder="Pilih Keanggotaan"
             />
+            <div v-if="page.props.errors.keanggotaan" class="text-red-500 text-sm mt-2">
+              {{ page.props.errors?.keanggotaan }}
+            </div>
           </div>
         </template>
         <template v-if="form.tipe == 'upload'">
@@ -343,7 +355,14 @@ const submit = async ({ update = false, fileupload = null }) => {
           _token: tokens,
           ...editedAnggota.value,
         },
-        { preserveScroll: false, preserveState: false }
+        {
+          preserveScroll: true,
+          preserveState: true,
+          onSuccess: () => {
+            fetchData();
+            updateDialog.value = false;
+          },
+        }
       );
       return;
     }
@@ -356,10 +375,11 @@ const submit = async ({ update = false, fileupload = null }) => {
           fileUpload: selectedFile.value,
         },
         {
-          preserveScroll: false,
-          preserveState: false,
+          preserveScroll: true,
+          preserveState: true,
           onSuccess: () => {
             const flash = page.props.flash;
+            createDialog.value = false;
             if (flash?.notification ?? null) {
               for (const [i, n] of flash.notification.entries()) {
                 setTimeout(() => {
@@ -372,16 +392,24 @@ const submit = async ({ update = false, fileupload = null }) => {
                 }, i * 500);
               }
             }
+            fetchData();
           },
         }
       );
     } else {
+      if (!form.tipe) {
+        form.errors.tipe = "Tipe belum diisi";
+        return;
+      } else form.errors.tipe = null;
+
       form._token = tokens;
       form.post(route("man-management.anggota.store"), {
-        preserveScroll: false,
-        preserveState: false,
+        preserveScroll: true,
+        preserveState: true,
         onSuccess: () => {
           form.reset();
+          fetchData();
+          createDialog.value = false;
         },
       });
     }
@@ -411,6 +439,11 @@ const deleteAnggota = (data) => {
       const { data: tokens } = await axios.get(route("api.token.csrf"));
       router.delete(route("man-management.anggota.destroy", { id: data.id }), {
         _token: tokens,
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          fetchData();
+        },
       });
     },
   });

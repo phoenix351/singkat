@@ -29,10 +29,40 @@ class PegawaiController extends Controller
 
     public function uploadPegawai(Request $request)
     {
+        if ($request->isMethod('patch')) {
+            $validated = $request->validate([
+                'id' => ['required'],
+                'nip_lama' => ['required'],
+                'nip' => ['required'],
+                'username' => ['required'],
+                'email' => ['required'],
+                'name' => ['required'],
+                'golongan' => ['required'],
+                'jabatan' => ['required'],
+                'organisasi' => ['required'],
+                'provinsi' => ['required'],
+                'kabupaten' => ['required'],
+                'foto' => ['required'],
+            ]);
+            if ($validated['provinsi'] != 'Sulawesi Utara') return redirect()->route('man-management.index')->with('error', 'Data NIP : ' . $validated['nip'] . ' bukan pegawai Sulawesi Utara');
+            try {
+                //code...
+                DB::beginTransaction();
+                $pegawai_to_update = ManManagementPegawai::findOrFail($validated['id']);
+                if ($pegawai_to_update) $pegawai_to_update->update($validated);
+                DB::commit();
+                return redirect()->route('man-management.index')->with('success', 'Data pegawai berhasil di-update');
+            } catch (\Throwable $th) {
+                //throw $th;
+                DB::rollBack();
+                return redirect()->route('man-management.index')->with('error', 'Data pegawai gagal di-update, error : ' . $th->getMessage());
+            }
+        }
         $lc = app(LoginController::class);
         $result = $lc->ssoAPI($request->nip);
         $data = $result[0]['attributes'] ?? null;
-        if (!$data) return redirect()->route('man-management.index')->with('error', 'Data tidak ditemukan');
+        if (!$data)
+            return redirect()->route('man-management.index')->with('error', 'Data tidak ditemukan');
         $payload = [
             'nip_lama'   => $data['attribute-nip-lama'][0] ?? null,
             'nip'        => $data['attribute-nip'][0] ?? null,

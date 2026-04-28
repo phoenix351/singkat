@@ -101,6 +101,9 @@
             v-model="form.tipe"
             placeholder="Pilih Mode"
           />
+          <div v-if="form.errors.tipe" class="text-red-500 text-sm mt-2">
+            {{ form.errors.tipe }}
+          </div>
         </div>
         <template v-if="form.tipe == 'manual'">
           <div>
@@ -114,6 +117,9 @@
               v-model="form.tahun"
               placeholder="Pilih Tahun"
             />
+            <div v-if="page.props.errors.tahun" class="text-red-500 text-sm mt-2">
+              {{ page.props.errors?.tahun }}
+            </div>
           </div>
           <div>
             <label for="label" class="block font-bold mb-3">Nama Tim Kerja</label>
@@ -125,11 +131,14 @@
               fluid
               placeholder="Isi Nama Tim Kerja"
             />
+            <div v-if="page.props.errors.label" class="text-red-500 text-sm mt-2">
+              {{ page.props.errors?.label }}
+            </div>
           </div>
         </template>
         <template v-if="form.tipe == 'upload'">
           <div class="flex flex-row space-x-2">
-            <Button @click="downloadTemplate" severity="info" class="mb-2 lg:mb-0">
+            <Button @click="downloadTemplate" severity="info" class="lg:mb-0">
               <i class="pi pi-file"></i>
               Template
             </Button>
@@ -179,6 +188,9 @@
             v-model="editedTimKerja.tahun"
             placeholder="Pilih Tahun"
           />
+          <div v-if="page.props.errors.tahun" class="text-red-500 text-sm mt-2">
+            {{ page.props.errors?.tahun }}
+          </div>
         </div>
         <div>
           <label for="label" class="block font-bold mb-3">Nama Tim Kerja</label>
@@ -190,6 +202,9 @@
             fluid
             placeholder="Isi Nama Tim Kerja"
           />
+          <div v-if="page.props.errors.label" class="text-red-500 text-sm mt-2">
+            {{ page.props.errors?.label }}
+          </div>
         </div>
       </div>
       <template #footer>
@@ -288,7 +303,6 @@ const submit = async ({ updated = false, fileupload = null }) => {
   try {
     const { data: tokens } = await axios.get(route("api.token.csrf"));
     if (fileupload) {
-      if (!selectedFile.value) return;
       router.post(
         route("man-management.tim-kerja.store"),
         {
@@ -296,9 +310,10 @@ const submit = async ({ updated = false, fileupload = null }) => {
           fileUpload: selectedFile.value,
         },
         {
-          preserveScroll: false,
-          preserveState: false,
+          preserveScroll: true,
+          preserveState: true,
           onSuccess: () => {
+            createDialog.value = false;
             const flash = page.props.flash;
             if (flash?.notification ?? null) {
               for (const [i, n] of flash.notification.entries()) {
@@ -312,6 +327,7 @@ const submit = async ({ updated = false, fileupload = null }) => {
                 }, i * 500);
               }
             }
+            fetchData();
           },
         }
       );
@@ -324,18 +340,31 @@ const submit = async ({ updated = false, fileupload = null }) => {
           _token: tokens,
           ...editedTimKerja.value,
         },
-        { preserveScroll: false, preserveState: false }
+        {
+          preserveScroll: true,
+          preserveState: true,
+          onSuccess: () => {
+            updateDialog.value = false;
+            fetchData();
+          },
+        }
       );
-      return;
+    } else {
+      if (!form.tipe) {
+        form.errors.tipe = "Tipe belum diisi";
+        return;
+      } else form.errors.tipe = null;
+      form._token = tokens;
+      form.post(route("man-management.tim-kerja.store"), {
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+          form.reset();
+          createDialog.value = false;
+          fetchData();
+        },
+      });
     }
-    form._token = tokens;
-    form.post(route("man-management.tim-kerja.store"), {
-      preserveState: false,
-      preserveScroll: false,
-      onSuccess: (response) => {
-        form.reset();
-      },
-    });
   } catch (error) {
     console.error(error);
   }
@@ -362,6 +391,11 @@ const deleteTimKerja = (data) => {
       const { data: tokens } = await axios.get(route("api.token.csrf"));
       router.delete(route("man-management.tim-kerja.destroy", { id: data.id }), {
         _token: tokens,
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          fetchData();
+        },
       });
     },
   });
@@ -393,6 +427,7 @@ watch(createDialog, () => {
   if (createDialog.value == false) {
     form.reset();
     selectedFile.value = null;
+    form.errors.tipe = null;
   }
 });
 const exportTimKerja = () => {
