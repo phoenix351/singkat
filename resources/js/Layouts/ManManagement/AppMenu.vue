@@ -37,6 +37,14 @@ const menu = ref([
         route: route("man-management.app-management.index"),
         isActive: "man-management.app-management.index",
       },
+      {
+        label: "Pengaturan Role",
+        icon: "pi-fw",
+        material_icon: "manage_accounts",
+        material: true,
+        route: route("man-management.role-management.index"),
+        isActive: "man-management.role-management.index",
+      },
     ],
   },
 ]);

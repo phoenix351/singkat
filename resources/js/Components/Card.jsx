@@ -6,7 +6,7 @@ const Card = ({
     description,
     link,
     navMode,
-    isMaintenance = false,
+    isMaintenance = 0,
     maintenanceMessage = "Aplikasi sedang dalam pemeliharaan",
 }) => {
     const handleClick = () => {
@@ -19,7 +19,7 @@ const Card = ({
         <div className="relative w-full group h-full">
             <div
                 className={`w-full flex flex-col items-center rounded-xl p-2 py-4 shadow-slate-400 transition ease-in-out delay-150
-                    ${isMaintenance
+                    ${isMaintenance == 1
                         ? "cursor-not-allowed bg-slate-200 opacity-80"
                         : "cursor-pointer bg-slate-100 dark:bg-boxdark hover:bg-slate-100 dark:hover:bg-slate-100 dark:hover:text-slate-900 md:hover:scale-110"
                     }`}

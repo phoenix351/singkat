@@ -15,6 +15,9 @@ const manmentLogout = async () => {
     },
   });
 };
+const backToHome = () => {
+  window.location.href = "/";
+};
 </script>
 
 <template>
@@ -88,9 +91,14 @@ const manmentLogout = async () => {
               <div class="fixed inset-0 z-40" @click="dropdown = false"></div>
               <div
                 @click.stop
-                class="absolute config-panel p-2 hover:bg-red-100 dark:hover:bg-red-800 z-50 right-0 mt-2 w-40 bg-surface-0 dark:bg-surface-900 border border-surface rounded-border origin-top shadow-[0px_3px_5px_rgba(0,0,0,0.02),0px_0px_2px_rgba(0,0,0,0.05),0px_1px_4px_rgba(0,0,0,0.08)]"
+                class="absolute config-panel p-2 z-50 right-0 mt-2 w-40 bg-surface-0 dark:bg-surface-900 border border-surface rounded-border origin-top shadow-[0px_3px_5px_rgba(0,0,0,0.02),0px_0px_2px_rgba(0,0,0,0.05),0px_1px_4px_rgba(0,0,0,0.08)]"
               >
                 <div class="flex flex-col gap-2">
+                  <span
+                    @click.stop="backToHome"
+                    class="text text-black font-semibold cursor-pointer px-2 py-1 rounded hover:bg-red-100 dark:hover:bg-red-800"
+                    >Home</span
+                  >
                   <span
                     @click.stop="manmentLogout"
                     class="text text-black font-semibold cursor-pointer px-2 py-1 rounded hover:bg-red-100 dark:hover:bg-red-800"

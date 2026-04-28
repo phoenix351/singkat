@@ -2,6 +2,7 @@
 
 use App\Exports\ManmentPegawaiExport;
 use App\Exports\TimKerjaExport;
+use App\Http\Controllers\ManManagement\AppController;
 use App\Http\Controllers\ManManagement\HomeController;
 use App\Http\Controllers\ManManagement\PegawaiController;
 use App\Http\Controllers\ManManagement\RoleController;
@@ -11,11 +12,13 @@ use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
 
 Route::prefix('man-management')->name('man-management.')->middleware(['auth', 'use.vue.inertia'])->group(function () {
+    Route::get('/', [HomeController::class, 'index']);
     Route::get('/index', [HomeController::class, 'index'])->name('index');
 
     Route::get('/check-pegawai', [PegawaiController::class, 'checkPegawai'])->name('check-pegawai');
     Route::get('/get-current-pegawai', [PegawaiController::class, 'getCurrentPegawai'])->name('get-current-pegawai');
     Route::post('/upload-pegawai', [PegawaiController::class, 'uploadPegawai'])->name('upload-pegawai');
+    Route::patch('/patch-pegawai', [PegawaiController::class, 'uploadPegawai'])->name('patch-pegawai');
 
     Route::get('/tim-kerja', [HomeController::class, 'tkIndex'])->name('tim-kerja.index');
     Route::post('/tim-kerja/store', [PegawaiController::class, 'tkStore'])->name('tim-kerja.store');
@@ -26,11 +29,18 @@ Route::prefix('man-management')->name('man-management.')->middleware(['auth', 'u
     Route::post('/anggota-tim-kerja/store', [PegawaiController::class, 'atStore'])->name('anggota.store');
     Route::patch('/anggota-tim-kerja/patch', [PegawaiController::class, 'atStore'])->name('anggota.patch');
     Route::delete('/anggota-tim-kerja/destroy/{id}', [PegawaiController::class, 'atDestroy'])->name('anggota.destroy');
-    
-    Route::get('/app-management', [RoleController::class, 'index'])->name('app-management.index');
-    Route::post('/app-management/store', [RoleController::class, 'store'])->name('app-management.store');
-    Route::patch('/app-management/patch', [RoleController::class, 'store'])->name('app-management.patch');
-    Route::delete('/app-management/destroy/{id}', [RoleController::class, 'destroy'])->name('app-management.destroy');
+
+    Route::get('/app-management', [AppController::class, 'index'])->name('app-management.index');
+    Route::post('/app-management/store', [AppController::class, 'store'])->name('app-management.store');
+    Route::patch('/app-management/patch', [AppController::class, 'store'])->name('app-management.patch');
+    Route::delete('/app-management/destroy/{id}', [AppController::class, 'destroy'])->name('app-management.destroy');
+
+    Route::get('/role-management', [RoleController::class, 'index'])->name('role-management.index');
+    Route::post('/role-management/store', [RoleController::class, 'store'])->name('role-management.store');
+    Route::patch('/role-management/patch', [RoleController::class, 'store'])->name('role-management.patch');
+    Route::delete('/role-management/destroy/{id}', [RoleController::class, 'destroy'])->name('role-management.destroy');
+    Route::get('/fetch-pegawai', [RoleController::class, 'fetchPegawai'])->name('fetch-pegawai');
+    Route::get('/fetch-tim', [RoleController::class, 'fetchTim'])->name('fetch-tim');
 
     Route::get('/download-template/tim-kerja', function () {
         $file_path = public_path('document/Tim Kerja Template.xlsx');
