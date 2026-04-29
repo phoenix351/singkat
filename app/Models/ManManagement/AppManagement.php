@@ -12,6 +12,7 @@ class AppManagement extends Model
     public $timestamps = true;
     protected $fillable = [
         'label',
+        'prefix',
         'deskripsi',
         'route_link',
         'navigation',

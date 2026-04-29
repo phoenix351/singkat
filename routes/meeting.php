@@ -3,7 +3,7 @@
 use App\Http\Controllers\Meeting\ZoomController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('meeting')->name('meeting.')->middleware(['auth', 'use.vue.inertia'])->group(function () {
+Route::prefix('meeting')->name('meeting.')->middleware(['auth', 'use.vue.inertia', 'permission'])->group(function () {
     Route::get('/', [ZoomController::class, 'dashboard'])->name('home');
     Route::get('/dashboard', [ZoomController::class, 'dashboard'])->name('dashboard');
     Route::get('/index/{id?}', [ZoomController::class, 'index'])->name('index');

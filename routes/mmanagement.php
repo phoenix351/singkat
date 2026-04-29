@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
 
-Route::prefix('man-management')->name('man-management.')->middleware(['auth', 'use.vue.inertia'])->group(function () {
+Route::prefix('man-management')->name('man-management.')->middleware(['auth', 'use.vue.inertia', 'permission'])->group(function () {
     Route::get('/', [HomeController::class, 'index']);
     Route::get('/index', [HomeController::class, 'index'])->name('index');
 

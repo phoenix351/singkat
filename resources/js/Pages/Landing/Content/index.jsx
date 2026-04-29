@@ -2,40 +2,6 @@ import Card from "@/Components/Card";
 import { usePage } from "@inertiajs/react";
 const Content = () => {
     const page = usePage()
-    const daftarAplikasi = [
-        {
-            imagePath: route('index'),
-            name: <span className="text-nowrap">SINGKAT</span>,
-            description: "Pengelolaan Angka Kredit dan Analisis Beban Kerja",
-            link: route("singkat"),
-            navMode: 'react',
-            isMaintenance: true,
-            maintenanceMessage: "Aplikasi sedang dalam pemeliharaan"
-        },
-        {
-            imagePath: route('index') + "/images/logo/MeetSulut-Zoom-Logo.png",
-            name: <span className="text-nowrap">MeetSulut</span>,
-            description: "Pengajuan dan Pengelolaan Zoom",
-            link: route("meeting.dashboard"),
-            navMode: 'reload',
-        },
-        {
-            imagePath: route('index') + "/images/logo/Simple-Logo.png",
-            name: <span className="text-nowrap">SIMPLE</span>,
-            description: "Pengajuan dan Pengelolaan Lembur",
-            link: route("singkat"),
-            navMode: 'reload',
-            isMaintenance: true,
-            maintenanceMessage: "Aplikasi sedang dalam proses migrasi"
-        },
-        {
-            imagePath: route('index') + "/images/logo/Man-Management-Logo.png",
-            name: <span className="text-nowrap">MANMENT</span>,
-            description: "Pengelolaan Pegawai dalam Aplikasi",
-            link: route("man-management.index"),
-            navMode: 'reload',
-        },
-    ];
     return (
         <div className="mt-16">
 
