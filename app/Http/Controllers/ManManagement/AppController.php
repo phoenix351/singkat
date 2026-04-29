@@ -42,6 +42,7 @@ class AppController extends Controller
         $validated = $request->validate([
             'id' => ['sometimes', 'nullable'],
             'label' => ['required', 'string', 'max:30'],
+            'prefix' => ['required', 'string', 'max:30'],
             'deskripsi' => ['required', 'string', 'max:100'],
             'route_link' => ['required', 'string', 'max:100'],
             'navigation' => ['required', 'string', 'max:30'],

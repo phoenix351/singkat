@@ -2,10 +2,12 @@
 
 namespace App\Models\ManManagement;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User;
+use Illuminate\Notifications\Notifiable;
 
-class Pegawai extends Model
+class Pegawai extends User
 {
+    use Notifiable;
     //
     protected $connection = 'sulutweb_man_management';
     protected $table = 'pegawai';

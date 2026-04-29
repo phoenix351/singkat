@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Singkat\Controller;
+use App\Models\ManManagement\Pegawai;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -68,7 +69,8 @@ class LoginController extends Controller
         $userInfo = $userInfoResponse->json();
         // dd($userInfo);
 
-        $user = User::where('pegawai_id', $userInfo['nip-lama'])->first();
+        // $user = User::where('pegawai_id', $userInfo['nip-lama'])->first();
+        $user = Pegawai::where('nip_lama', $userInfo['nip-lama'])->first();
         if ($user) {
             Auth::login($user);
             $request->session()->regenerate();

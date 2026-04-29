@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AppPermission;
 use App\Http\Middleware\UseVueInertia;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'use.vue.inertia' => UseVueInertia::class,
+            'permission' => AppPermission::class,
         ]);
 
         //

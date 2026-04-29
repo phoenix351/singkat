@@ -37,6 +37,7 @@
         class="w-full"
         lazy
         paginator
+        scrollable
         :rows="apps.per_page"
         :first="(apps.current_page - 1) * apps.per_page"
         :total-records="apps.total"
@@ -49,7 +50,13 @@
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data"
       >
-        <Column header="Nama Aplikasi" field="label" sortable>
+        <Column
+          frozen
+          class="min-w-[150px]"
+          header="Nama Aplikasi"
+          field="label"
+          sortable
+        >
           <template #body="{ data }">
             <div class="flex items-center gap-2">
               <img style="width: 32px" :src="'/storage/' + data.image_path" />
@@ -57,7 +64,8 @@
             </div>
           </template>
         </Column>
-        <Column header="Deskripsi" field="deskripsi" sortable />
+        <Column header="Prefix" field="prefix" />
+        <Column class="min-w-[300px]" header="Deskripsi" field="deskripsi" sortable />
         <Column header="Link Aplikasi" field="route_link" sortable>
           <template #body="{ data }">
             <Badge
@@ -83,8 +91,18 @@
             ></Badge>
           </template>
         </Column>
-        <Column header="Message" field="maintenance_message" sortable />
-        <Column :exportable="false">
+        <Column
+          class="min-w-[300px]"
+          header="Message"
+          field="maintenance_message"
+          sortable
+        />
+        <Column align-frozen="right" frozen :exportable="false">
+          <template #header>
+            <div class="flex justify-center w-full">
+              <span class="font-bold">Edit</span>
+            </div>
+          </template>
           <template #body="slotProps">
             <div class="flex justify-end gap-2 w-full">
               <Button
