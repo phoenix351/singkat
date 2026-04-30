@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import vue from '@vitejs/plugin-vue';
 import Components from 'unplugin-vue-components/vite';
 import { PrimeVueResolver } from "@primevue/auto-import-resolver";
+import vueDevTools from 'vite-plugin-vue-devtools';
 
 export default defineConfig({
     plugins: [
@@ -19,6 +20,9 @@ export default defineConfig({
                     includeAbsolute: false,
                 },
             },
+        }),
+        vueDevTools({
+            appendTo: 'resources/js/app-vue.js',
         }),
         Components({
             resolvers: [PrimeVueResolver()],

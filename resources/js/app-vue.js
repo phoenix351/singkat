@@ -14,6 +14,7 @@ import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 // const appName = 'MeetSulut';
 const getPrefix = () => {
     const currentRoute = route().current()
+    if (!currentRoute) return ''
     const prefix = currentRoute.split('.')[0]
     return prefix
 }
@@ -25,6 +26,9 @@ const setNameApp = () => {
             break;
         case 'meeting':
             result = 'MeetSulut'
+            break;
+        case 'simple':
+            result = 'Simple'
             break;
         default:
             result = 'superapp'
@@ -40,6 +44,9 @@ const colornProgress = () => {
             break;
         case 'meeting':
             result = "#4B5563"
+            break;
+        case 'simple':
+            result = "#3B82F6" // Blue
             break;
         default:
             result = "#4B5563"
@@ -64,7 +71,7 @@ createInertiaApp({
             const { default: VueTailwindDatepicker } = await import("vue-tailwind-datepicker")
             vueApp.use(VueTailwindDatepicker)
         }
-        if (prefix === "man-management") {
+        if (prefix === "man-management" || prefix === "simple") {
             await import('../css/manment/styles.scss')
             await import('../css/manment/tailwind.css')
             const { default: PrimeVue } = await import("primevue/config");
@@ -84,17 +91,6 @@ createInertiaApp({
                 .use(ConfirmationService)
                 .use(ToastService);
         }
-        //     .use(plugin)
-        //     .use(ZiggyVue)
-        //     .use(VueTailwindDatepicker)
-        //     .use(PrimeVue, {
-        //         theme: {
-        //             preset: Aura,
-        //             options: {
-        //                 darkModeSelector: '.app-dark'
-        //             }
-        //         }
-        //     })
         return vueApp.mount(el)
     },
     progress: {
