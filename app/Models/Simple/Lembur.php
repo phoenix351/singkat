@@ -2,6 +2,7 @@
 
 namespace App\Models\Simple;
 
+use App\Models\ManManagement\TimKerja;
 use Illuminate\Database\Eloquent\Model;
 
 class Lembur extends Model
@@ -11,12 +12,12 @@ class Lembur extends Model
     public $timestamps = true;
     protected $table = 'lembur';
     protected $fillable = [
-        'pegawai_id',
-        'tanggal',
-        'jam_mulai',
-        'jam_selesai',
-        'nomor_spkl',
         'maksud_lembur',
-        'created_by',
+        'nomor_spkl',
+        'tim_id',
     ];
+    public function tim()
+    {
+        return $this->belongsTo(TimKerja::class);
+    }
 }

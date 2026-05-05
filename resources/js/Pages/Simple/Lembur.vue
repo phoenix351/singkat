@@ -67,11 +67,11 @@
       v-model:visible="createDialog"
       modal
       :header="isUpdated ? 'Edit Data' : 'Tambah Data Baru'"
-      class="min-w-[30vw]"
+      class="min-w-[40vw]"
     >
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-4">
         <div>
-          <label class="block font-bold mb-3">Tim Kerja</label>
+          <label class="block font-bold mb-2">Tim Kerja</label>
           <Select
             placeholder="Pilih tim kerja"
             :options="tim"
@@ -79,11 +79,23 @@
             showClear
             option-label="tim_kerja"
             option-value="tim_id"
-            v-model="form.timkerja"
+            v-model="form.tim_id"
           />
         </div>
-        <div v-if="form.timkerja">
-          <label class="block font-bold mb-3">Anggota yang Lembur</label>
+        <div>
+          <label class="block font-bold mb-2">Maksud Lembur</label>
+          <Select
+            placeholder="Pilih maksud lembur yang sudah ada atau tambah baru"
+            :options="maksudLembur"
+            showClear
+            editable
+            emptyMessage="Ketik untuk menambah maksud baru..."
+            v-model="form.maksud_lembur"
+            fluid
+          />
+        </div>
+        <div v-if="form.tim_id">
+          <label class="block font-bold mb-2">Anggota yang Lembur</label>
           <MultiSelect
             filter
             showClear
@@ -103,7 +115,7 @@
         </div>
         <template v-if="form.anggotalembur && form.anggotalembur.length > 0">
           <div>
-            <label class="block font-bold mb-3">Tanggal</label>
+            <label class="block font-bold mb-2">Tanggal</label>
             <DatePicker
               v-model="form.tanggal"
               fluid
@@ -113,7 +125,7 @@
             />
           </div>
           <div>
-            <label class="block font-bold mb-3">Jam Mulai</label>
+            <label class="block font-bold mb-2">Jam Mulai</label>
             <InputText
               type="time"
               placeholder="Isi jam mulai lembur"
@@ -123,7 +135,7 @@
             />
           </div>
           <div>
-            <label class="block font-bold mb-3">Jam Selesai</label>
+            <label class="block font-bold mb-2">Jam Selesai</label>
             <InputText
               type="time"
               placeholder="Isi jam selesai lembur"
@@ -131,20 +143,6 @@
               fluid
               showClear
             />
-          </div>
-          <div>
-            <label class="block font-bold mb-3">No. SPKL</label>
-            <InputText
-              v-model="form.nomor_spkl"
-              required="true"
-              autofocus
-              fluid
-              placeholder="Isikan Nomor SPKL"
-            />
-          </div>
-          <div>
-            <label class="block font-bold mb-3">Maksud Lembur</label>
-            <Textarea autoResize v-model="form.maksud_lembur" rows="5" fluid />
           </div>
         </template>
       </div>
@@ -186,7 +184,12 @@ const props = defineProps({
   },
 });
 const paginatedItem = ref(props.lembur);
-
+watch(
+  () => props.lembur,
+  (value) => {
+    paginatedItem.value = value;
+  }
+);
 //paginated and search
 const currentPage = computed(
   () => (paginatedItem.value.current_page - 1) * paginatedItem.value.per_page
@@ -218,17 +221,18 @@ const fetchData = (event = null) => {
 const createDialog = ref(false);
 const isUpdated = ref(false);
 const form = useForm({
-  timkerja: null,
+  _token: null,
+  tim_id: null,
   anggotalembur: [],
   tanggal: null,
   jam_mulai: null,
   jam_selesai: null,
-  nomor_spkl: null,
   maksud_lembur: null,
 });
 const anggotaTim = ref([]);
+const maksudLembur = ref([]);
 watch(
-  () => form.timkerja,
+  () => form.tim_id,
   async (tim) => {
     if (tim) {
       form.anggotalembur = [];
@@ -237,14 +241,37 @@ watch(
       );
       anggotaTim.value = anggota;
       form.anggotalembur = [...anggota.map((a) => a.value)];
+
+      form.maksud_lembur = null;
+      const { data: maksud } = await axios.get(
+        route("simple.fetch-maksud", { tim_id: tim })
+      );
+      maksudLembur.value = maksud;
+    } else {
+      form.anggotalembur = [];
     }
   }
 );
-const submit = () => {};
+const submit = async () => {
+  try {
+    const { data: tokens } = await axios.get(route("api.token.csrf"));
+    form._token = tokens._token;
+    form.post(route("simple.store"), {
+      preserveScroll: true,
+      preserveState: true,
+      onSuccess: () => {
+        createDialog.value = false;
+        form.reset();
+      },
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
 watch(createDialog, () => {
   form.reset();
   anggotaTim.value = [];
 });
 </script>
 
-<style lang="scss" scoped></style>
+<style scoped></style>

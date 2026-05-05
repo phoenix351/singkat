@@ -10,4 +10,7 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
         Route::get('/', [HomeController::class, 'index'])->name('index');
 
         Route::get('/pengajuan-lembur', [LemburController::class, 'index'])->name('lembur');
+        Route::post('/pengajuan-lembur/store', [LemburController::class, 'store'])->name('store');
+
+        Route::get('/fetch-maksud/{tim_id}', [LemburController::class, 'fetchMaksud'])->name('fetch-maksud');
     });
