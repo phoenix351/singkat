@@ -37,6 +37,7 @@ return new class extends Migration {
             $table->date('tanggal');
             $table->time('jam_mulai');
             $table->time('jam_selesai');
+            $table->string('status', 30)->comment('pending, ditolak, setuju')->default('pending');
             $table->timestamps();
         });
     }

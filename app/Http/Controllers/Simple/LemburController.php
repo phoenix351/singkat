@@ -25,8 +25,26 @@ class LemburController extends Controller
         else
             $currentPage = 1;
 
-        $query = Lembur::query();
-        $query->with(['tim']);
+        // $query = LemburPegawai::query()->from('sulutweb_simple.lembur_pegawai as slp');
+        // $query->join('sulutweb_simple.lembur as sl', 'slp.lembur_id', 'sl.id')
+        //     ->join('sulutweb_man_management.pegawai as smmp', 'slp.pegawai_id', 'smmp.id');
+        // $query->join('sulutweb_man_management.timkerja as smt', 'smt.id', 'sl.tim_id');
+
+        // $query->orderBy('sl.created_at', 'desc')->orderBy('smmp.name', 'asc');
+        // $query->select([
+        //     'smmp.name as nama_pegawai',
+        //     'slp.tanggal',
+        //     'slp.jam_mulai',
+        //     'slp.jam_selesai',
+        //     'sl.nomor_spkl',
+        //     'sl.maksud_lembur',
+        //     'smt.label as tim_kerja'
+        // ]);
+
+        $query = Lembur::query()->from('sulutweb_simple.lembur as sl');
+        $query->join('sulutweb_man_management.timkerja as st', 'st.id', 'sl.tim_id');
+        $query->with(['pegawai.pegawai']);
+        $query->select(['sl.*', 'st.label as tim_kerja']);
         $lembur = $query->paginate($paginated, ['*'], 'page', $currentPage);
 
         $myTeam = AnggotaTimKerja::from('sulutweb_man_management.keanggotaan_timkerja as mkt')
@@ -44,6 +62,7 @@ class LemburController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'id' => ['sometimes', 'nullable'],
             'tim_id' => ['required', 'integer'],
             'anggotalembur' => ['required', 'array'],
             'tanggal' => ['required', 'date'],
@@ -51,6 +70,14 @@ class LemburController extends Controller
             'jam_selesai' => ['required', 'date_format:H:i'],
             'maksud_lembur' => ['required', 'string'],
         ]);
+        $id = $validated['id'] ?? null;
+        if ($request->isMethod('patch')) {
+            try {
+                //code...
+            } catch (\Throwable $th) {
+                //throw $th;
+            }
+        }
         try {
             //code...
             DB::connection('sulutweb_simple')->beginTransaction();

@@ -16,13 +16,6 @@
             <InputText placeholder="Cari Data" />
           </IconField>
           <Button
-            icon="pi pi-download"
-            rounded
-            aria-label="Download"
-            severity="success"
-            class="mr-2 mb-2 lg:mb-0"
-          />
-          <Button
             @click="createDialog = true"
             severity="info"
             rounded
@@ -40,6 +33,9 @@
         paginator
         showGridlines
         stripedRows
+        v-model:expandedRows="expandedRows"
+        dataKey="id"
+        :rowExpandable="isRowExpandable"
         :rows="paginatedItem.per_page"
         :first="(paginatedItem.current_page - 1) * paginatedItem.per_page"
         :total-records="paginatedItem.total"
@@ -55,12 +51,89 @@
         <template #empty>
           <div class="text-center">Data tidak ada</div>
         </template>
-        <Column header="Pegawai" field="nama_pegawai" sortable />
-        <Column header="Tanggal" field="tanggal" sortable />
-        <Column header="Jam Mulai" field="jam_mulai" sortable />
-        <Column header="Jam Selesai" field="jam_selesai" sortable />
+        <Column expander style="width: 3rem" />
+        <Column header="Pegawai">
+          <template #body="{ data }">
+            <span v-if="data.pegawai && data.pegawai.length === 1">
+              {{ data.pegawai[0]?.pegawai?.name }}
+            </span>
+            <span v-else-if="data.pegawai && data.pegawai.length > 1">
+              {{ data.pegawai.length }} Pegawai
+            </span>
+            <span v-else>-</span>
+          </template>
+        </Column>
+        <Column header="Tim Kerja">
+          <template #body="{ data }">
+            {{ data.pegawai && data.pegawai.length > 0 ? data.tim_kerja : "-" }}
+          </template>
+        </Column>
+        <Column header="Tanggal">
+          <template #body="{ data }">
+            {{
+              data.pegawai && data.pegawai.length > 0
+                ? data.pegawai[0].tanggal
+                : "-"
+            }}
+          </template>
+        </Column>
+        <Column header="Jam Mulai">
+          <template #body="{ data }">
+            {{
+              data.pegawai && data.pegawai.length > 0
+                ? data.pegawai[0].jam_mulai
+                : "-"
+            }}
+          </template>
+        </Column>
+        <Column header="Jam Selesai">
+          <template #body="{ data }">
+            {{
+              data.pegawai && data.pegawai.length > 0
+                ? data.pegawai[0].jam_selesai
+                : "-"
+            }}
+          </template>
+        </Column>
         <Column header="No. SPKL" field="nomor_spkl" sortable />
         <Column header="Maksud" field="maksud_lembur" sortable />
+
+        <template #expansion="slotProps">
+          <div class="p-4 bg-gray-50 rounded-lg">
+            <div class="flex mb-2 justify-between flex-wrap items-center">
+              <h5 class="font-bold">Daftar Pegawai Lembur</h5>
+              <Button
+                @click="addPegawaiTo(slotProps.data)"
+                severity="warning"
+                rounded
+                class="lg:mb-0"
+              >
+                <i class="pi pi-plus"></i>
+                Tambah Pegawai
+              </Button>
+            </div>
+            <DataTable
+              :value="slotProps.data.pegawai"
+              showGridlines
+              size="small"
+            >
+              <Column header="No" style="width: 3rem">
+                <template #body="itemProps">{{ itemProps.index + 1 }}</template>
+              </Column>
+              <Column header="Nama Pegawai">
+                <template #body="{ data }">{{ data.pegawai?.name }}</template>
+              </Column>
+              <Column header="NIP">
+                <template #body="{ data }">{{ data.pegawai?.nip }}</template>
+              </Column>
+              <Column header="Golongan">
+                <template #body="{ data }">{{
+                  data.pegawai?.golongan
+                }}</template>
+              </Column>
+            </DataTable>
+          </div>
+        </template>
       </DataTable>
     </div>
     <Dialog
@@ -163,6 +236,50 @@
         />
       </template>
     </Dialog>
+    <Dialog
+      v-model:visible="pegawaiDialog"
+      modal
+      header="Tambah Pegawai"
+      class="min-w-[40vw]"
+    >
+      <div class="flex flex-col gap-4">
+        <div>
+          <label class="block font-bold mb-2">Anggota yang Lembur</label>
+          <MultiSelect
+            filter
+            showClear
+            v-model="editedData.anggotalembur"
+            :options="anggotaTim"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Pilih anggota yang lembur"
+            :max-selected-labels="0"
+            :selected-items-label="
+              editedData.anggotalembur?.length === anggotaTim.length
+                ? 'Seluruh anggota terpilih'
+                : '{0} anggota terpilih'
+            "
+            class="w-full"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          label="Cancel"
+          @click="pegawaiDialog = false"
+          size="small"
+          severity="danger"
+          autofocus
+        />
+        <Button
+          @click="submit({ patch: true, add_pegawai: true })"
+          label="Simpan"
+          size="small"
+          severity="success"
+          autofocus
+        />
+      </template>
+    </Dialog>
   </SimpleLayout>
 </template>
 
@@ -171,6 +288,11 @@ import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
 import { Head, router, useForm } from "@inertiajs/vue3";
 import axios from "axios";
 import { computed, ref, watch } from "vue";
+
+const expandedRows = ref({});
+const isRowExpandable = (data) => {
+  return data.pegawai && data.pegawai.length > 1;
+};
 
 const props = defineProps({
   lembur: {
@@ -228,6 +350,7 @@ const form = useForm({
   jam_mulai: null,
   jam_selesai: null,
   maksud_lembur: null,
+  add_pegawai: false,
 });
 const anggotaTim = ref([]);
 const maksudLembur = ref([]);
@@ -252,24 +375,44 @@ watch(
     }
   }
 );
-const submit = async () => {
+const submit = async ({ patch = false, add_pegawai = false }) => {
   try {
     const { data: tokens } = await axios.get(route("api.token.csrf"));
     form._token = tokens._token;
-    form.post(route("simple.store"), {
-      preserveScroll: true,
-      preserveState: true,
-      onSuccess: () => {
-        createDialog.value = false;
-        form.reset();
-      },
-    });
+    if (patch && add_pegawai) {
+    } else {
+      form.post(route("simple.store"), {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          createDialog.value = false;
+          form.reset();
+        },
+      });
+    }
   } catch (error) {
     console.error(error);
   }
 };
+const pegawaiDialog = ref(false);
+const editedData = ref({ anggotalembur: [] });
+const addPegawaiTo = async (data) => {
+  pegawaiDialog.value = true;
+  editedData.value = {
+    ...data,
+    anggotalembur: data.pegawai ? data.pegawai.map((p) => p.pegawai_id) : [],
+  };
+  const { data: anggota } = await axios.get(
+    route("man-management.fetch-anggota-tim", { id: editedData.value.tim_id })
+  );
+  anggotaTim.value = anggota;
+};
+
 watch(createDialog, () => {
   form.reset();
+  anggotaTim.value = [];
+});
+watch(pegawaiDialog, () => {
   anggotaTim.value = [];
 });
 </script>

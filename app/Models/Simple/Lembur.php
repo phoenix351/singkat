@@ -20,4 +20,8 @@ class Lembur extends Model
     {
         return $this->belongsTo(TimKerja::class);
     }
+    public function pegawai()
+    {
+        return $this->hasMany(LemburPegawai::class, 'lembur_id', 'id');
+    }
 }

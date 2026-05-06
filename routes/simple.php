@@ -11,6 +11,7 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
 
         Route::get('/pengajuan-lembur', [LemburController::class, 'index'])->name('lembur');
         Route::post('/pengajuan-lembur/store', [LemburController::class, 'store'])->name('store');
+        Route::patch('/pengajuan-lembur/patch', [LemburController::class, 'store'])->name('patch');
 
         Route::get('/fetch-maksud/{tim_id}', [LemburController::class, 'fetchMaksud'])->name('fetch-maksud');
     });
