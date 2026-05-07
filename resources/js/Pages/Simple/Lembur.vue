@@ -97,14 +97,32 @@
         </Column>
         <Column header="No. SPKL" field="nomor_spkl" sortable />
         <Column header="Maksud" field="maksud_lembur" sortable />
-
+        <Column header="Edit/Hapus" :exportable="false">
+          <template #body="slotProps">
+            <div class="flex justify-end gap-2 w-full">
+              <Button
+                @click="updateData(slotProps.data)"
+                icon="pi pi-pencil"
+                variant="outlined"
+                rounded
+                class="mr-2"
+              />
+              <Button
+                @click="deleteData(slotProps.data)"
+                icon="pi pi-trash"
+                variant="outlined"
+                rounded
+                severity="danger"
+              />
+            </div>
+          </template>
+        </Column>
         <template #expansion="slotProps">
           <div class="p-4 bg-gray-50 rounded-lg">
             <div class="flex mb-2 justify-between flex-wrap items-center">
               <h5 class="font-bold">Daftar Pegawai Lembur</h5>
               <Button
                 @click="addPegawaiTo(slotProps.data)"
-                severity="warning"
                 rounded
                 class="lg:mb-0"
               >
@@ -126,10 +144,42 @@
               <Column header="NIP">
                 <template #body="{ data }">{{ data.pegawai?.nip }}</template>
               </Column>
-              <Column header="Golongan">
-                <template #body="{ data }">{{
-                  data.pegawai?.golongan
-                }}</template>
+              <Column header="Status" style="text-align: center">
+                <template #body="{ data }">
+                  <div class="flex flex-col items-center justify-center gap-1">
+                    <Badge
+                      size="small"
+                      :value="data.status"
+                      :severity="
+                        data.status === 'pending'
+                          ? 'warn'
+                          : data.status === 'setuju'
+                          ? 'success'
+                          : data.status === 'ditolak'
+                          ? 'danger'
+                          : 'secondary'
+                      "
+                    />
+                    <Badge
+                      size="small"
+                      severity="secondary"
+                      :value="formatDateTime(data.updated_at)"
+                    />
+                  </div>
+                </template>
+              </Column>
+              <Column header="Hapus" :exportable="false">
+                <template #body="slotProps">
+                  <div class="flex justify-center gap-2 w-full">
+                    <Button
+                      @click="deletePegawai(slotProps.data)"
+                      icon="pi pi-trash"
+                      variant="outlined"
+                      rounded
+                      severity="danger"
+                    />
+                  </div>
+                </template>
               </Column>
             </DataTable>
           </div>
@@ -139,7 +189,7 @@
     <Dialog
       v-model:visible="createDialog"
       modal
-      :header="isUpdated ? 'Edit Data' : 'Tambah Data Baru'"
+      header="Tambah Data Baru"
       class="min-w-[40vw]"
     >
       <div class="flex flex-col gap-4">
@@ -237,6 +287,69 @@
       </template>
     </Dialog>
     <Dialog
+      v-model:visible="updateDialog"
+      modal
+      header="Edit Data"
+      class="min-w-[40vw]"
+    >
+      <div class="flex flex-col gap-4">
+        <div>
+          <label class="block font-bold mb-2">Maksud Lembur</label>
+          <InputText
+            placeholder="Pilih maksud lembur yang sudah ada atau tambah baru"
+            v-model="editedLembur.maksud_lembur"
+            fluid
+          />
+        </div>
+        <div>
+          <label class="block font-bold mb-2">Tanggal</label>
+          <DatePicker
+            v-model="editedLembur.pegawai[0].tanggal"
+            fluid
+            showIcon
+            dateFormat="dd-mm-yy"
+            placeholder="Isi tanggal lembur"
+          />
+        </div>
+        <div>
+          <label class="block font-bold mb-2">Jam Mulai</label>
+          <InputText
+            type="time"
+            placeholder="Isi jam mulai lembur"
+            v-model="editedLembur.pegawai[0].jam_mulai"
+            showClear
+            fluid
+          />
+        </div>
+        <div>
+          <label class="block font-bold mb-2">Jam Selesai</label>
+          <InputText
+            type="time"
+            placeholder="Isi jam selesai lembur"
+            v-model="editedLembur.pegawai[0].jam_selesai"
+            fluid
+            showClear
+          />
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          label="Cancel"
+          @click="updateDialog = false"
+          size="small"
+          severity="danger"
+          autofocus
+        />
+        <Button
+          @click="submit({ patch: true })"
+          label="Simpan"
+          size="small"
+          severity="success"
+          autofocus
+        />
+      </template>
+    </Dialog>
+    <Dialog
       v-model:visible="pegawaiDialog"
       modal
       header="Tambah Pegawai"
@@ -287,8 +400,23 @@
 import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
 import { Head, router, useForm } from "@inertiajs/vue3";
 import axios from "axios";
+import { useConfirm } from "primevue";
 import { computed, ref, watch } from "vue";
 
+const confirm = useConfirm();
+const formatDateTime = (dateString) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date
+    .toLocaleString("id-ID", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    .replace(/\./g, ":"); // Ganti format titik (bawaan id-ID) menjadi titik dua untuk jam
+};
 const expandedRows = ref({});
 const isRowExpandable = (data) => {
   return data.pegawai && data.pegawai.length > 1;
@@ -375,13 +503,43 @@ watch(
     }
   }
 );
+const updateDialog = ref(false);
+const editedLembur = ref({ pegawai: [{}] });
+const updateData = (data) => {
+  updateDialog.value = true;
+  let copy = JSON.parse(JSON.stringify(data));
+  if (copy.pegawai && copy.pegawai.length > 0 && copy.pegawai[0].tanggal) {
+    copy.pegawai[0].tanggal = new Date(copy.pegawai[0].tanggal);
+  } else if (!copy.pegawai || copy.pegawai.length === 0) {
+    copy.pegawai = [{}];
+  }
+  editedLembur.value = copy;
+};
 const submit = async ({ patch = false, add_pegawai = false }) => {
   try {
     const { data: tokens } = await axios.get(route("api.token.csrf"));
     form._token = tokens._token;
-    if (patch && add_pegawai) {
+    if (patch) {
+      let dataToUpdate = add_pegawai ? editedData.value : editedLembur.value;
+      router.patch(
+        route("simple.lembur.patch"),
+        {
+          _token: tokens,
+          ...dataToUpdate,
+          add_pegawai: add_pegawai,
+        },
+        {
+          preserveScroll: true,
+          preserveState: true,
+          onSuccess: () => {
+            pegawaiDialog.value = false;
+            updateDialog.value = false;
+            fetchData();
+          },
+        }
+      );
     } else {
-      form.post(route("simple.store"), {
+      form.post(route("simple.lembur.store"), {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
@@ -407,7 +565,66 @@ const addPegawaiTo = async (data) => {
   );
   anggotaTim.value = anggota;
 };
-
+const deletePegawai = (data) => {
+  confirm.require({
+    message: "Apakah kamu yakin menghapus pegawai ini?",
+    header: "Konfirmasi",
+    icon: "pi pi-info-circle",
+    rejectLabel: "Cancel",
+    acceptLabel: "Hapus",
+    rejectProps: {
+      label: "Cancel",
+      size: "small",
+      severity: "danger",
+    },
+    acceptProps: {
+      label: "Hapus",
+      size: "small",
+      severity: "success",
+    },
+    accept: async () => {
+      const { data: tokens } = await axios.get(route("api.token.csrf"));
+      router.delete(route("simple.lembur.destroy-pegawai", { id: data.id }), {
+        _token: tokens,
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          fetchData();
+        },
+      });
+    },
+  });
+};
+const deleteData = (data) => {
+  confirm.require({
+    message: "Apakah kamu yakin menghapus pegawai ini?",
+    header: "Konfirmasi",
+    icon: "pi pi-info-circle",
+    rejectLabel: "Cancel",
+    acceptLabel: "Hapus",
+    rejectProps: {
+      label: "Cancel",
+      size: "small",
+      severity: "danger",
+    },
+    acceptProps: {
+      label: "Hapus",
+      size: "small",
+      severity: "success",
+    },
+    accept: async () => {
+      const { data: tokens } = await axios.get(route("api.token.csrf"));
+      router.delete(route("simple.lembur.destroy", { id: data.id }), {
+        _token: tokens,
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          fetchData();
+        },
+      });
+    },
+  });
+};
 watch(createDialog, () => {
   form.reset();
   anggotaTim.value = [];

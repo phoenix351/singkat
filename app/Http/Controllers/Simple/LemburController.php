@@ -61,33 +61,99 @@ class LemburController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->isMethod('patch')) {
+            if ($request->input('add_pegawai') == true) {
+                $validated = $request->validate([
+                    'id' => ['required', 'integer'],
+                    'anggotalembur' => ['required', 'array'],
+                    'pegawai' => ['required', 'array']
+                ]);
+            } else {
+                $pegawai = $request->input('pegawai') ?? [];
+                $validated = $request->validate([
+                    'id' => ['required', 'integer'],
+                    'pegawai.0.tanggal' => ['required', 'date'],
+                    'pegawai.0.jam_mulai' => ['required', 'date_format:H:i,H:i:s'],
+                    'pegawai.0.jam_selesai' => ['required', 'date_format:H:i,H:i:s'],
+                    'maksud_lembur' => ['required', 'string'],
+                ], [
+                    'pegawai.0.tanggal.required' => 'Tanggal harus diisi',
+                    'pegawai.0.jam_mulai.required' => 'Jam mulai harus diisi',
+                    'pegawai.0.jam_selesai.required' => 'Jam selesai harus diisi',
+                    'maksud_lembur.required' => 'Maksud lembur harus diisi',
+                ]);
+            }
+            try {
+                //code...
+                DB::connection('sulutweb_simple')->beginTransaction();
+                if ($request->input('add_pegawai') == true) {
+                    $anggota = $validated['anggotalembur'];
+                    $pegawai = $request->input('pegawai')[0];
+                    foreach ($anggota as $key => $p) {
+                        # code...
+                        LemburPegawai::firstOrCreate(
+                            [
+                                'lembur_id' => $validated['id'],
+                                'pegawai_id' => $p,
+                            ],
+                            [
+                                'lembur_id' => $validated['id'],
+                                'pegawai_id' => $p,
+                                'tanggal' => $pegawai['tanggal'],
+                                'jam_mulai' => $pegawai['jam_mulai'],
+                                'jam_selesai' => $pegawai['jam_selesai'],
+                            ]
+                        );
+                    }
+                } else {
+                    $lembur_to_update = Lembur::findOrFail($validated['id']);
+                    $lembur_to_update->update($validated);
+
+                    if (sizeof($pegawai) > 0) {
+                        $lp = [
+                            'tanggal' => \Carbon\Carbon::parse($validated['pegawai'][0]['tanggal'])->setTimezone('Asia/Makassar')->format('Y-m-d'),
+                            'jam_mulai' => $validated['pegawai'][0]['jam_mulai'],
+                            'jam_selesai' => $validated['pegawai'][0]['jam_selesai'],
+                        ];
+                        foreach ($pegawai as $key => $p) {
+                            # code...
+                            $lp_to_update = LemburPegawai::findOrFail($p['id']);
+                            $lp_to_update->update($lp);
+                        }
+                    }
+                }
+                DB::connection('sulutweb_simple')->commit();
+                return redirect()->route('simple.lembur')->with('success', 'Berhasil mengedit data lembur');
+            } catch (\Throwable $th) {
+                //throw $th;
+                DB::connection('sulutweb_simple')->rollback();
+                return redirect()->route('simple.lembur')->with('error', 'Terdapat error : ' . $th->getMessage());
+            }
+        }
         $validated = $request->validate([
-            'id' => ['sometimes', 'nullable'],
             'tim_id' => ['required', 'integer'],
             'anggotalembur' => ['required', 'array'],
             'tanggal' => ['required', 'date'],
-            'jam_mulai' => ['required', 'date_format:H:i'],
-            'jam_selesai' => ['required', 'date_format:H:i'],
+            'jam_mulai' => ['required', 'date_format:H:i,H:i:s'],
+            'jam_selesai' => ['required', 'date_format:H:i,H:i:s'],
             'maksud_lembur' => ['required', 'string'],
         ]);
-        $id = $validated['id'] ?? null;
-        if ($request->isMethod('patch')) {
-            try {
-                //code...
-            } catch (\Throwable $th) {
-                //throw $th;
-            }
-        }
         try {
             //code...
             DB::connection('sulutweb_simple')->beginTransaction();
-            $validated['tanggal'] = \Carbon\Carbon::parse($validated['tanggal'])->format('Y-m-d');
+            $validated['tanggal'] = \Carbon\Carbon::parse($validated['tanggal'])->setTimezone('Asia/Makassar')->format('Y-m-d');
             $lembur = Lembur::create($validated);
             foreach ($validated['anggotalembur'] as $key => $anggota) {
                 # code...
                 $validated['pegawai_id'] = $anggota;
                 $validated['lembur_id'] = $lembur->id;
-                LemburPegawai::create($validated);
+                LemburPegawai::firstOrCreate(
+                    [
+                        'lembur_id' => $lembur->id,
+                        'pegawai_id' => $anggota,
+                    ],
+                    $validated
+                );
             }
             DB::connection('sulutweb_simple')->commit();
             return redirect()->route('simple.lembur')->with('success', 'Berhasil menambahkan data');
@@ -96,6 +162,41 @@ class LemburController extends Controller
             DB::connection('sulutweb_simple')->rollBack();
             return redirect()->route('simple.lembur')->with('error', 'Gagal menambahkan data, error: ' . $th->getMessage());
         }
+    }
+
+    public function destroyPegawai($id)
+    {
+        try {
+            //code...
+            DB::connection('sulutweb_simple')->beginTransaction();
+            $lp_to_delete = LemburPegawai::findOrFail($id);
+            if ($lp_to_delete)
+                $lp_to_delete->delete();
+            DB::connection('sulutweb_simple')->commit();
+            return redirect()->route('simple.lembur')->with('success', 'Berhasil hapus data');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::connection('sulutweb_simple')->rollBack();
+            return redirect()->route('simple.lembur')->with('error', 'Gagal hapus data, error : ' . $th->getMessage());
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            //code...
+            DB::connection('sulutweb_simple')->beginTransaction();
+            $lembur_to_delete = Lembur::findOrFail($id);
+            if ($lembur_to_delete)
+                $lembur_to_delete->delete();
+            DB::connection('sulutweb_simple')->commit();
+            return redirect()->route('simple.lembur')->with('success', 'Berhasil hapus data');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::connection('sulutweb_simple')->rollBack();
+            return redirect()->route('simple.lembur')->with('error', 'Gagal hapus data, error : ' . $th->getMessage());
+        }
+
     }
 
     public function fetchMaksud($tim_id)
