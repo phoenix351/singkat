@@ -204,6 +204,12 @@
             option-value="tim_id"
             v-model="form.tim_id"
           />
+          <div
+            v-if="page.props.errors.tim_id"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.tim_id }}
+          </div>
         </div>
         <div>
           <label class="block font-bold mb-2">Maksud Lembur</label>
@@ -216,6 +222,12 @@
             v-model="form.maksud_lembur"
             fluid
           />
+          <div
+            v-if="page.props.errors.maksud_lembur"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.maksud_lembur }}
+          </div>
         </div>
         <div v-if="form.tim_id">
           <label class="block font-bold mb-2">Anggota yang Lembur</label>
@@ -235,6 +247,12 @@
             "
             class="w-full"
           />
+          <div
+            v-if="page.props.errors.anggotalembur"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.anggotalembur }}
+          </div>
         </div>
         <template v-if="form.anggotalembur && form.anggotalembur.length > 0">
           <div>
@@ -246,6 +264,12 @@
               dateFormat="dd-mm-yy"
               placeholder="Isi tanggal lembur"
             />
+            <div
+              v-if="page.props.errors.tanggal"
+              class="text-red-500 text-sm mt-2"
+            >
+              {{ page.props.errors?.tanggal }}
+            </div>
           </div>
           <div>
             <label class="block font-bold mb-2">Jam Mulai</label>
@@ -256,6 +280,12 @@
               showClear
               fluid
             />
+            <div
+              v-if="page.props.errors.jam_mulai"
+              class="text-red-500 text-sm mt-2"
+            >
+              {{ page.props.errors?.jam_mulai }}
+            </div>
           </div>
           <div>
             <label class="block font-bold mb-2">Jam Selesai</label>
@@ -266,6 +296,12 @@
               fluid
               showClear
             />
+            <div
+              v-if="page.props.errors.jam_selesai"
+              class="text-red-500 text-sm mt-2"
+            >
+              {{ page.props.errors?.jam_selesai }}
+            </div>
           </div>
         </template>
       </div>
@@ -300,6 +336,12 @@
             v-model="editedLembur.maksud_lembur"
             fluid
           />
+          <div
+            v-if="page.props.errors.maksud_lembur"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.maksud_lembur }}
+          </div>
         </div>
         <div>
           <label class="block font-bold mb-2">Tanggal</label>
@@ -310,6 +352,12 @@
             dateFormat="dd-mm-yy"
             placeholder="Isi tanggal lembur"
           />
+          <div
+            v-if="page.props.errors['pegawai.0.tanggal']"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.["pegawai.0.tanggal"] }}
+          </div>
         </div>
         <div>
           <label class="block font-bold mb-2">Jam Mulai</label>
@@ -320,6 +368,12 @@
             showClear
             fluid
           />
+          <div
+            v-if="page.props.errors['pegawai.0.jam_mulai']"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.["pegawai.0.jam_mulai"] }}
+          </div>
         </div>
         <div>
           <label class="block font-bold mb-2">Jam Selesai</label>
@@ -330,6 +384,12 @@
             fluid
             showClear
           />
+          <div
+            v-if="page.props.errors['pegawai.0.jam_selesai']"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.["pegawai.0.jam_selesai"] }}
+          </div>
         </div>
       </div>
       <template #footer>
@@ -374,6 +434,12 @@
             "
             class="w-full"
           />
+          <div
+            v-if="page.props.errors.anggotalembur"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.anggotalembur }}
+          </div>
         </div>
       </div>
       <template #footer>
@@ -398,11 +464,12 @@
 
 <script setup>
 import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
-import { Head, router, useForm } from "@inertiajs/vue3";
+import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { useConfirm } from "primevue";
 import { computed, ref, watch } from "vue";
 
+const page = usePage();
 const confirm = useConfirm();
 const formatDateTime = (dateString) => {
   if (!dateString) return "-";

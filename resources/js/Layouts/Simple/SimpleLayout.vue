@@ -51,6 +51,7 @@
       <main class="flex-1 p-4 lg:p-6">
         <Toast />
         <ConfirmDialog />
+        <SpinnerBorder v-if="triggerSpinner" />
         <slot />
       </main>
 
@@ -87,6 +88,8 @@ import Menu from "primevue/menu";
 import Avatar from "primevue/avatar";
 import Sidebar from "./Sidebar.vue";
 import { useToast, Toast, ConfirmDialog } from "primevue";
+import SpinnerBorder from "@/Components/ManManagement/SpinnerBorder.vue";
+import { triggerSpinner } from "../ManManagement/Composables/axiosSetup";
 
 const isSidebarOpen = ref(false);
 const profileMenu = ref();

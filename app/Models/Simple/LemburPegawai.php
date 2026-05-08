@@ -17,6 +17,9 @@ class LemburPegawai extends Model
         'tanggal',
         'jam_mulai',
         'jam_selesai',
+        'status',
+        'catatan',
+        'edited_by'
     ];
     public function lembur()
     {

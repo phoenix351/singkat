@@ -15,7 +15,9 @@
             class="flex items-center px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group"
             :class="{ 'text-white': page.props.route == item.route }"
           >
-            <i :class="[item.icon, 'mr-3 text-lg w-6 group-hover:text-white']"></i>
+            <i
+              :class="[item.icon, 'mr-3 text-lg w-6 group-hover:text-white']"
+            ></i>
             <span :class="{ 'font-bold': page.props.route == item.route }">{{
               item.label
             }}</span>
@@ -50,9 +52,9 @@ const menuItems = ref([
     route: "simple.lembur",
   },
   {
-    label: "Verifikasi",
+    label: "Verifikasi Ketua Tim",
     icon: "pi pi-check-square",
-    // route: 'simple.verifikasi' // Akan dibuat nanti
+    route: "simple.lembur.verify",
   },
   {
     label: "Kelola Pegawai",

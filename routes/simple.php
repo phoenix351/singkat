@@ -15,4 +15,7 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
         Route::delete('/pengajuan-lembur/destroy-pegawai/{id}', [LemburController::class, 'destroyPegawai'])->name('lembur.destroy-pegawai');
         Route::delete('/pengajuan-lembur/destroy/{id}', [LemburController::class, 'destroy'])->name('lembur.destroy');
         Route::get('/fetch-maksud/{tim_id}', [LemburController::class, 'fetchMaksud'])->name('fetch-maksud');
+
+        Route::get('/pengajuan-lembur/verifikasi', [LemburController::class, 'verify'])->name('lembur.verify');
+        Route::patch('/pengajuan-lembur/verifikasi/patch', [LemburController::class, 'verifyPatch'])->name('lembur.verify-patch');
     });

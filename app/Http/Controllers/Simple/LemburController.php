@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Simple;
 
 use App\Http\Controllers\Controller;
 use App\Models\ManManagement\AnggotaTimKerja;
+use App\Models\ManManagement\Role;
 use App\Models\Simple\Lembur;
 use App\Models\Simple\LemburPegawai;
 use Illuminate\Http\Request;
@@ -24,22 +25,6 @@ class LemburController extends Controller
             $currentPage = $request->currentPage;
         else
             $currentPage = 1;
-
-        // $query = LemburPegawai::query()->from('sulutweb_simple.lembur_pegawai as slp');
-        // $query->join('sulutweb_simple.lembur as sl', 'slp.lembur_id', 'sl.id')
-        //     ->join('sulutweb_man_management.pegawai as smmp', 'slp.pegawai_id', 'smmp.id');
-        // $query->join('sulutweb_man_management.timkerja as smt', 'smt.id', 'sl.tim_id');
-
-        // $query->orderBy('sl.created_at', 'desc')->orderBy('smmp.name', 'asc');
-        // $query->select([
-        //     'smmp.name as nama_pegawai',
-        //     'slp.tanggal',
-        //     'slp.jam_mulai',
-        //     'slp.jam_selesai',
-        //     'sl.nomor_spkl',
-        //     'sl.maksud_lembur',
-        //     'smt.label as tim_kerja'
-        // ]);
 
         $query = Lembur::query()->from('sulutweb_simple.lembur as sl');
         $query->join('sulutweb_man_management.timkerja as st', 'st.id', 'sl.tim_id');
@@ -198,6 +183,75 @@ class LemburController extends Controller
         }
 
     }
+
+    public function verify(Request $request)
+    {
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
+        $my_role = Role::currentRole();
+
+        $query_myTeam = AnggotaTimKerja::query();
+        $query_myTeam->from('sulutweb_man_management.keanggotaan_timkerja as mkt')
+            ->join('sulutweb_man_management.timkerja as ttk', 'mkt.tim_id', 'ttk.id');
+        if ($my_role != 'admin') {
+            $query_myTeam->where('mkt.keanggotaan', 'ketua');
+        }
+
+        $myTeam = $query_myTeam->select(['mkt.*', 'ttk.label as tim_kerja'])
+            ->where('mkt.pegawai_id', Auth::user()->id)->get();
+        $keanggotaan = $myTeam->pluck('keanggotaan')->toArray();
+
+        $query = Lembur::query()->from('sulutweb_simple.lembur as sl');
+        $query->join('sulutweb_man_management.timkerja as st', 'st.id', 'sl.tim_id');
+        if ($my_role != 'admin') {
+            $query->whereIn('sl.tim_id', $myTeam->pluck('tim_id')->toArray());
+        }
+        $query->with(['pegawai.pegawai']);
+        $query->select(['sl.*', 'st.label as tim_kerja']);
+        $lembur = $query->paginate($paginated, ['*'], 'page', $currentPage);
+
+        return Inertia::render('Simple/Verify', [
+            'lembur' => $lembur,
+            'tim' => $myTeam,
+            'keanggotaan' => $keanggotaan
+        ]);
+    }
+
+    public function verifyPatch(Request $request)
+    {
+        $validated = $request->validate([
+            'individual' => ['required', 'boolean'],
+            'status' => ['required', 'string', 'in:setuju,ditolak'],
+            'catatan' => ['required_if:status,ditolak', 'nullable', 'string'],
+            'lembur_id' => ['required_if:individual,false', 'integer'],
+            'lembur_pegawai' => ['required_if:individual,true', 'nullable', 'array']
+        ]);
+
+        try {
+            DB::connection('sulutweb_simple')->beginTransaction();
+            $updateData = [
+                'status' => $validated['status'],
+                'catatan' => $validated['catatan'] ?? null
+            ];
+            if ($validated['individual'] == true)
+                LemburPegawai::whereIn('id', $validated['lembur_pegawai'])->update($updateData);
+            else
+                LemburPegawai::where('lembur_id', $validated['lembur_id'])->update($updateData);
+            DB::connection('sulutweb_simple')->commit();
+            return redirect()->route('simple.lembur.verify')->with('success', 'Berhasil mengubah status lembur');
+
+        } catch (\Throwable $th) {
+            DB::connection('sulutweb_simple')->rollBack();
+            return redirect()->route('simple.lembur.verify')->with('error', 'Gagal mengubah status lembur, error: ' . $th->getMessage());
+        }
+    }
+
 
     public function fetchMaksud($tim_id)
     {
