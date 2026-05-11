@@ -13,7 +13,12 @@ return new class extends Migration {
     {
         //
         Schema::table('lembur_pegawai', function (Blueprint $table) {
-            $table->string('edited_by')->after('catatan')->nullable();
+            $table->foreignId('edited_by')
+                ->after('catatan')
+                ->nullable()
+                ->constrained('sulutweb_man_management.pegawai')
+                ->onUpdate('restrict')
+                ->onDelete('set null');
         });
     }
 

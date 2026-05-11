@@ -13,7 +13,7 @@
             <InputIcon>
               <i class="pi pi-search" />
             </InputIcon>
-            <InputText placeholder="Cari Data" />
+            <InputText placeholder="Cari Pegawai" v-model="searchField" />
           </IconField>
           <Button
             @click="createDialog = true"
@@ -28,7 +28,7 @@
       </div>
       <DataTable
         :value="paginatedItem.data"
-        class="w-full"
+        class="w-full text-sm"
         lazy
         paginator
         showGridlines
@@ -43,6 +43,7 @@
         :removable-sort="true"
         :sort-field="sortField"
         :sort-order="sortOrder"
+        filterDisplay="row"
         @page="fetchData"
         @sort="fetchData"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
@@ -63,25 +64,46 @@
             <span v-else>-</span>
           </template>
         </Column>
-        <Column header="Tim Kerja">
+        <Column
+          header="Tim Kerja"
+          field="tim_kerja"
+          sortable
+          :showFilterMenu="false"
+        >
           <template #body="{ data }">
             {{ data.pegawai && data.pegawai.length > 0 ? data.tim_kerja : "-" }}
           </template>
+          <template #filter>
+            <InputText
+              v-model="filterModel.tim_kerja"
+              class="text-sm"
+              fluid
+              placeholder="Cari tim kerja"
+            />
+          </template>
         </Column>
-        <Column header="Tanggal">
+        <Column header="Tanggal" :show-filter-menu="false">
           <template #body="{ data }">
             {{
               data.pegawai && data.pegawai.length > 0
-                ? data.pegawai[0].tanggal
+                ? formatDateOnly(data.pegawai[0].tanggal)
                 : "-"
             }}
+          </template>
+          <template #filter>
+            <InputText
+              v-model="filterModel.tanggal"
+              class="text-sm"
+              fluid
+              placeholder="Cari tanggal"
+            />
           </template>
         </Column>
         <Column header="Jam Mulai">
           <template #body="{ data }">
             {{
               data.pegawai && data.pegawai.length > 0
-                ? data.pegawai[0].jam_mulai
+                ? formatTimeOnly(data.pegawai[0].jam_mulai)
                 : "-"
             }}
           </template>
@@ -90,29 +112,78 @@
           <template #body="{ data }">
             {{
               data.pegawai && data.pegawai.length > 0
-                ? data.pegawai[0].jam_selesai
+                ? formatTimeOnly(data.pegawai[0].jam_selesai)
                 : "-"
             }}
           </template>
         </Column>
-        <Column header="No. SPKL" field="nomor_spkl" sortable />
-        <Column header="Maksud" field="maksud_lembur" sortable />
+        <Column
+          class="min-w-[180px]"
+          header="No. SPKL"
+          field="nomor_spkl"
+          sortable
+        >
+          <template #body="{ data }">
+            <span v-if="data.nomor_spkl">{{ data.nomor_spkl }}</span>
+            <Badge v-else severity="secondary" value="belum diajukan" />
+          </template>
+        </Column>
+        <Column
+          header="Maksud"
+          field="maksud_lembur"
+          sortable
+          :show-filter-menu="false"
+        >
+          <template #filter>
+            <InputText
+              v-model="filterModel.maksud_lembur"
+              class="text-sm"
+              fluid
+              placeholder="Cari maksud lembur"
+            />
+          </template>
+        </Column>
         <Column header="Edit/Hapus" :exportable="false">
           <template #body="slotProps">
             <div class="flex justify-end gap-2 w-full">
               <Button
-                @click="updateData(slotProps.data)"
-                icon="pi pi-pencil"
+                @click="
+                  isProcessed(slotProps.data)
+                    ? null
+                    : updateData(slotProps.data)
+                "
+                :icon="
+                  isProcessed(slotProps.data) ? 'pi pi-lock' : 'pi pi-pencil'
+                "
                 variant="outlined"
                 rounded
                 class="mr-2"
+                :severity="
+                  isProcessed(slotProps.data) ? 'secondary' : 'success'
+                "
+                v-tooltip.top="
+                  isProcessed(slotProps.data)
+                    ? 'Ada data yang sudah diproses, tidak bisa bulk edit'
+                    : ''
+                "
               />
               <Button
-                @click="deleteData(slotProps.data)"
-                icon="pi pi-trash"
+                @click="
+                  isProcessed(slotProps.data)
+                    ? null
+                    : deleteData(slotProps.data)
+                "
+                :icon="
+                  isProcessed(slotProps.data) ? 'pi pi-lock' : 'pi pi-trash'
+                "
                 variant="outlined"
                 rounded
-                severity="danger"
+                :severity="isProcessed(slotProps.data) ? 'secondary' : 'danger'"
+                v-tooltip.top="
+                  isProcessed(slotProps.data)
+                    ? 'Ada data yang sudah diproses, tidak bisa bulk edit'
+                    : ''
+                "
               />
             </div>
           </template>
@@ -149,14 +220,18 @@
                   <div class="flex flex-col items-center justify-center gap-1">
                     <Badge
                       size="small"
-                      :value="data.status"
+                      :value="data.status_detail || data.status"
                       :severity="
-                        data.status === 'pending'
+                        String(data.status) === '1'
                           ? 'warn'
-                          : data.status === 'setuju'
+                          : String(data.status) === '2'
                           ? 'success'
-                          : data.status === 'ditolak'
+                          : String(data.status) === '3'
                           ? 'danger'
+                          : String(data.status) === '4'
+                          ? 'info'
+                          : String(data.status) === '5'
+                          ? 'contrast'
                           : 'secondary'
                       "
                     />
@@ -168,15 +243,45 @@
                   </div>
                 </template>
               </Column>
+              <Column header="Catatan">
+                <template #body="{ data }">
+                  <Badge
+                    v-if="!data.catatan"
+                    severity="secondary"
+                    value="Tidak ada catatan"
+                  />
+                  <span v-else>{{ data.catatan }}</span>
+                </template>
+              </Column>
+              <Column header="Terakhir diedit">
+                <template #body="{ data }">{{
+                  data.edited?.username
+                }}</template>
+              </Column>
               <Column header="Hapus" :exportable="false">
-                <template #body="slotProps">
+                <template #body="itemProps">
                   <div class="flex justify-center gap-2 w-full">
                     <Button
-                      @click="deletePegawai(slotProps.data)"
-                      icon="pi pi-trash"
+                      @click="
+                        itemProps.data.status >= 2
+                          ? null
+                          : deletePegawai(itemProps.data)
+                      "
+                      :icon="
+                        itemProps.data.status >= 2
+                          ? 'pi pi-lock'
+                          : 'pi pi-trash'
+                      "
                       variant="outlined"
                       rounded
-                      severity="danger"
+                      :severity="
+                        itemProps.data.status >= 2 ? 'secondary' : 'danger'
+                      "
+                      v-tooltip.top="
+                        itemProps.data.status >= 2
+                          ? 'Status pegawai sudah diproses'
+                          : ''
+                      "
                     />
                   </div>
                 </template>
@@ -463,6 +568,7 @@
 </template>
 
 <script setup>
+import { debounce } from "@/Layouts/ManManagement/Composables/debounce";
 import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import axios from "axios";
@@ -471,6 +577,17 @@ import { computed, ref, watch } from "vue";
 
 const page = usePage();
 const confirm = useConfirm();
+const searchField = ref(null);
+const filterModel = ref({
+  tim_kerja: null,
+  tanggal: null,
+  maksud_lembur: null,
+});
+
+const isProcessed = (data) => {
+  if (!data || !data.pegawai) return false;
+  return data.pegawai.some((p) => p.status == 2 || p.status > 3);
+};
 const formatDateTime = (dateString) => {
   if (!dateString) return "-";
   const date = new Date(dateString);
@@ -483,6 +600,20 @@ const formatDateTime = (dateString) => {
       minute: "2-digit",
     })
     .replace(/\./g, ":"); // Ganti format titik (bawaan id-ID) menjadi titik dua untuk jam
+};
+const formatDateOnly = (dateString) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+const formatTimeOnly = (timeString) => {
+  if (!timeString) return "-";
+  // timeString is typically "HH:mm:ss" or "HH:mm"
+  return timeString.substring(0, 5);
 };
 const expandedRows = ref({});
 const isRowExpandable = (data) => {
@@ -508,32 +639,41 @@ watch(
   }
 );
 //paginated and search
-const currentPage = computed(
-  () => (paginatedItem.value.current_page - 1) * paginatedItem.value.per_page
-);
-const paginated = computed(() => paginatedItem?.value?.per_page ?? 10);
+const currentPage = ref(1);
+const paginated = ref(10);
 const sortField = ref(null);
 const sortOrder = ref(null);
-const fetchData = (event = null) => {
-  currentPage.value = event ? Math.floor(event.first / event.rows) + 1 : 1;
-  paginated.value = event?.rows ?? paginated.value;
-  router.get(
-    route("simple.lembur"),
-    {
-      currentPage: currentPage.value,
-      paginated: paginated.value,
-      sortField: event?.sortField ?? sortField.value,
-      sortOrder: event?.sortOrder ?? sortOrder.value,
-      searchField: searchField.value,
-    },
-    {
-      preserveState: true,
-      preserveScroll: true,
-      replace: true,
+const fetchData = async (event = null) => {
+  if (event) {
+    if (event.first !== undefined && event.rows !== undefined) {
+      currentPage.value = Math.floor(event.first / event.rows) + 1;
+      paginated.value = event.rows;
     }
-  );
-};
+    if (event.sortField !== undefined) sortField.value = event.sortField;
+    if (event.sortOrder !== undefined) sortOrder.value = event.sortOrder;
+  }
 
+  try {
+    const { data } = await axios.get(route("simple.lembur"), {
+      params: {
+        currentPage: currentPage.value,
+        paginated: paginated.value,
+        sortField: sortField.value,
+        sortOrder: sortOrder.value,
+        searchField: searchField.value,
+        filters: filterModel.value,
+      },
+    });
+    paginatedItem.value = data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+};
+const delayedFetchData = debounce(() => {
+  fetchData();
+});
+watch(searchField, () => delayedFetchData());
+watch(filterModel, () => delayedFetchData(), { deep: true });
 //submit
 const createDialog = ref(false);
 const isUpdated = ref(false);

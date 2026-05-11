@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ManManagement\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,8 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => Auth::user(),
+                'role' => Role::currentRole(),
+                'keanggotaan' => Role::statusKeanggotaan()
             ],
             'route' => $route,
             "flash" => [

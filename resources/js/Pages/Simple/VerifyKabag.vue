@@ -6,7 +6,7 @@
         <div
           class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0"
         >
-          Verifikasi Ketua Tim
+          Verifikasi Kepala Bagian Umum
         </div>
         <div class="flex space-x-2 items-center w-full md:w-full lg:w-auto">
           <IconField>
@@ -86,7 +86,12 @@
             }}
           </template>
         </Column>
-        <Column header="No. SPKL" field="nomor_spkl" sortable>
+        <Column
+          class="min-w-[150px]"
+          header="No. SPKL"
+          field="nomor_spkl"
+          sortable
+        >
           <template #body="{ data }">
             <span v-if="data.nomor_spkl">{{ data.nomor_spkl }}</span>
             <Badge v-else severity="secondary" value="belum diajukan" />
@@ -97,43 +102,18 @@
           <template #body="slotProps">
             <div class="flex justify-end gap-2 w-full">
               <Button
-                @click="
-                  isProcessed(slotProps.data)
-                    ? null
-                    : updateData({ data: slotProps.data, status: 'setuju' })
-                "
-                :icon="
-                  isProcessed(slotProps.data) ? 'pi pi-lock' : 'pi pi-check'
-                "
+                @click="updateData({ data: slotProps.data, status: 'setuju' })"
+                icon="pi pi-check"
                 variant="outlined"
                 rounded
                 class="mr-2"
-                :severity="
-                  isProcessed(slotProps.data) ? 'secondary' : 'success'
-                "
-                v-tooltip.top="
-                  isProcessed(slotProps.data)
-                    ? 'Ada data yang sudah diproses, tidak bisa bulk edit'
-                    : ''
-                "
               />
               <Button
-                @click="
-                  isProcessed(slotProps.data)
-                    ? null
-                    : updateData({ data: slotProps.data, status: 'ditolak' })
-                "
-                :icon="
-                  isProcessed(slotProps.data) ? 'pi pi-lock' : 'pi pi-times'
-                "
+                @click="updateData({ data: slotProps.data, status: 'ditolak' })"
+                icon="pi pi-times"
                 variant="outlined"
                 rounded
-                :severity="isProcessed(slotProps.data) ? 'secondary' : 'danger'"
-                v-tooltip.top="
-                  isProcessed(slotProps.data)
-                    ? 'Ada data yang sudah diproses, tidak bisa bulk edit'
-                    : ''
-                "
+                severity="danger"
               />
             </div>
           </template>
@@ -144,52 +124,21 @@
               <h5 class="font-bold">Daftar Pegawai Lembur</h5>
               <div class="flex justify-end w-auto">
                 <Button
-                  @click="
-                    isSelectionProcessed
-                      ? null
-                      : updateData({ status: 'setuju', individual: true })
-                  "
+                  @click="updateData({ status: 'setuju', individual: true })"
                   v-if="selectedPegawai.length > 0"
                   rounded
                   class="mr-2"
-                  :severity="isSelectionProcessed ? 'secondary' : 'primary'"
-                  v-tooltip.top="
-                    isSelectionProcessed
-                      ? 'Pilihan mengandung data yang sudah diproses'
-                      : ''
-                  "
                 >
-                  <i
-                    :class="
-                      isSelectionProcessed
-                        ? 'pi pi-lock mr-2'
-                        : 'pi pi-check mr-2'
-                    "
-                  />
+                  <i class="pi pi-check" />
                   Terima
                 </Button>
                 <Button
-                  @click="
-                    isSelectionProcessed
-                      ? null
-                      : updateData({ status: 'ditolak', individual: true })
-                  "
+                  @click="updateData({ status: 'ditolak', individual: true })"
                   v-if="selectedPegawai.length > 0"
                   rounded
-                  :severity="isSelectionProcessed ? 'secondary' : 'danger'"
-                  v-tooltip.top="
-                    isSelectionProcessed
-                      ? 'Pilihan mengandung data yang sudah diproses'
-                      : ''
-                  "
+                  severity="danger"
                 >
-                  <i
-                    :class="
-                      isSelectionProcessed
-                        ? 'pi pi-lock mr-2'
-                        : 'pi pi-times mr-2'
-                    "
-                  />
+                  <i class="pi pi-times" />
                   Tolak
                 </Button>
               </div>
@@ -237,16 +186,6 @@
                       :value="formatDateTime(data.updated_at)"
                     />
                   </div>
-                </template>
-              </Column>
-              <Column header="Catatan">
-                <template #body="{ data }">
-                  <Badge
-                    v-if="!data.catatan"
-                    severity="secondary"
-                    value="Tidak ada catatan"
-                  />
-                  <span v-else>{{ data.catatan }}</span>
                 </template>
               </Column>
               <Column header="Terakhir diedit">
@@ -309,18 +248,9 @@
 import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
 import { Head, router, useForm } from "@inertiajs/vue3";
 import axios from "axios";
+import { useConfirm } from "primevue";
 import { computed, ref, watch } from "vue";
 
-const isProcessed = (data) => {
-  if (!data || !data.pegawai) return false;
-  return data.pegawai.some((p) => p.status == 4);
-};
-
-const selectedPegawai = ref([]);
-
-const isSelectionProcessed = computed(() => {
-  return selectedPegawai.value.some((p) => p.status == 4);
-});
 const formatDateTime = (dateString) => {
   if (!dateString) return "-";
   const date = new Date(dateString);
@@ -357,12 +287,6 @@ const props = defineProps({
   lembur: {
     type: Object,
   },
-  tim: {
-    type: Array,
-  },
-  keanggotaan: {
-    type: Array,
-  },
 });
 const paginatedItem = ref(props.lembur);
 watch(
@@ -382,7 +306,7 @@ const fetchData = (event = null) => {
   currentPage.value = event ? Math.floor(event.first / event.rows) + 1 : 1;
   paginated.value = event?.rows ?? paginated.value;
   router.get(
-    route("simple.lembur.verify"),
+    route("simple.lembur.verify-kabag"),
     {
       currentPage: currentPage.value,
       paginated: paginated.value,
@@ -399,6 +323,7 @@ const fetchData = (event = null) => {
 };
 
 //submit
+const selectedPegawai = ref([]);
 const confirmDialog = ref(false);
 const confirmData = ref({
   data: {},
@@ -421,7 +346,7 @@ const processUpdate = async () => {
   try {
     const { data: tokens } = await axios.get(route("api.token.csrf"));
     router.patch(
-      route("simple.lembur.verify-patch"),
+      route("simple.lembur.verify-kabag-patch"),
       {
         _token: tokens,
         individual: confirmData.value.individual,

@@ -38,11 +38,22 @@ class Role extends Model
 
             if (in_array('admin', $all_user_roles)) {
                 $roles = 'admin';
+            } elseif (in_array('validator', $all_user_roles)) {
+                $roles = 'validator';
             } elseif (in_array('operator', $all_user_roles)) {
                 $roles = 'operator';
             }
         }
 
         return $roles;
+    }
+
+    public static function statusKeanggotaan()
+    {
+        $keanggotaan = 'anggota';
+        $my_keanggotaan = AnggotaTimKerja::where('pegawai_id', Auth::id())->pluck('keanggotaan')->toArray();
+        if (in_array('ketua', $my_keanggotaan))
+            $keanggotaan = 'ketua';
+        return $keanggotaan;
     }
 }

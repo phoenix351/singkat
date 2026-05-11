@@ -3,11 +3,13 @@
 namespace App\Models\Simple;
 
 use App\Models\ManManagement\TimKerja;
+use App\Simple\HasJobLogs;
 use Illuminate\Database\Eloquent\Model;
 
 class Lembur extends Model
 {
     //
+    use HasJobLogs;
     protected $connection = 'sulutweb_simple';
     public $timestamps = true;
     protected $table = 'lembur';

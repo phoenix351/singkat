@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Simple\HomeController;
 use App\Http\Controllers\Simple\LemburController;
+use App\Http\Controllers\Simple\SpklController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('simple')->middleware('auth')->name('simple.')
@@ -16,6 +17,13 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
         Route::delete('/pengajuan-lembur/destroy/{id}', [LemburController::class, 'destroy'])->name('lembur.destroy');
         Route::get('/fetch-maksud/{tim_id}', [LemburController::class, 'fetchMaksud'])->name('fetch-maksud');
 
+        //ketua tim
         Route::get('/pengajuan-lembur/verifikasi', [LemburController::class, 'verify'])->name('lembur.verify');
         Route::patch('/pengajuan-lembur/verifikasi/patch', [LemburController::class, 'verifyPatch'])->name('lembur.verify-patch');
+        //kabag
+        Route::get('/pengajuan-lembur/verifikasi-kabag', [LemburController::class, 'verifyKabag'])->name('lembur.verify-kabag');
+        Route::patch('/pengajuan-lembur/verifikasi-kabag/patch', [LemburController::class, 'verifyKabagPatch'])->name('lembur.verify-kabag-patch');
+
+        //spkl
+        Route::get('/daftar-spkl', [SpklController::class, 'index'])->name('spkl');
     });

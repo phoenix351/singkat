@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="min-h-screen bg-gray-50 flex overflow-hidden">
     <!-- Sidebar -->
-    <Sidebar />
+    <Sidebar :isOpen="isSidebarOpen" />
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col min-h-screen transition-all duration-300">
@@ -12,7 +12,7 @@
         <div class="flex items-center">
           <button
             @click="toggleSidebar"
-            class="lg:hidden text-gray-500 hover:text-gray-700 focus:outline-none mr-4"
+            class="text-gray-500 hover:text-gray-700 focus:outline-none mr-4"
           >
             <i class="pi pi-bars text-xl"></i>
           </button>
@@ -82,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick, onMounted } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
 import Menu from "primevue/menu";
 import Avatar from "primevue/avatar";
@@ -93,6 +93,12 @@ import { triggerSpinner } from "../ManManagement/Composables/axiosSetup";
 
 const isSidebarOpen = ref(false);
 const profileMenu = ref();
+
+onMounted(() => {
+  if (window.innerWidth >= 1024) {
+    isSidebarOpen.value = true;
+  }
+});
 
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value;
