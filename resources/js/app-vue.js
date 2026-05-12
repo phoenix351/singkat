@@ -87,6 +87,17 @@ createInertiaApp({
                             darkModeSelector: ".app-dark",
                         },
                     },
+                    locale: {
+                        dayNames: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"],
+                        dayNamesShort: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"],
+                        dayNamesMin: ["Mi", "Se", "Sl", "Rb", "Km", "Jm", "Sa"],
+                        monthNames: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"],
+                        monthNamesShort: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"],
+                        today: "Hari Ini",
+                        clear: "Hapus",
+                        dateFormat: "dd/mm/yy",
+                        weekHeader: "Mg"
+                    }
                 })
                 .use(ConfirmationService)
                 .use(ToastService);

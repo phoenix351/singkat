@@ -10,6 +10,8 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
     ->group(function () {
         Route::get('/', [HomeController::class, 'index'])->name('index');
 
+        Route::get('/my-lembur', [LemburController::class, 'myLembur'])->name('my-lembur');
+
         Route::get('/pengajuan-lembur', [LemburController::class, 'index'])->name('lembur');
         Route::post('/pengajuan-lembur/store', [LemburController::class, 'store'])->name('lembur.store');
         Route::patch('/pengajuan-lembur/patch', [LemburController::class, 'store'])->name('lembur.patch');
@@ -26,4 +28,6 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
 
         //spkl
         Route::get('/daftar-spkl', [SpklController::class, 'index'])->name('spkl');
+        Route::post('/daftar-spkl/store', [SpklController::class, 'store'])->name('spkl.store');
+        Route::get('/daftar-spkl/print', [SpklController::class, 'print'])->name('spkl.print');
     });

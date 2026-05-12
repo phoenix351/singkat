@@ -19,7 +19,11 @@ return new class extends Migration {
                 ->constrained('sulutweb_man_management.timkerja')
                 ->onUpdate('restrict')
                 ->onDelete('set null');
-            $table->string('nomor_spkl')->nullable();
+            $table->foreignId('spkl_id')
+                ->nullable()
+                ->constrained('sulutweb_simple.spkl')
+                ->onUpdate('restrict')
+                ->onDelete('set null');
             $table->timestamps();
         });
         Schema::create('lembur_pegawai', function (Blueprint $table) {

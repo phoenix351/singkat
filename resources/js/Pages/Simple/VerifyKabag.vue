@@ -13,7 +13,7 @@
             <InputIcon>
               <i class="pi pi-search" />
             </InputIcon>
-            <InputText placeholder="Cari Data" />
+            <InputText placeholder="Cari Pegawai" v-model="searchField" />
           </IconField>
         </div>
       </div>
@@ -30,10 +30,11 @@
         :rows="paginatedItem.per_page"
         :first="(paginatedItem.current_page - 1) * paginatedItem.per_page"
         :total-records="paginatedItem.total"
-        :rows-per-page-options="[10, 20, 50, 100]"
+        :rows-per-page-options="[5, 10, 20, 50, 100]"
         :removable-sort="true"
         :sort-field="sortField"
         :sort-order="sortOrder"
+        filterDisplay="row"
         @page="fetchData"
         @sort="fetchData"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
@@ -54,18 +55,39 @@
             <span v-else>-</span>
           </template>
         </Column>
-        <Column header="Tim Kerja">
+        <Column header="Tim Kerja" sortable :show-filter-menu="false">
           <template #body="{ data }">
             {{ data.pegawai && data.pegawai.length > 0 ? data.tim_kerja : "-" }}
           </template>
+          <template #filter>
+            <InputText
+              v-model="filterModel.tim_kerja"
+              class="text-sm"
+              fluid
+              placeholder="Cari tim kerja"
+            />
+          </template>
         </Column>
-        <Column header="Tanggal">
+        <Column
+          header="Tanggal"
+          :show-filter-menu="false"
+          field="tanggal"
+          sortable
+        >
           <template #body="{ data }">
             {{
               data.pegawai && data.pegawai.length > 0
                 ? formatDateOnly(data.pegawai[0].tanggal)
                 : "-"
             }}
+          </template>
+          <template #filter>
+            <InputText
+              v-model="filterModel.tanggal"
+              class="text-sm"
+              fluid
+              placeholder="Cari tanggal"
+            />
           </template>
         </Column>
         <Column header="Jam Mulai">
@@ -86,15 +108,29 @@
             }}
           </template>
         </Column>
-        <Column
-          class="min-w-[150px]"
-          header="No. SPKL"
-          field="nomor_spkl"
-          sortable
-        >
+        <Column header="Status Pengajuan" field="status_pengajuan" sortable>
           <template #body="{ data }">
-            <span v-if="data.nomor_spkl">{{ data.nomor_spkl }}</span>
-            <Badge v-else severity="secondary" value="belum diajukan" />
+            <div class="flex flex-wrap gap-1">
+              <Badge
+                size="small"
+                v-for="item in getStatusCounts(data.pegawai)"
+                :key="item.label"
+                :value="`${item.count} ${item.label}`"
+                :severity="
+                  item.code === '1'
+                    ? 'warn'
+                    : item.code === '2'
+                    ? 'success'
+                    : item.code === '3'
+                    ? 'danger'
+                    : item.code === '4'
+                    ? 'info'
+                    : item.code === '5'
+                    ? 'contrast'
+                    : 'secondary'
+                "
+              />
+            </div>
           </template>
         </Column>
         <Column header="Maksud" field="maksud_lembur" sortable />
@@ -245,12 +281,36 @@
 </template>
 
 <script setup>
+import { debounce } from "@/Layouts/ManManagement/Composables/debounce";
 import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
 import { Head, router, useForm } from "@inertiajs/vue3";
 import axios from "axios";
-import { useConfirm } from "primevue";
 import { computed, ref, watch } from "vue";
 
+const searchField = ref(null);
+const filterModel = ref({
+  tim_kerja: null,
+  tanggal: null,
+  maksud_lembur: null,
+});
+const getStatusCounts = (pegawai) => {
+  if (!pegawai) return [];
+  const counts = {};
+  pegawai.forEach((p) => {
+    const statusLabel = p.status_detail || p.status || "Unknown";
+    const statusCode = String(p.status);
+    const key = `${statusCode}_${statusLabel}`;
+    if (!counts[key]) {
+      counts[key] = {
+        label: statusLabel,
+        code: statusCode,
+        count: 0,
+      };
+    }
+    counts[key].count++;
+  });
+  return Object.values(counts);
+};
 const formatDateTime = (dateString) => {
   if (!dateString) return "-";
   const date = new Date(dateString);
@@ -296,31 +356,40 @@ watch(
   }
 );
 //paginated and search
-const currentPage = computed(
-  () => (paginatedItem.value.current_page - 1) * paginatedItem.value.per_page
-);
-const paginated = computed(() => paginatedItem?.value?.per_page ?? 10);
+const currentPage = ref(1);
+const paginated = ref(5);
 const sortField = ref(null);
 const sortOrder = ref(null);
-const fetchData = (event = null) => {
-  currentPage.value = event ? Math.floor(event.first / event.rows) + 1 : 1;
-  paginated.value = event?.rows ?? paginated.value;
-  router.get(
-    route("simple.lembur.verify-kabag"),
-    {
-      currentPage: currentPage.value,
-      paginated: paginated.value,
-      sortField: event?.sortField ?? sortField.value,
-      sortOrder: event?.sortOrder ?? sortOrder.value,
-      searchField: searchField.value,
-    },
-    {
-      preserveState: true,
-      preserveScroll: true,
-      replace: true,
+const fetchData = async (event = null) => {
+  if (event) {
+    if (event.first !== undefined && event.rows !== undefined) {
+      currentPage.value = Math.floor(event.first / event.rows) + 1;
+      paginated.value = event.rows;
     }
-  );
+    if (event.sortField !== undefined) sortField.value = event.sortField;
+    if (event.sortOrder !== undefined) sortOrder.value = event.sortOrder;
+  }
+  try {
+    const { data } = await axios.get(route("simple.lembur.verify-kabag"), {
+      params: {
+        currentPage: currentPage.value,
+        paginated: paginated.value,
+        sortField: sortField.value,
+        sortOrder: sortOrder.value,
+        searchField: searchField.value,
+        filters: filterModel.value,
+      },
+    });
+    paginatedItem.value = data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
 };
+const delayedFetchData = debounce(() => {
+  fetchData();
+});
+watch(searchField, () => delayedFetchData());
+watch(filterModel, () => delayedFetchData(), { deep: true });
 
 //submit
 const selectedPegawai = ref([]);

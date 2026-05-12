@@ -206,6 +206,7 @@
               { label: 'Viewer', value: 'viewer' },
               { label: 'Operator', value: 'operator' },
               { label: 'Validator', value: 'validator' },
+              { label: 'Kepala', value: 'kaprov' },
               { label: 'Administrator', value: 'admin' },
             ]"
             class="w-full"

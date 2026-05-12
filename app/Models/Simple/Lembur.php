@@ -15,7 +15,7 @@ class Lembur extends Model
     protected $table = 'lembur';
     protected $fillable = [
         'maksud_lembur',
-        'nomor_spkl',
+        'spkl_id',
         'tim_id',
     ];
     public function tim()
@@ -25,5 +25,9 @@ class Lembur extends Model
     public function pegawai()
     {
         return $this->hasMany(LemburPegawai::class, 'lembur_id', 'id');
+    }
+    public function spkl()
+    {
+        return $this->belongsTo(Spkl::class);
     }
 }

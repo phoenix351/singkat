@@ -21,6 +21,7 @@ class LemburPegawai extends Model
         'jam_selesai',
         'status',
         'catatan',
+        'created_by',
         'edited_by'
     ];
 

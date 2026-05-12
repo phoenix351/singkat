@@ -1,13 +1,24 @@
 <template>
   <aside
     class="fixed inset-y-0 left-0 z-50 bg-slate-900 text-white transition-all duration-300 ease-in-out lg:static overflow-hidden flex flex-col whitespace-nowrap"
-    :class="isOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full lg:w-20 lg:translate-x-0'"
+    :class="
+      isOpen
+        ? 'w-64 translate-x-0'
+        : 'w-64 -translate-x-full lg:w-20 lg:translate-x-0'
+    "
   >
-    <div class="flex items-center justify-center h-16 bg-slate-950 flex-shrink-0 relative">
-      <span class="text-xl font-bold tracking-wider text-blue-400 transition-opacity duration-300"
-            :class="isOpen ? 'opacity-100' : 'opacity-0'">SIMPLE</span>
-      <i class="pi pi-compass text-2xl text-blue-400 absolute transition-opacity duration-300" 
-         :class="isOpen ? 'opacity-0' : 'opacity-100'"></i>
+    <div
+      class="flex items-center justify-center h-16 bg-slate-950 flex-shrink-0 relative"
+    >
+      <span
+        class="text-xl font-bold tracking-wider text-blue-400 transition-opacity duration-300"
+        :class="isOpen ? 'opacity-100' : 'opacity-0'"
+        >SIMPLE</span
+      >
+      <i
+        class="pi pi-compass text-2xl text-blue-400 absolute transition-opacity duration-300"
+        :class="isOpen ? 'opacity-0' : 'opacity-100'"
+      ></i>
     </div>
     <nav class="py-4" :class="isOpen ? 'px-4' : 'px-4 lg:px-3'">
       <ul class="space-y-1">
@@ -19,16 +30,24 @@
             class="flex items-center py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all group overflow-hidden"
             :class="[
               page.props.route == item.route ? 'text-white bg-slate-800' : '',
-              isOpen ? 'px-4 justify-start' : 'px-4 lg:px-0 lg:justify-center'
+              isOpen ? 'px-4 justify-start' : 'px-4 lg:px-0 lg:justify-center',
             ]"
           >
             <i
-              :class="[item.icon, 'text-lg w-6 flex-shrink-0 group-hover:text-white transition-all text-center', isOpen ? 'mr-3' : 'mr-3 lg:mr-0']"
+              :class="[
+                item.icon,
+                'text-lg w-6 flex-shrink-0 group-hover:text-white transition-all text-center',
+                isOpen ? 'mr-3' : 'mr-3 lg:mr-0',
+              ]"
             ></i>
-            <span 
+            <span
               class="transition-opacity duration-300 whitespace-nowrap"
-              :class="[{ 'font-bold': page.props.route == item.route }, isOpen ? 'opacity-100 block' : 'opacity-0 lg:hidden']"
-            >{{ item.label }}</span>
+              :class="[
+                { 'font-bold': page.props.route == item.route },
+                isOpen ? 'opacity-100 block' : 'opacity-0 lg:hidden',
+              ]"
+              >{{ item.label }}</span
+            >
           </Link>
           <!-- <a
             v-else
@@ -60,6 +79,11 @@ const menuItems = ref([
     route: "simple.index",
   },
   {
+    label: "MyLembur",
+    icon: "pi pi-sync",
+    route: "simple.my-lembur",
+  },
+  {
     label: "Pengajuan Lembur",
     icon: "pi pi-calendar-plus",
     route: "simple.lembur",
@@ -80,7 +104,7 @@ const menuItems = ref([
     role: "operator",
     label: "SPKL",
     icon: "pi pi-file-pdf",
-    route: "simple.lembur.verify-kabag",
+    route: "simple.spkl",
   },
 ]);
 const checkAvailability = (role) => {
