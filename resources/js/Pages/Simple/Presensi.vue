@@ -1,7 +1,7 @@
 <template>
-  <Head title="SPKL" />
-  <SimpleLayout :is-open="isSidebarOpen">
-    <div class="text-xl font-bold mb-4">Pengajuan SPKL</div>
+  <Head title="Presensi Lembur" />
+  <SimpleLayout>
+    <div class="text-xl font-bold mb-4">Rekap Presensi Lembur</div>
     <div class="flex flex-wrap items-end gap-4">
       <div class="flex flex-col gap-2">
         <label class="font-bold">Tahun</label>
@@ -25,18 +25,18 @@
           class="w-48"
         />
       </div>
-      <div class="space-x-2">
-        <Button @click="fetchData" icon="pi pi-search" class="mb-0" />
+      <div>
         <Button
-          @click="presensiDialog = true"
-          label="Presensi"
-          icon="pi pi-upload"
-          severity="warn"
+          label="Tampilkan"
+          @click="fetchData"
+          icon="pi pi-search"
           class="mb-0"
         />
+      </div>
+      <div>
         <Button
           @click="createDialog = true"
-          label="Laporan"
+          label="Cetak SPKL"
           icon="pi pi-print"
           severity="info"
           class="mb-0"
@@ -81,7 +81,7 @@
           <template #body="slotProps">{{ slotProps.index + 1 }}</template>
         </Column>
         <Column hidden field="pegawai_id" />
-        <Column class="whitespace-nowrap" header="No. SPKL" field="pegawai_id">
+        <Column header="No. SPKL" field="pegawai_id">
           <template #body="{ data }">
             <Badge
               v-if="data.lembur.spkl?.nomor_spkl"
@@ -97,26 +97,10 @@
         <Column header="Jabatan" field="pegawai_id">
           <template #body="{ data }">{{ data.pegawai.jabatan }}</template>
         </Column>
-        <Column header="Tanggal Pelaksanaan Pengajuan" field="tanggal">
+        <Column header="Tanggal Pelaksanaan" field="tanggal">
           <template #body="{ data }">{{
             formatDateOnly(data.tanggal)
           }}</template>
-        </Column>
-        <Column class="whitespace-nowrap" header="Jam Berangkat">
-          <template #body="{ data }"
-            ><span v-if="data.jam_berangkat">{{ data.jam_berangkat }}</span>
-            <Badge size="small" v-if="!data.jam_berangkat" severity="secondary"
-              ><span class="italic">Tidak ditemukan</span></Badge
-            >
-          </template>
-        </Column>
-        <Column class="whitespace-nowrap" header="Jam Pulang">
-          <template #body="{ data }"
-            ><span v-if="data.jam_pulang">{{ data.jam_pulang }}</span>
-            <Badge size="small" v-if="!data.jam_pulang" severity="secondary"
-              ><span class="italic">Tidak ditemukan</span></Badge
-            >
-          </template>
         </Column>
         <Column header="Maksud Lembur" field="lembur.maksud_lembur" />
         <Column header="Link" field="link_dokumentasi">
@@ -136,7 +120,6 @@
       </DataTable>
     </div>
     <Dialog
-      position="top"
       v-model:visible="createDialog"
       modal
       header="Cetak SPKL"
@@ -192,85 +175,16 @@
         />
       </template>
     </Dialog>
-    <Dialog
-      position="top"
-      v-model:visible="presensiDialog"
-      modal
-      header="Upload Presensi"
-      class="min-w-[30vw]"
-    >
-      <div class="flex flex-col gap-4">
-        <div>
-          <label class="block font-bold mb-2">Pilih Bulan</label>
-          <div class="flex flex-wrap flex-row space-x-2">
-            <Select
-              class="w-[45%]"
-              v-model="presensiYear"
-              placeholder="Pilih tahun"
-              :options="yearDrop"
-              optionLabel="label"
-              optionValue="value"
-            />
-            <Select
-              class="w-[45%]"
-              v-model="presensiMonth"
-              placeholder="Pilih bulan"
-              :options="monthDrop"
-              optionLabel="label"
-              optionValue="value"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="block font-bold">Pilih File Excel :</label>
-        </div>
-        <div class="flex flex-row space-x-2">
-          <Button @click="downloadTemplate" severity="info" class="lg:mb-0">
-            <i class="pi pi-file"></i>
-            Template
-          </Button>
-          <FileUpload
-            ref="fileupload"
-            mode="basic"
-            name="file"
-            accept=".xlsx,.xls,.csv"
-            :maxFileSize="1000000"
-            @select="onSelectFile"
-          />
-        </div>
-      </div>
-      <template #footer>
-        <Button
-          label="Cancel"
-          @click="presensiDialog = false"
-          size="small"
-          severity="danger"
-          autofocus
-        />
-        <Button
-          @click="submitPresensi"
-          label="Upload"
-          size="small"
-          severity="success"
-          autofocus
-        />
-      </template>
-    </Dialog>
   </SimpleLayout>
 </template>
 
 <script setup>
 import { debounce } from "@/Layouts/ManManagement/Composables/debounce";
 import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
-import { Head, router, useForm } from "@inertiajs/vue3";
+import { Head, useForm } from "@inertiajs/vue3";
 import axios from "axios";
-import { computed, onMounted, ref, watch } from "vue";
-import * as XLSX from "xlsx";
+import { ref, watch } from "vue";
 
-const isSidebarOpen = ref(true);
-onMounted(() => {
-  isSidebarOpen.value = false;
-});
 const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1;
 const formatDateOnly = (dateString) => {
@@ -380,110 +294,6 @@ const submit = async () => {
   }
 };
 
-//presensi
-const presensiDialog = ref(false);
-const presensiMonth = ref(null);
-const presensiYear = ref(null);
-const downloadTemplate = () => {
-  window.location.href = "/simple/download-template/presensi";
-};
-const selectedFile = ref(false);
-const onSelectFile = (e) => {
-  let fileS = e?.files?.[0] ?? null;
-  if (fileS) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      /* Parse data */
-      const bstr = e.target.result;
-      const wb = XLSX.read(bstr, { type: "binary" });
-      /* Get first worksheet */
-      const wsname = wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      /* Convert array of arrays */
-      const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-      selectedFile.value = data;
-    };
-    reader.readAsBinaryString(fileS);
-  }
-};
-const presensiUploaded = computed(() => {
-  if (selectedFile.value && selectedFile.value.length > 2) {
-    const tanggalArray = selectedFile.value[0].slice(1);
-    const hasil = [];
-
-    const pYear = presensiYear.value || new Date().getFullYear();
-    const pMonth = presensiMonth.value || new Date().getMonth() + 1;
-
-    for (let i = 2; i < selectedFile.value.length; i++) {
-      const row = selectedFile.value[i];
-      const nip = row[0];
-      if (!nip) continue;
-      for (let j = 1; j < row.length; j++) {
-        const sel = row[j];
-        if (typeof sel === "string" && sel.includes("WFOL")) {
-          const parts = sel.split("\r\n");
-          if (parts.length >= 3) {
-            const masuk = parts[0].trim();
-            const pulang = parts[1].trim();
-
-            const [mH, mM, mS] = masuk.split(":").map(Number);
-            const [pH, pM, pS] = pulang.split(":").map(Number);
-            const dateMasuk = new Date(0, 0, 0, mH || 0, mM || 0, mS || 0);
-            const datePulang = new Date(0, 0, 0, pH || 0, pM || 0, pS || 0);
-
-            let selisih = (datePulang - dateMasuk) / (1000 * 60 * 60);
-            if (selisih < 0) selisih += 24;
-            selisih = Math.round(selisih * 100) / 100;
-            const tgl = Number(tanggalArray[j - 1]);
-            const tanggalDate = new Date(pYear, pMonth - 1, tgl);
-
-            hasil.push({
-              nip: nip.toString(),
-              tanggal: tanggalDate,
-              jam_masuk: masuk,
-              jam_pulang: pulang,
-              lamanya: selisih,
-              status_kehadiran: "WFOL",
-            });
-          }
-        }
-      }
-    }
-
-    return hasil;
-  }
-  return [];
-});
-const submitPresensi = async () => {
-  try {
-    const { data: tokens } = await axios.get(route("api.token.csrf"));
-    router.patch(
-      route("simple.presensi.patch"),
-      {
-        _token: tokens,
-        data: presensiUploaded.value,
-      },
-      {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-          fetchData();
-          presensiDialog.value = false;
-        },
-      }
-    );
-  } catch (error) {
-    console.error(error);
-  }
-};
-watch(
-  () => presensiDialog.value,
-  (v) => {
-    if (!v) {
-      selectedFile.value = false;
-    }
-  }
-);
 //print
 const createDialog = ref(false);
 const form = useForm({

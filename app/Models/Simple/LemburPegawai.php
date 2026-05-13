@@ -17,12 +17,13 @@ class LemburPegawai extends Model
         'lembur_id',
         'pegawai_id',
         'tanggal',
-        'jam_mulai',
-        'jam_selesai',
+        'jumlah_jam',
         'status',
         'catatan',
         'created_by',
-        'edited_by'
+        'edited_by',
+        'jam_berangkat',
+        'jam_pulang'
     ];
 
     protected $appends = ['status_detail'];

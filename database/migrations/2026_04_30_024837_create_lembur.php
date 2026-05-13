@@ -11,6 +11,16 @@ return new class extends Migration {
     protected $connection = 'sulutweb_simple';
     public function up(): void
     {
+        Schema::create('spkl', function (Blueprint $table) {
+            $table->id();
+            $table->string('nomor_spkl', 150);
+            $table->tinyInteger('bulan');
+            $table->year('tahun');
+            $table->year('tahun_dipa');
+            $table->date('tanggal_pengajuan');
+            $table->timestamps();
+        });
+
         Schema::create('lembur', function (Blueprint $table) {
             $table->id();
             $table->string('maksud_lembur');
@@ -39,8 +49,9 @@ return new class extends Migration {
                 ->onUpdate('restrict')
                 ->onDelete('set null');
             $table->date('tanggal');
-            $table->time('jam_mulai');
-            $table->time('jam_selesai');
+            $table->float('jumlah_jam')->default(1);
+            $table->time('jam_berangkat')->nullable();
+            $table->time('jam_pulang')->nullable();
             $table->string('status', 30)->comment('1=pending, 2=ditolak, 3=setuju, 4=proses, 5=selesai')->default('1');
             $table->timestamps();
         });
@@ -51,7 +62,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('lembur');
         Schema::dropIfExists('lembur_pegawai');
+        Schema::dropIfExists('lembur');
+        Schema::dropIfExists('spkl');
     }
 };

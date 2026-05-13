@@ -156,14 +156,15 @@ class LemburController extends Controller
                 $validated = $request->validate([
                     'id' => ['required', 'integer'],
                     'pegawai.0.tanggal' => ['required', 'date'],
-                    'pegawai.0.jam_mulai' => ['required', 'date_format:H:i,H:i:s'],
-                    'pegawai.0.jam_selesai' => ['required', 'date_format:H:i,H:i:s'],
+                    'pegawai.0.jumlah_jam' => ['required', 'numeric', 'max:24'],
                     'maksud_lembur' => ['required', 'string'],
+                    'link_dokumentasi' => ['required', 'string']
                 ], [
                     'pegawai.0.tanggal.required' => 'Tanggal harus diisi',
-                    'pegawai.0.jam_mulai.required' => 'Jam mulai harus diisi',
-                    'pegawai.0.jam_selesai.required' => 'Jam selesai harus diisi',
+                    'pegawai.0.jumlah_jam.required' => 'Jumlah jam harus diisi',
+                    'pegawai.0.jumlah_jam.max' => 'Jumlah jam tidak boleh lebih dari 24',
                     'maksud_lembur.required' => 'Maksud lembur harus diisi',
+                    'link_dokumentasi.required' => 'Link dokumentasi harus diisi',
                 ]);
             }
             try {
@@ -183,8 +184,7 @@ class LemburController extends Controller
                                 'lembur_id' => $validated['id'],
                                 'pegawai_id' => $p,
                                 'tanggal' => $pegawai['tanggal'],
-                                'jam_mulai' => $pegawai['jam_mulai'],
-                                'jam_selesai' => $pegawai['jam_selesai'],
+                                'jumlah_jam' => $pegawai['jumlah_jam'],
                                 'created_by' => Auth::id(),
                                 'edited_by' => Auth::id(),
                             ]
@@ -197,8 +197,7 @@ class LemburController extends Controller
                     if (sizeof($pegawai) > 0) {
                         $lp = [
                             'tanggal' => \Carbon\Carbon::parse($validated['pegawai'][0]['tanggal'])->setTimezone('Asia/Makassar')->format('Y-m-d'),
-                            'jam_mulai' => $validated['pegawai'][0]['jam_mulai'],
-                            'jam_selesai' => $validated['pegawai'][0]['jam_selesai'],
+                            'jumlah_jam' => $validated['pegawai'][0]['jumlah_jam'],
                             'edited_by' => Auth::id()
                         ];
                         foreach ($pegawai as $key => $p) {
@@ -220,16 +219,17 @@ class LemburController extends Controller
             'tim_id' => ['required', 'integer'],
             'anggotalembur' => ['required', 'array'],
             'tanggal' => ['required', 'date'],
-            'jam_mulai' => ['required', 'date_format:H:i,H:i:s'],
-            'jam_selesai' => ['required', 'date_format:H:i,H:i:s'],
+            'jumlah_jam' => ['required', 'numeric', 'max:24'],
             'maksud_lembur' => ['required', 'string'],
+            'link_dokumentasi' => ['required', 'string']
         ], [
             'tim_id.required' => 'Tim kerja harus diisi',
             'anggotalembur.required' => 'Anggota tim harus diisi',
             'tanggal.required' => 'Tanggal harus diisi',
-            'jam_mulai.required' => 'Jam mulai harus diisi',
-            'jam_selesai.required' => 'Jam selesai harus diisi',
-            'maksud_lembur.required' => 'Maksud lembur harus diisi'
+            'jumlah_jam.required' => 'Jumlah jam harus diisi',
+            'jumlah_jam.max' => 'Jumlah jam tidak boleh lebih dari 24',
+            'maksud_lembur.required' => 'Maksud lembur harus diisi',
+            'link_dokumentasi.required' => 'Link dokumentasi harus diisi'
         ]);
         try {
             //code...

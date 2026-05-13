@@ -1,6 +1,6 @@
 <template>
   <Head title="Lembur" />
-  <SimpleLayout>
+  <SimpleLayout :is-open="isSidebarOpen">
     <div class="card">
       <div class="mb-4 flex flex-wrap items-center justify-between">
         <div
@@ -104,27 +104,23 @@
             />
           </template>
         </Column>
-        <Column header="Jam Mulai">
+        <Column header="Jumlah Jam" sortable>
           <template #body="{ data }">
             {{
               data.pegawai && data.pegawai.length > 0
-                ? formatTimeOnly(data.pegawai[0].jam_mulai)
+                ? data.pegawai[0].jumlah_jam + " Jam"
                 : "-"
             }}
           </template>
         </Column>
-        <Column header="Jam Selesai">
+        <Column
+          header="Status Pengajuan"
+          class="whitespace-nowrap"
+          sortable
+          field="status_pengajuan"
+        >
           <template #body="{ data }">
-            {{
-              data.pegawai && data.pegawai.length > 0
-                ? formatTimeOnly(data.pegawai[0].jam_selesai)
-                : "-"
-            }}
-          </template>
-        </Column>
-        <Column header="Status Pengajuan" sortable field="status_pengajuan">
-          <template #body="{ data }">
-            <div class="flex flex-wrap gap-1">
+            <div class="flex flex-col gap-1">
               <Badge
                 size="small"
                 v-for="item in getStatusCounts(data.pegawai)"
@@ -160,6 +156,20 @@
               fluid
               placeholder="Cari maksud lembur"
             />
+          </template>
+        </Column>
+        <Column header="Link" field="link_dokumentasi">
+          <template #body="{ data }">
+            <Button
+              v-if="data.link_dokumentasi"
+              icon="pi pi-external-link"
+              variant="outlined"
+              rounded
+              class="mr-2"
+              :severity="'info'"
+              @click="toDocumentation(data.link_dokumentasi)"
+            ></Button>
+            <div v-else>-</div>
           </template>
         </Column>
         <Column header="Edit/Hapus" :exportable="false">
@@ -222,6 +232,9 @@
             </div>
             <DataTable
               :value="slotProps.data.pegawai"
+              paginator
+              :rows="10"
+              :rowsPerPageOptions="[10, 20]"
               showGridlines
               size="small"
             >
@@ -234,7 +247,11 @@
               <Column header="NIP">
                 <template #body="{ data }">{{ data.pegawai?.nip }}</template>
               </Column>
-              <Column header="Status" style="text-align: center">
+              <Column
+                header="Status"
+                class="whitespace-nowrap"
+                style="text-align: center"
+              >
                 <template #body="{ data }">
                   <div class="flex flex-col items-center justify-center gap-1">
                     <Badge
@@ -262,7 +279,7 @@
                   </div>
                 </template>
               </Column>
-              <Column header="Catatan">
+              <Column header="Catatan" class="whitespace-nowrap">
                 <template #body="{ data }">
                   <Badge
                     v-if="!data.catatan"
@@ -396,35 +413,36 @@
             </div>
           </div>
           <div>
-            <label class="block font-bold mb-2">Jam Mulai</label>
+            <label class="block font-bold mb-2">Jumlah Jam</label>
             <InputText
-              type="time"
-              placeholder="Isi jam mulai lembur"
-              v-model="form.jam_mulai"
+              type="number"
+              max="24"
+              placeholder="Isi jumlah jam lembur"
+              v-model="form.jumlah_jam"
               showClear
               fluid
             />
             <div
-              v-if="page.props.errors.jam_mulai"
+              v-if="page.props.errors.jumlah_jam"
               class="text-red-500 text-sm mt-2"
             >
-              {{ page.props.errors?.jam_mulai }}
+              {{ page.props.errors?.jumlah_jam }}
             </div>
           </div>
           <div>
-            <label class="block font-bold mb-2">Jam Selesai</label>
+            <label class="block font-bold mb-2">Link Dokumentasi</label>
             <InputText
-              type="time"
-              placeholder="Isi jam selesai lembur"
-              v-model="form.jam_selesai"
+              type="text"
+              placeholder="Isi link dokumentasi lembur"
+              v-model="form.link_dokumentasi"
               fluid
               showClear
             />
             <div
-              v-if="page.props.errors.jam_selesai"
+              v-if="page.props.errors.link_dokumentasi"
               class="text-red-500 text-sm mt-2"
             >
-              {{ page.props.errors?.jam_selesai }}
+              {{ page.props.errors?.link_dokumentasi }}
             </div>
           </div>
         </template>
@@ -484,35 +502,35 @@
           </div>
         </div>
         <div>
-          <label class="block font-bold mb-2">Jam Mulai</label>
+          <label class="block font-bold mb-2">Jumlah Jam</label>
           <InputText
-            type="time"
-            placeholder="Isi jam mulai lembur"
-            v-model="editedLembur.pegawai[0].jam_mulai"
+            type="number"
+            placeholder="Isi jumlah jam lembur"
+            v-model="editedLembur.pegawai[0].jumlah_jam"
             showClear
             fluid
           />
           <div
-            v-if="page.props.errors['pegawai.0.jam_mulai']"
+            v-if="page.props.errors['pegawai.0.jumlah_jam']"
             class="text-red-500 text-sm mt-2"
           >
-            {{ page.props.errors?.["pegawai.0.jam_mulai"] }}
+            {{ page.props.errors?.["pegawai.0.jumlah_jam"] }}
           </div>
         </div>
         <div>
-          <label class="block font-bold mb-2">Jam Selesai</label>
+          <label class="block font-bold mb-2">Link Dokumentasi</label>
           <InputText
-            type="time"
-            placeholder="Isi jam selesai lembur"
-            v-model="editedLembur.pegawai[0].jam_selesai"
+            type="text"
+            placeholder="Isi link dokumentasi lembur"
+            v-model="editedLembur.link_dokumentasi"
             fluid
             showClear
           />
           <div
-            v-if="page.props.errors['pegawai.0.jam_selesai']"
+            v-if="page.props.errors.link_dokumentasi"
             class="text-red-500 text-sm mt-2"
           >
-            {{ page.props.errors?.["pegawai.0.jam_selesai"] }}
+            {{ page.props.errors?.link_dokumentasi }}
           </div>
         </div>
       </div>
@@ -592,8 +610,12 @@ import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { useConfirm } from "primevue";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
+const isSidebarOpen = ref(true);
+onMounted(() => {
+  isSidebarOpen.value = false;
+});
 const page = usePage();
 const confirm = useConfirm();
 const searchField = ref(null);
@@ -713,16 +735,15 @@ watch(searchField, () => delayedFetchData());
 watch(filterModel, () => delayedFetchData(), { deep: true });
 //submit
 const createDialog = ref(false);
-const isUpdated = ref(false);
 const form = useForm({
   _token: null,
   tim_id: null,
   anggotalembur: [],
   tanggal: null,
-  jam_mulai: null,
-  jam_selesai: null,
+  jumlah_jam: null,
   maksud_lembur: null,
   add_pegawai: false,
+  link_dokumentasi: null,
 });
 const anggotaTim = ref([]);
 const maksudLembur = ref([]);
@@ -876,6 +897,10 @@ watch(createDialog, () => {
 watch(pegawaiDialog, () => {
   anggotaTim.value = [];
 });
+const toDocumentation = (link) => {
+  const url = link.startsWith("http") ? link : `https://${link}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+};
 </script>
 
 <style scoped></style>

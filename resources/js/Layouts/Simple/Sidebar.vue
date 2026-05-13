@@ -102,7 +102,7 @@ const menuItems = ref([
   },
   {
     role: "operator",
-    label: "SPKL",
+    label: "SPKL & Presensi",
     icon: "pi pi-file-pdf",
     route: "simple.spkl",
   },

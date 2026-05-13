@@ -11,14 +11,9 @@ return new class extends Migration {
     protected $connection = 'sulutweb_simple';
     public function up(): void
     {
-        Schema::create('spkl', function (Blueprint $table) {
-            $table->id();
-            $table->string('nomor_spkl', 150);
-            $table->tinyInteger('bulan');
-            $table->year('tahun');
-            $table->year('tahun_dipa');
-            $table->date('tanggal_pengajuan');
-            $table->timestamps();
+        Schema::table('lembur', function (Blueprint $table) {
+            //
+            $table->string('link_dokumentasi')->nullable()->after('spkl_id');
         });
     }
 
@@ -27,6 +22,9 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('spkl');
+        Schema::table('lembur', function (Blueprint $table) {
+            //
+            $table->dropColumn('link_dokumentasi');
+        });
     }
 };

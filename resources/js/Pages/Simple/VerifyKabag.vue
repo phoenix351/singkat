@@ -1,6 +1,6 @@
 <template>
   <Head title="Lembur" />
-  <SimpleLayout>
+  <SimpleLayout :is-open="isSidebarOpen">
     <div class="card">
       <div class="mb-4 flex flex-wrap items-center justify-between">
         <div
@@ -90,27 +90,23 @@
             />
           </template>
         </Column>
-        <Column header="Jam Mulai">
+        <Column header="Jumlah Jam" sortable>
           <template #body="{ data }">
             {{
               data.pegawai && data.pegawai.length > 0
-                ? formatTimeOnly(data.pegawai[0].jam_mulai)
+                ? data.pegawai[0].jumlah_jam + " Jam"
                 : "-"
             }}
           </template>
         </Column>
-        <Column header="Jam Selesai">
+        <Column
+          class="whitespace-nowrap"
+          header="Status Pengajuan"
+          field="status_pengajuan"
+          sortable
+        >
           <template #body="{ data }">
-            {{
-              data.pegawai && data.pegawai.length > 0
-                ? formatTimeOnly(data.pegawai[0].jam_selesai)
-                : "-"
-            }}
-          </template>
-        </Column>
-        <Column header="Status Pengajuan" field="status_pengajuan" sortable>
-          <template #body="{ data }">
-            <div class="flex flex-wrap gap-1">
+            <div class="flex flex-col gap-1">
               <Badge
                 size="small"
                 v-for="item in getStatusCounts(data.pegawai)"
@@ -134,6 +130,20 @@
           </template>
         </Column>
         <Column header="Maksud" field="maksud_lembur" sortable />
+        <Column header="Link" field="link_dokumentasi">
+          <template #body="{ data }">
+            <Button
+              v-if="data.link_dokumentasi"
+              icon="pi pi-external-link"
+              variant="outlined"
+              rounded
+              class="mr-2"
+              :severity="'info'"
+              @click="toDocumentation(data.link_dokumentasi)"
+            ></Button>
+            <div v-else>-</div>
+          </template>
+        </Column>
         <Column header="Setuju/Tolak" :exportable="false">
           <template #body="slotProps">
             <div class="flex justify-end gap-2 w-full">
@@ -184,6 +194,9 @@
               :value="slotProps.data.pegawai"
               data-key="id"
               showGridlines
+              paginator
+              :rows="10"
+              :rowsPerPageOptions="[10, 20]"
               size="small"
             >
               <Column selection-mode="multiple" />
@@ -196,7 +209,11 @@
               <Column header="NIP">
                 <template #body="{ data }">{{ data.pegawai?.nip }}</template>
               </Column>
-              <Column header="Status" style="text-align: center">
+              <Column
+                class="whitespace-nowrap"
+                header="Status"
+                style="text-align: center"
+              >
                 <template #body="{ data }">
                   <div class="flex flex-col items-center justify-center gap-1">
                     <Badge
@@ -285,8 +302,12 @@ import { debounce } from "@/Layouts/ManManagement/Composables/debounce";
 import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
 import { Head, router, useForm } from "@inertiajs/vue3";
 import axios from "axios";
-import { computed, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 
+const isSidebarOpen = ref(true);
+onMounted(() => {
+  isSidebarOpen.value = false;
+});
 const searchField = ref(null);
 const filterModel = ref({
   tim_kerja: null,
@@ -437,6 +458,10 @@ const processUpdate = async () => {
   } catch (error) {
     console.error(error);
   }
+};
+const toDocumentation = (link) => {
+  const url = link.startsWith("http") ? link : `https://${link}`;
+  window.open(url, "_blank", "noopener,noreferrer");
 };
 </script>
 

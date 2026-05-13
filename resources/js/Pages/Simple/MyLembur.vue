@@ -1,6 +1,6 @@
 <template>
   <Head title="Lembur" />
-  <SimpleLayout>
+  <SimpleLayout :is-open="isSidebarOpen">
     <div class="card">
       <div class="mb-4 flex flex-wrap items-center justify-between">
         <div
@@ -65,24 +65,9 @@
             />
           </template>
         </Column>
-        <Column
-          header="Jam Mulai"
-          sortable
-          :show-filter-menu="false"
-          field="jam_mulai"
-        >
+        <Column header="Jumlah Jam" sortable>
           <template #body="{ data }">
-            {{ formatTimeOnly(data.jam_mulai) }}
-          </template>
-        </Column>
-        <Column
-          header="Jam Selesai"
-          sortable
-          :show-filter-menu="false"
-          field="jam_selesai"
-        >
-          <template #body="{ data }">
-            {{ formatTimeOnly(data.jam_selesai) }}
+            {{ data.jumlah_jam + " Jam" }}
           </template>
         </Column>
         <Column
@@ -162,8 +147,12 @@ import { debounce } from "@/Layouts/ManManagement/Composables/debounce";
 import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import axios from "axios";
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 
+const isSidebarOpen = ref(true);
+onMounted(() => {
+  isSidebarOpen.value = false;
+});
 const page = usePage();
 const searchField = ref(null);
 const filterModel = ref({

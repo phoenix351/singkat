@@ -91,7 +91,13 @@ import { useToast, Toast, ConfirmDialog } from "primevue";
 import SpinnerBorder from "@/Components/ManManagement/SpinnerBorder.vue";
 import { triggerSpinner } from "../ManManagement/Composables/axiosSetup";
 
-const isSidebarOpen = ref(false);
+const props = defineProps({
+  isOpen: {
+    default: false,
+    type: Boolean,
+  },
+});
+const isSidebarOpen = ref(props.isOpen);
 const profileMenu = ref();
 
 onMounted(() => {
@@ -99,6 +105,13 @@ onMounted(() => {
     isSidebarOpen.value = true;
   }
 });
+
+watch(
+  () => props.isOpen,
+  (open) => {
+    isSidebarOpen.value = open;
+  }
+);
 
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value;
@@ -152,6 +165,11 @@ watch(
 );
 </script>
 
-<style>
-/* Customize PrimeVue Menu for Sidebar to make it dark themed seamlessly */
+<style scoped>
+:deep(.p-inputtext::placeholder) {
+  @apply text-sm;
+}
+:deep(.p-inputtext) {
+  @apply text-sm;
+}
 </style>

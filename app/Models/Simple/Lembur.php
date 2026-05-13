@@ -17,6 +17,7 @@ class Lembur extends Model
         'maksud_lembur',
         'spkl_id',
         'tim_id',
+        'link_dokumentasi',
     ];
     public function tim()
     {
