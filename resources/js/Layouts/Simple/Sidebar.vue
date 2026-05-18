@@ -89,6 +89,11 @@ const menuItems = ref([
     route: "simple.lembur",
   },
   {
+    label: "Laporan Lembur Tim",
+    icon: "pi pi-file-word",
+    route: "simple.laporan-lembur",
+  },
+  {
     role: "ketua",
     label: "Verifikasi Ketua Tim",
     icon: "pi pi-check-square",
