@@ -675,6 +675,11 @@ class LemburController extends Controller
         ]);
     }
 
+    public function fetchLembur($lembur_id)
+    {
+        $lembur = Lembur::findOrFail($lembur_id)->with(['pegawai.pegawai', 'tim'])->first();
+        return response()->json($lembur);
+    }
 
     public function fetchMaksud($tim_id)
     {

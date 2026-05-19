@@ -42,4 +42,7 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
             $file_path = public_path('document/template_presensi_lembur.xlsx');
             return Response::download($file_path);
         });
+
+        //fetching
+        Route::get('/fetch-lembur/{lembur_id}', [LemburController::class, 'fetchLembur'])->name('fetch-lembur');
     });

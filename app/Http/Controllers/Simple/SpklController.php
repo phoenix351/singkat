@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Simple;
 
 use App\Http\Controllers\Controller;
+use App\Models\ManManagement\AnggotaTimKerja;
 use App\Models\ManManagement\Pegawai;
 use App\Models\ManManagement\Role;
 use App\Models\Simple\Lembur;
@@ -10,6 +11,7 @@ use App\Models\Simple\LemburPegawai;
 use App\Models\Simple\Spkl;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use PhpOffice\PhpWord\Element\Table;
@@ -256,6 +258,35 @@ class SpklController extends Controller
             $template_processor->saveAs('php://output');
         }, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ]);
+    }
+
+    public function laporan(Request $request)
+    {
+        $myTeam = AnggotaTimKerja::where('pegawai_id', Auth::id())->pluck('tim_id')->toArray();
+        $query = LemburPegawai::query();
+        $query->where('status', 4);
+        $query->whereMonth('tanggal', date('n'))
+            ->whereYear('tanggal', date('Y'));
+        $query->whereHas('lembur', function ($q) use ($myTeam) {
+            $q->whereIn('tim_id', $myTeam);
+        });
+        $query->with(['lembur.tim', 'lembur.spkl']);
+        $lp = $query->get()->groupBy('lembur.tim.label')
+            ->map(function ($group, $key) {
+                $first_item = $group->first();
+                $result = [
+                    'tim' => $key,
+                    'jumlah' => $group->count(),
+                    'lembur_id' => $first_item->lembur_id,
+                    'maksud_lembur' => $first_item->lembur->maksud_lembur ?? null,
+                    'link_dokumentasi' => $first_item->lembur->link_dokumentasi ?? null,
+                    'no_spkl' => $first_item->lembur->spkl->nomor_spkl ?? null,
+                ];
+                return $result;
+            })->values();
+        return Inertia::render('Simple/Laporan', [
+            'lembur' => $lp
         ]);
     }
 }
