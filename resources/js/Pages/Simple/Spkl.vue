@@ -41,6 +41,13 @@
           severity="info"
           class="mb-0"
         />
+        <Button
+          @click="printUang"
+          label="Uang"
+          icon="pi pi-print"
+          severity="contrast"
+          class="mb-0"
+        />
       </div>
     </div>
     <div class="card mt-4">
@@ -533,5 +540,29 @@ const toPrint = async () => {
 const toDocumentation = (link) => {
   const url = link.startsWith("http") ? link : `https://${link}`;
   window.open(url, "_blank", "noopener,noreferrer");
+};
+
+//print keuangan
+const formKeuangan = useForm({
+  tahun: null,
+  bulan: null,
+});
+const printUang = async () => {
+  formKeuangan.tahun = search.value.tahun;
+  formKeuangan.bulan = search.value.bulan;
+  const nativeForm = document.createElement("form");
+  nativeForm.method = "GET";
+  nativeForm.action = route("simple.spkl.keuangan-print");
+  const formData = formKeuangan.data();
+  for (const key in formData) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = key;
+    input.value = formData[key];
+    nativeForm.appendChild(input);
+  }
+  document.body.appendChild(nativeForm);
+  nativeForm.submit();
+  document.body.removeChild(nativeForm);
 };
 </script> 

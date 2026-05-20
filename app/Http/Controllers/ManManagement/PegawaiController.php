@@ -9,6 +9,7 @@ use App\Models\ManManagement\Pegawai as ManManagementPegawai;
 use App\Models\ManManagement\TimKerja;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -331,5 +332,11 @@ class PegawaiController extends Controller
         $anggota = ManManagementPegawai::whereIn('id', $tim)
             ->select(['id as value', 'name as label'])->get();
         return response()->json($anggota);
+    }
+
+    public function fetchMyTim()
+    {
+        $myTeam = AnggotaTimKerja::where('pegawai_id', Auth::id())->pluck('tim_id')->toArray();
+        return response()->json($myTeam);
     }
 }

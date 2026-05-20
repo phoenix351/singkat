@@ -33,8 +33,13 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
         Route::post('/daftar-spkl/store', [SpklController::class, 'store'])->name('spkl.store');
         Route::get('/daftar-spkl/print', [SpklController::class, 'print'])->name('spkl.print');
 
+        //uang
+        Route::get('/print/keuangan-lembur', [SpklController::class, 'printKeuangan'])->name('spkl.keuangan-print');
+
         //laporan lembur
         Route::get('/laporan-lembur', [SpklController::class, 'laporan'])->name('laporan-lembur');
+        Route::get('/print/laporan-lembur', [SpklController::class, 'printLaporan'])->name('print.laporan-lembur');
+        Route::post('/laporan-lembur/upload', [SpklController::class, 'uploadLaporan'])->name('upload.laporan-lembur');
 
         //presensi-lembur
         Route::patch('/presensi/patch', [SpklController::class, 'patch'])->name('presensi.patch');

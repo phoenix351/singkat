@@ -343,7 +343,7 @@ const formatDateTime = (dateString) => {
       hour: "2-digit",
       minute: "2-digit",
     })
-    .replace(/\./g, ":"); // Ganti format titik (bawaan id-ID) menjadi titik dua untuk jam
+    .replace(/\./g, ":");
 };
 const formatDateOnly = (dateString) => {
   if (!dateString) return "-";

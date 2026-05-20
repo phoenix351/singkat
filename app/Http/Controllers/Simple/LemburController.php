@@ -677,7 +677,17 @@ class LemburController extends Controller
 
     public function fetchLembur($lembur_id)
     {
-        $lembur = Lembur::findOrFail($lembur_id)->with(['pegawai.pegawai', 'tim'])->first();
+        $lembur = Lembur::findOrFail($lembur_id)
+            ->whereHas('pegawai', function ($q) {
+                $q->where('status', 4);
+            })
+            ->with([
+                'pegawai' => function ($q) {
+                    $q->where('status', 4)->with(['pegawai']);
+                },
+                'tim'
+            ])
+            ->first();
         return response()->json($lembur);
     }
 
