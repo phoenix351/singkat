@@ -443,10 +443,11 @@ class SpklController extends Controller
             ->with(['pegawai', 'lembur']);
 
         $lembur = $query->get();
-
+        $pegawaiMap = [];
         $rekap = [];
         foreach ($lembur as $l) {
             $nip_lama = $l->pegawai->nip_lama;
+            $pegawaiMap[$nip_lama] = $l->pegawai->name;
             if (!isset($rekap[$nip_lama])) {
                 $rekap[$nip_lama] = [];
             }
@@ -460,27 +461,24 @@ class SpklController extends Controller
                     $pulang->addDay();
                 }
 
-                $selisih = floor($pulang->diffInMinutes($masuk) / 60);
-
+                $selisih = floor($masuk->diffInMinutes($pulang) / 60);
                 if ($selisih < $durasi) {
                     $durasi = $selisih;
                 }
             }
-
-            if ($durasi <= 0) continue;
+            if ($durasi <= 0)
+                continue;
 
             $tgl = Carbon::parse($l->tanggal);
             $dayOfWeek = $tgl->dayOfWeekIso;
 
             $tipe = ($dayOfWeek >= 6) ? 'HL' : 'HB';
             $kolom = $tipe . $durasi;
-
             if (!isset($rekap[$nip_lama][$kolom])) {
                 $rekap[$nip_lama][$kolom] = 0;
             }
             $rekap[$nip_lama][$kolom]++;
         }
-
         $template_path = public_path('document/template_rekap utk uang.xlsx');
         $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($template_path);
         $worksheet = $spreadsheet->getActiveSheet();
@@ -495,11 +493,15 @@ class SpklController extends Controller
             }
         }
 
-        $nipCol = $headerMap['NIP Lama'] ?? 'A';
+        $nipCol = $headerMap['NIP Lama'] ?? 'B';
+        $namaCol = $headerMap['Nama Pegawai'] ?? 'A';
         $row = 2;
 
         foreach ($rekap as $nip_lama => $counts) {
-            $worksheet->setCellValue($nipCol . $row, $nip_lama);
+            if (isset($headerMap['Nama Pegawai']) && isset($pegawaiMap[$nip_lama])) {
+                $worksheet->setCellValue($namaCol . $row, $pegawaiMap[$nip_lama]);
+            }
+            $worksheet->setCellValueExplicit($nipCol . $row, $nip_lama, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
 
             foreach ($counts as $kolom => $jumlah) {
                 if (isset($headerMap[$kolom])) {
