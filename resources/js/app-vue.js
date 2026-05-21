@@ -14,6 +14,7 @@ import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 // const appName = 'MeetSulut';
 const getPrefix = () => {
     const currentRoute = route().current()
+    if (!currentRoute) return ''
     const prefix = currentRoute.split('.')[0]
     return prefix
 }
@@ -25,6 +26,9 @@ const setNameApp = () => {
             break;
         case 'meeting':
             result = 'MeetSulut'
+            break;
+        case 'simple':
+            result = 'Simple'
             break;
         default:
             result = 'superapp'
@@ -40,6 +44,9 @@ const colornProgress = () => {
             break;
         case 'meeting':
             result = "#4B5563"
+            break;
+        case 'simple':
+            result = "#3B82F6" // Blue
             break;
         default:
             result = "#4B5563"
@@ -64,7 +71,7 @@ createInertiaApp({
             const { default: VueTailwindDatepicker } = await import("vue-tailwind-datepicker")
             vueApp.use(VueTailwindDatepicker)
         }
-        if (prefix === "man-management") {
+        if (prefix === "man-management" || prefix === "simple") {
             await import('../css/manment/styles.scss')
             await import('../css/manment/tailwind.css')
             const { default: PrimeVue } = await import("primevue/config");
@@ -80,21 +87,21 @@ createInertiaApp({
                             darkModeSelector: ".app-dark",
                         },
                     },
+                    locale: {
+                        dayNames: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"],
+                        dayNamesShort: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"],
+                        dayNamesMin: ["Mi", "Se", "Sl", "Rb", "Km", "Jm", "Sa"],
+                        monthNames: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"],
+                        monthNamesShort: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"],
+                        today: "Hari Ini",
+                        clear: "Hapus",
+                        dateFormat: "dd/mm/yy",
+                        weekHeader: "Mg"
+                    }
                 })
                 .use(ConfirmationService)
                 .use(ToastService);
         }
-        //     .use(plugin)
-        //     .use(ZiggyVue)
-        //     .use(VueTailwindDatepicker)
-        //     .use(PrimeVue, {
-        //         theme: {
-        //             preset: Aura,
-        //             options: {
-        //                 darkModeSelector: '.app-dark'
-        //             }
-        //         }
-        //     })
         return vueApp.mount(el)
     },
     progress: {

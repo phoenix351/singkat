@@ -39,8 +39,11 @@ Route::prefix('man-management')->name('man-management.')->middleware(['auth', 'u
     Route::post('/role-management/store', [RoleController::class, 'store'])->name('role-management.store');
     Route::patch('/role-management/patch', [RoleController::class, 'store'])->name('role-management.patch');
     Route::delete('/role-management/destroy/{id}', [RoleController::class, 'destroy'])->name('role-management.destroy');
+
     Route::get('/fetch-pegawai', [RoleController::class, 'fetchPegawai'])->name('fetch-pegawai');
     Route::get('/fetch-tim', [RoleController::class, 'fetchTim'])->name('fetch-tim');
+    Route::get('/fetch-anggota-tim/{id}', [PegawaiController::class, 'fetchAnggotaTim'])->name('fetch-anggota-tim');
+    Route::get('/fetch-my-team', [PegawaiController::class, 'fetchMyTim'])->name('fetch-my-team');
 
     Route::get('/download-template/tim-kerja', function () {
         $file_path = public_path('document/Tim Kerja Template.xlsx');

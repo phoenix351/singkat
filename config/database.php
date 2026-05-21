@@ -79,7 +79,27 @@ return [
             ]) : [],
         ],
 
-        
+        'sulutweb_simple' => [
+            'driver' => 'mysql',
+            'url' => env('DB_SIMPLE_URL'),
+            'host' => env('DB_SIMPLE_HOST', '127.0.0.1'),
+            'port' => env('DB_SIMPLE_PORT', '3306'),
+            'database' => env('DB_SIMPLE_DATABASE', 'laravel'),
+            'username' => env('DB_SIMPLE_USERNAME', 'root'),
+            'password' => env('DB_SIMPLE_PASSWORD', ''),
+            'unix_socket' => env('DB_SIMPLE_SOCKET', ''),
+            'charset' => env('DB_SIMPLE_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_SIMPLE_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+
 
         'mariadb' => [
             'driver' => 'mariadb',
@@ -166,7 +186,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
         ],
 
         'default' => [

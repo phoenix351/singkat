@@ -9,6 +9,7 @@ use App\Models\ManManagement\Pegawai as ManManagementPegawai;
 use App\Models\ManManagement\TimKerja;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -44,12 +45,14 @@ class PegawaiController extends Controller
                 'kabupaten' => ['required'],
                 'foto' => ['required'],
             ]);
-            if ($validated['provinsi'] != 'Sulawesi Utara') return redirect()->route('man-management.index')->with('error', 'Data NIP : ' . $validated['nip'] . ' bukan pegawai Sulawesi Utara');
+            if ($validated['provinsi'] != 'Sulawesi Utara')
+                return redirect()->route('man-management.index')->with('error', 'Data NIP : ' . $validated['nip'] . ' bukan pegawai Sulawesi Utara');
             try {
                 //code...
                 DB::beginTransaction();
                 $pegawai_to_update = ManManagementPegawai::findOrFail($validated['id']);
-                if ($pegawai_to_update) $pegawai_to_update->update($validated);
+                if ($pegawai_to_update)
+                    $pegawai_to_update->update($validated);
                 DB::commit();
                 return redirect()->route('man-management.index')->with('success', 'Data pegawai berhasil di-update');
             } catch (\Throwable $th) {
@@ -64,17 +67,17 @@ class PegawaiController extends Controller
         if (!$data)
             return redirect()->route('man-management.index')->with('error', 'Data tidak ditemukan');
         $payload = [
-            'nip_lama'   => $data['attribute-nip-lama'][0] ?? null,
-            'nip'        => $data['attribute-nip'][0] ?? null,
-            'username'   => $data['attribute-username'][0] ?? null,
-            'email'      => $data['attribute-email'][0] ?? null,
-            'name'       => $data['attribute-nama'][0] ?? null,
-            'golongan'   => $data['attribute-golongan'][0] ?? null,
-            'jabatan'    => $data['attribute-jabatan'][0] ?? null,
+            'nip_lama' => $data['attribute-nip-lama'][0] ?? null,
+            'nip' => $data['attribute-nip'][0] ?? null,
+            'username' => $data['attribute-username'][0] ?? null,
+            'email' => $data['attribute-email'][0] ?? null,
+            'name' => $data['attribute-nama'][0] ?? null,
+            'golongan' => $data['attribute-golongan'][0] ?? null,
+            'jabatan' => $data['attribute-jabatan'][0] ?? null,
             'organisasi' => $data['attribute-organisasi'][0] ?? null,
-            'provinsi'   => $data['attribute-provinsi'][0] ?? null,
-            'kabupaten'  => $data['attribute-kabupaten'][0] ?? null,
-            'foto'       => $data['attribute-foto'][0] ?? null,
+            'provinsi' => $data['attribute-provinsi'][0] ?? null,
+            'kabupaten' => $data['attribute-kabupaten'][0] ?? null,
+            'foto' => $data['attribute-foto'][0] ?? null,
         ];
         if (
             !$payload['nip_lama'] ||
@@ -110,7 +113,8 @@ class PegawaiController extends Controller
             $total = count($fileData) - 1;
             foreach ($fileData as $key => $value) {
                 # code...
-                if ($key === 0) continue;
+                if ($key === 0)
+                    continue;
                 if (!empty($value) && count($value) > 0) {
                     $result = [
                         'tahun' => $value[0] ?? null,
@@ -137,7 +141,8 @@ class PegawaiController extends Controller
                         TimKerja::create($result);
                 }
             }
-            if (count($notification) < $total) $notification[] = ['type' => 'success', 'message' => 'Tim Kerja berhasil di upload'];
+            if (count($notification) < $total)
+                $notification[] = ['type' => 'success', 'message' => 'Tim Kerja berhasil di upload'];
             return redirect()->route('man-management.tim-kerja.index')->with('notification', $notification);
         }
         $validated = $request->validate([
@@ -152,14 +157,16 @@ class PegawaiController extends Controller
             })
             ->where('label', $validated['label'])
             ->first();
-        if ($check) return redirect()->route('man-management.tim-kerja.index')->with('error', 'Tim Kerja sudah ada');
+        if ($check)
+            return redirect()->route('man-management.tim-kerja.index')->with('error', 'Tim Kerja sudah ada');
 
         if ($request->isMethod('patch')) {
             try {
                 //code...
                 DB::beginTransaction();
                 $timkerja_to_updated = TimKerja::findOrFail($validated['id']);
-                if ($timkerja_to_updated) $timkerja_to_updated->update($validated);
+                if ($timkerja_to_updated)
+                    $timkerja_to_updated->update($validated);
                 DB::commit();
                 return redirect()->route('man-management.tim-kerja.index')->with('success', 'Tim Kerja berhasil diedit');
             } catch (\Throwable $th) {
@@ -192,15 +199,20 @@ class PegawaiController extends Controller
             $total = count($fileData) - 1;
             foreach ($fileData as $key => $value) {
                 # code...
-                if ($key === 0) continue;
+                if ($key === 0)
+                    continue;
                 if (!empty($value) && count($value) > 0) {
                     $tim = TimKerja::where('label', $value[0])->value('id');
-                    if (!$tim)  $notification[] = ['type' => 'error', 'message' => 'Tim Kerja ' . $value[0] . ' tidak ada'];
+                    if (!$tim)
+                        $notification[] = ['type' => 'error', 'message' => 'Tim Kerja ' . $value[0] . ' tidak ada'];
                     $pegawai = ManManagementPegawai::where('name', $value[1])->value('id');
-                    if (!$pegawai) $notification[] = ['type' => 'error', 'message' => 'Pegawai ' . $value[1] . ' tidak ada'];
+                    if (!$pegawai)
+                        $notification[] = ['type' => 'error', 'message' => 'Pegawai ' . $value[1] . ' tidak ada'];
                     $check_keanggotaan = false;
-                    if ($value[2] == 'anggota' || $value[2] == 'ketua') $check_keanggotaan = true;
-                    if (!$check_keanggotaan) $notification[] = ['type' => 'error', 'message' => 'Pegawai ' . $value[1] . ' keanggotaannya tidak ada di format'];
+                    if ($value[2] == 'anggota' || $value[2] == 'ketua')
+                        $check_keanggotaan = true;
+                    if (!$check_keanggotaan)
+                        $notification[] = ['type' => 'error', 'message' => 'Pegawai ' . $value[1] . ' keanggotaannya tidak ada di format'];
 
                     $result = [
                         'tim_id' => $tim ?? null,
@@ -230,7 +242,8 @@ class PegawaiController extends Controller
                         AnggotaTimKerja::create($result);
                 }
             }
-            if (count($notification) < $total) $notification[] = ['type' => 'success', 'message' => 'Keanggotaan tim berhasil di upload'];
+            if (count($notification) < $total)
+                $notification[] = ['type' => 'success', 'message' => 'Keanggotaan tim berhasil di upload'];
             return redirect()->route('man-management.anggota.index')->with('notification', $notification);
         }
         $validated = $request->validate([
@@ -246,14 +259,16 @@ class PegawaiController extends Controller
                 $query->where('id', '!=', $id);
             })
             ->first();
-        if ($check) return redirect()->route('man-management.anggota.index')->with('error', 'Pegawai tersebut sudah ada di tim tersebut');
+        if ($check)
+            return redirect()->route('man-management.anggota.index')->with('error', 'Pegawai tersebut sudah ada di tim tersebut');
 
         if ($request->isMethod('patch')) {
             try {
                 //code...
                 DB::beginTransaction();
                 $keanggotaan_tim_kerja_to_updated = AnggotaTimKerja::findOrFail($validated['id']);
-                if ($keanggotaan_tim_kerja_to_updated) $keanggotaan_tim_kerja_to_updated->update($validated);
+                if ($keanggotaan_tim_kerja_to_updated)
+                    $keanggotaan_tim_kerja_to_updated->update($validated);
                 DB::commit();
                 return redirect()->route('man-management.anggota.index')->with('success', 'Keanggotaan pegawai ini di tim sudah diedit');
             } catch (\Throwable $th) {
@@ -309,5 +324,19 @@ class PegawaiController extends Controller
             return redirect()->route('man-management.anggota.index')
                 ->with('error', 'Keanggotaan gagal dihapus');
         }
+    }
+
+    public function fetchAnggotaTim($id)
+    {
+        $tim = AnggotaTimKerja::where('tim_id', $id)->pluck('pegawai_id')->toArray();
+        $anggota = ManManagementPegawai::whereIn('id', $tim)
+            ->select(['id as value', 'name as label'])->get();
+        return response()->json($anggota);
+    }
+
+    public function fetchMyTim()
+    {
+        $myTeam = AnggotaTimKerja::where('pegawai_id', Auth::id())->pluck('tim_id')->toArray();
+        return response()->json($myTeam);
     }
 }

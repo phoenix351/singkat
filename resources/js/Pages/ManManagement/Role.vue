@@ -3,7 +3,9 @@
   <AppLayout>
     <div class="card">
       <div class="mb-4 flex flex-wrap items-center justify-between">
-        <div class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0">
+        <div
+          class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0"
+        >
           Role Management
         </div>
         <div class="flex space-x-2 items-center w-full md:w-full lg:w-auto">
@@ -139,7 +141,10 @@
             v-model="form.to_role_id"
             placeholder="Pilih Pegawai/Tim"
           />
-          <div v-if="page.props.errors.to_role_id" class="text-red-500 text-sm mt-2">
+          <div
+            v-if="page.props.errors.to_role_id"
+            class="text-red-500 text-sm mt-2"
+          >
             {{ page.props.errors?.to_role_id }}
           </div>
         </div>
@@ -155,7 +160,10 @@
             v-model="editedData.to_role_id"
             placeholder="Pilih Pegawai/Tim"
           />
-          <div v-if="page.props.errors.to_role_id" class="text-red-500 text-sm mt-2">
+          <div
+            v-if="page.props.errors.to_role_id"
+            class="text-red-500 text-sm mt-2"
+          >
             {{ page.props.errors?.to_role_id }}
           </div>
         </div>
@@ -183,7 +191,10 @@
             v-model="editedData.app_id"
             placeholder="Pilih Aplikasi"
           />
-          <div v-if="page.props.errors.app_id" class="text-red-500 text-sm mt-2">
+          <div
+            v-if="page.props.errors.app_id"
+            class="text-red-500 text-sm mt-2"
+          >
             {{ page.props.errors?.app_id }}
           </div>
         </div>
@@ -195,6 +206,7 @@
               { label: 'Viewer', value: 'viewer' },
               { label: 'Operator', value: 'operator' },
               { label: 'Validator', value: 'validator' },
+              { label: 'Kepala', value: 'kaprov' },
               { label: 'Administrator', value: 'admin' },
             ]"
             class="w-full"
@@ -282,10 +294,14 @@ watch(
     let data = null;
     if (type) {
       if (type == "unit") {
-        const { data: unit } = await axios.get(route("man-management.fetch-pegawai"));
+        const { data: unit } = await axios.get(
+          route("man-management.fetch-pegawai")
+        );
         data = unit;
       } else if (type == "tim") {
-        const { data: tim } = await axios.get(route("man-management.fetch-tim"));
+        const { data: tim } = await axios.get(
+          route("man-management.fetch-tim")
+        );
         data = tim;
       }
       userDrop.value = data;
@@ -371,7 +387,9 @@ const userUpdDrop = ref([]);
 watch(editedData, async () => {
   let data = null;
   if (editedData.value?.type == "unit") {
-    const { data: unit } = await axios.get(route("man-management.fetch-pegawai"));
+    const { data: unit } = await axios.get(
+      route("man-management.fetch-pegawai")
+    );
     data = unit;
   } else if (editedData.value?.type == "tim") {
     const { data: tim } = await axios.get(route("man-management.fetch-tim"));
@@ -406,14 +424,17 @@ const deleteData = (data) => {
     },
     accept: async () => {
       const { data: tokens } = await axios.get(route("api.token.csrf"));
-      router.delete(route("man-management.role-management.destroy", { id: data.id }), {
-        _token: tokens,
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-          fetchData();
-        },
-      });
+      router.delete(
+        route("man-management.role-management.destroy", { id: data.id }),
+        {
+          _token: tokens,
+          preserveScroll: true,
+          preserveState: true,
+          onSuccess: () => {
+            fetchData();
+          },
+        }
+      );
     },
   });
 };
