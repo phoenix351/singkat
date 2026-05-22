@@ -18,21 +18,26 @@ class RoleController extends Controller
     //
     public function index(Request $request)
     {
-        if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
 
         $query = Role::query()->from('sulutweb_man_management.roles as mmr');
         $query->join('sulutweb_man_management.application_management as mma', 'mma.id', '=', 'mmr.app_id');
         if ($request->sortOrder) {
             $order = $request->sortOrder == 1 ? 'asc' : 'desc';
             $query->orderBy($request->sortField, $order);
-        } else $query->orderBy('mma.label', 'asc');
+        } else
+            $query->orderBy('mma.label', 'asc');
         if ($request->searchField) {
             $tim = TimKerja::where('label', 'like', '%' . $request->searchField . '%')->pluck('id')->toArray();
             $unit = Pegawai::where('name', 'like', '%' . $request->searchField . '%')->pluck('id')->toArray();
-             $query->where(function ($q) use ($request, $tim, $unit) {
+            $query->where(function ($q) use ($request, $tim, $unit) {
                 $q->where('mma.label', 'like', '%' . $request->searchField . '%')
                     ->orWhere('mmr.type', 'like', '%' . $request->searchField . '%')
                     ->orWhere('mmr.roles', 'like', '%' . $request->searchField . '%')
@@ -77,26 +82,27 @@ class RoleController extends Controller
         if ($request->isMethod('patch')) {
             try {
                 //code...
-                DB::beginTransaction();
+                DB::connection('sulutweb_man_management')->beginTransaction();
                 $role_to_update = Role::findOrFail($id);
-                if ($role_to_update) $role_to_update->update($validated);
-                DB::commit();
+                if ($role_to_update)
+                    $role_to_update->update($validated);
+                DB::connection('sulutweb_man_management')->commit();
                 return redirect()->route('man-management.role-management.index')->with('success', 'Berhasil edit data');
             } catch (\Throwable $th) {
                 //throw $th;
-                DB::rollBack();
+                DB::connection('sulutweb_man_management')->rollBack();
                 return redirect()->route('man-management.role-management.index')->with('error', 'Gagal edit data, error : ' . $th->getMessage());
             }
         }
         try {
             //code...
-            DB::beginTransaction();
+            DB::connection('sulutweb_man_management')->beginTransaction();
             Role::create($validated);
-            DB::commit();
+            DB::connection('sulutweb_man_management')->commit();
             return redirect()->route('man-management.role-management.index')->with('success', 'Data berhasil ditambahkan');
         } catch (\Throwable $th) {
             //throw $th;
-            DB::rollBack();
+            DB::connection('sulutweb_man_management')->rollBack();
             return redirect()->route('man-management.role-management.index')->with('error', 'Terjadi kesalahan, error : ' . $th->getMessage());
         }
     }
@@ -105,14 +111,15 @@ class RoleController extends Controller
     {
         try {
             //code...
-            DB::beginTransaction();
+            DB::connection('sulutweb_man_management')->beginTransaction();
             $role_to_delete = Role::findOrFail($id);
-            if ($role_to_delete) $role_to_delete->delete();
-            DB::commit();
+            if ($role_to_delete)
+                $role_to_delete->delete();
+            DB::connection('sulutweb_man_management')->commit();
             return redirect()->route('man-management.role-management.index')->with('success', 'data berhasil dihapus');
         } catch (\Throwable $th) {
             //throw $th;
-            DB::rollBack();
+            DB::connection('sulutweb_man_management')->rollBack();
             return redirect()->route('man-management.role-management.index')->with('error', 'data gagal dihapus, error: ' . $th->getMessage());
         }
     }
