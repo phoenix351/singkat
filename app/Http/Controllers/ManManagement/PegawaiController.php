@@ -49,15 +49,15 @@ class PegawaiController extends Controller
                 return redirect()->route('man-management.index')->with('error', 'Data NIP : ' . $validated['nip'] . ' bukan pegawai Sulawesi Utara');
             try {
                 //code...
-                DB::beginTransaction();
+                DB::connection('sulutweb_man_management')->beginTransaction();
                 $pegawai_to_update = ManManagementPegawai::findOrFail($validated['id']);
                 if ($pegawai_to_update)
                     $pegawai_to_update->update($validated);
-                DB::commit();
+                DB::connection('sulutweb_man_management')->commit();
                 return redirect()->route('man-management.index')->with('success', 'Data pegawai berhasil di-update');
             } catch (\Throwable $th) {
                 //throw $th;
-                DB::rollBack();
+                DB::connection('sulutweb_man_management')->rollBack();
                 return redirect()->route('man-management.index')->with('error', 'Data pegawai gagal di-update, error : ' . $th->getMessage());
             }
         }
@@ -100,6 +100,44 @@ class PegawaiController extends Controller
         );
 
         return redirect()->route('man-management.index')->with('success', 'Pegawai NIP : ' . $request->nip . ' berhasil ditambahkan');
+    }
+
+    public function syncPegawai(Request $request)
+    {
+        $lc = app(LoginController::class);
+        $result = $lc->ssoAPI($request->nip);
+        $data = $result[0]['attributes'] ?? null;
+        if (!$data)
+            return redirect()->route('man-management.index')->with('error', 'Data tidak ditemukan');
+        $payload = [
+            'nip_lama' => $data['attribute-nip-lama'][0] ?? null,
+            'nip' => $data['attribute-nip'][0] ?? null,
+            'username' => $data['attribute-username'][0] ?? null,
+            'email' => $data['attribute-email'][0] ?? null,
+            'name' => $data['attribute-nama'][0] ?? null,
+            'golongan' => $data['attribute-golongan'][0] ?? null,
+            'jabatan' => $data['attribute-jabatan'][0] ?? null,
+            'organisasi' => $data['attribute-organisasi'][0] ?? null,
+            'provinsi' => $data['attribute-provinsi'][0] ?? null,
+            'kabupaten' => $data['attribute-kabupaten'][0] ?? null,
+            'foto' => $data['attribute-foto'][0] ?? null,
+        ];
+        if (
+            !$payload['nip_lama'] ||
+            !$payload['nip'] ||
+            !$payload['username'] ||
+            !$payload['email'] ||
+            !$payload['name'] ||
+            !$payload['organisasi'] ||
+            !$payload['provinsi'] ||
+            !$payload['kabupaten']
+        ) {
+            return redirect()->route('man-management.index')->with('error', 'Data NIP : ' . $request->nip . ' tolong diperiksa lagi');
+        }
+        ManManagementPegawai::where('nip_lama', $payload['nip_lama'])->update(
+            $payload
+        );
+        return redirect()->route('man-management.index')->with('success', 'Pegawai NIP : ' . $request->nip . ' berhasil di-update');
     }
 
     public function tkStore(Request $request)
@@ -163,27 +201,27 @@ class PegawaiController extends Controller
         if ($request->isMethod('patch')) {
             try {
                 //code...
-                DB::beginTransaction();
+                DB::connection('sulutweb_man_management')->beginTransaction();
                 $timkerja_to_updated = TimKerja::findOrFail($validated['id']);
                 if ($timkerja_to_updated)
                     $timkerja_to_updated->update($validated);
-                DB::commit();
+                DB::connection('sulutweb_man_management')->commit();
                 return redirect()->route('man-management.tim-kerja.index')->with('success', 'Tim Kerja berhasil diedit');
             } catch (\Throwable $th) {
                 //throw $th;
-                DB::rollBack();
+                DB::connection('sulutweb_man_management')->rollBack();
                 return redirect()->route('man-management.tim-kerja.index')->with('error', 'Terjadi kesalahan dalam data');
             }
         }
         try {
             //code...
-            DB::beginTransaction();
+            DB::connection('sulutweb_man_management')->beginTransaction();
             TimKerja::create($validated);
-            DB::commit();
+            DB::connection('sulutweb_man_management')->commit();
             return redirect()->route('man-management.tim-kerja.index')->with('success', 'Tim Kerja berhasil ditambahkan');
         } catch (\Throwable $th) {
             //throw $th;
-            DB::rollBack();
+            DB::connection('sulutweb_man_management')->rollBack();
             return redirect()->route('man-management.tim-kerja.index')->with('error', 'Terjadi kesalahan dalam data');
         }
     }
@@ -265,28 +303,46 @@ class PegawaiController extends Controller
         if ($request->isMethod('patch')) {
             try {
                 //code...
-                DB::beginTransaction();
+                DB::connection('sulutweb_man_management')->beginTransaction();
                 $keanggotaan_tim_kerja_to_updated = AnggotaTimKerja::findOrFail($validated['id']);
                 if ($keanggotaan_tim_kerja_to_updated)
                     $keanggotaan_tim_kerja_to_updated->update($validated);
-                DB::commit();
+                DB::connection('sulutweb_man_management')->commit();
                 return redirect()->route('man-management.anggota.index')->with('success', 'Keanggotaan pegawai ini di tim sudah diedit');
             } catch (\Throwable $th) {
                 //throw $th;
-                DB::rollBack();
+                DB::connection('sulutweb_man_management')->rollBack();
                 return redirect()->route('man-management.anggota.index')->with('error', 'Terjadi kesalahan dalam server');
             }
         }
         try {
             //code...
-            DB::beginTransaction();
+            DB::connection('sulutweb_man_management')->beginTransaction();
             AnggotaTimKerja::create($validated);
-            DB::commit();
+            DB::connection('sulutweb_man_management')->commit();
             return redirect()->route('man-management.anggota.index')->with('success', 'Pegawai sudah ditambahkan ke tim tersebut');
         } catch (\Throwable $th) {
             //throw $th;
-            DB::rollBack();
+            DB::connection('sulutweb_man_management')->rollBack();
             return redirect()->route('man-management.anggota.index')->with('error', 'Terjadi kesalahan di server');
+        }
+    }
+
+    public function pDestroy($id)
+    {
+        try {
+            //code...
+            DB::connection('sulutweb_man_management')->beginTransaction();
+            $pegawai_to_destroy = ManManagementPegawai::findOrFail($id);
+            $pegawai_to_destroy->delete();
+            DB::connection('sulutweb_man_management')->commit();
+            return redirect()->route('man-management.index')
+                ->with('success', 'Pegawai berhasil dihapus');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::connection('sulutweb_man_management')->rollBack();
+            return redirect()->route('man-management.index')
+                ->with('error', 'Pegawai gagal dihapus');
         }
     }
 
@@ -294,15 +350,15 @@ class PegawaiController extends Controller
     {
         try {
             //code...
-            DB::beginTransaction();
+            DB::connection('sulutweb_man_management')->beginTransaction();
             $tim_kerja_to_destroy = TimKerja::findOrFail($id);
             $tim_kerja_to_destroy->delete();
-            DB::commit();
+            DB::connection('sulutweb_man_management')->commit();
             return redirect()->route('man-management.tim-kerja.index')
                 ->with('success', 'Tim Kerja berhasil dihapus');
         } catch (\Throwable $th) {
             //throw $th;
-            DB::rollBack();
+            DB::connection('sulutweb_man_management')->rollBack();
             return redirect()->route('man-management.tim-kerja.index')
                 ->with('error', 'Tim Kerja gagal dihapus');
         }
@@ -312,15 +368,15 @@ class PegawaiController extends Controller
     {
         try {
             //code...
-            DB::beginTransaction();
+            DB::connection('sulutweb_man_management')->beginTransaction();
             $keanggotaan_to_destroy = AnggotaTimKerja::findOrFail($id);
             $keanggotaan_to_destroy->delete();
-            DB::commit();
+            DB::connection('sulutweb_man_management')->commit();
             return redirect()->route('man-management.anggota.index')
                 ->with('success', 'Keanggotaan berhasil dihapus');
         } catch (\Throwable $th) {
             //throw $th;
-            DB::rollBack();
+            DB::connection('sulutweb_man_management')->rollBack();
             return redirect()->route('man-management.anggota.index')
                 ->with('error', 'Keanggotaan gagal dihapus');
         }

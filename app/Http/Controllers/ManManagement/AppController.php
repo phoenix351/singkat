@@ -15,16 +15,21 @@ class AppController extends Controller
     //
     public function index(Request $request)
     {
-        if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
 
         $query = AppManagement::query();
         if ($request->sortOrder) {
             $order = $request->sortOrder == 1 ? 'asc' : 'desc';
             $query->orderBy($request->sortField, $order);
-        } else $query->orderBy('label', 'asc');
+        } else
+            $query->orderBy('label', 'asc');
         if ($request->searchField) {
             $query->where(function ($q) use ($request) {
                 $q->where('label', 'like', '%' . $request->searchField . '%')
@@ -57,12 +62,12 @@ class AppController extends Controller
         if ($request->isMethod('patch')) {
             try {
                 //code...
-                DB::beginTransaction();
+                DB::connection('sulutweb_man_management')->beginTransaction();
                 $old_path = $request->input('image_path');
                 if ($image) {
-                    $ext      = $image->getClientOriginalExtension();
-                    $filename = Str::slug($validated['label'])  . '-logo-' . time() . '.' . $ext;
-                    $disk   = 'public';
+                    $ext = $image->getClientOriginalExtension();
+                    $filename = Str::slug($validated['label']) . '-logo-' . time() . '.' . $ext;
+                    $disk = 'public';
                     $folder = 'images/logo';
                     $new_path = $image->storeAs($folder, $filename, $disk);
                     $validated['image_path'] = $new_path;
@@ -71,35 +76,37 @@ class AppController extends Controller
                     }
                 }
                 unset($validated['image']);
-                if ($validated['maintenance'] == 0) $validated['maintenance_message'] = null;
+                if ($validated['maintenance'] == 0)
+                    $validated['maintenance_message'] = null;
                 $app_to_update = AppManagement::findOrFail($id);
-                if ($app_to_update) $app_to_update->update($validated);
-                DB::commit();
+                if ($app_to_update)
+                    $app_to_update->update($validated);
+                DB::connection('sulutweb_man_management')->commit();
                 return redirect()->route('man-management.app-management.index')->with('success', 'Berhasil edit data');
             } catch (\Throwable $th) {
                 //throw $th;
-                DB::rollBack();
+                DB::connection('sulutweb_man_management')->rollBack();
                 return redirect()->route('man-management.app-management.index')->with('error', 'Gagal edit data, error : ' . $th->getMessage());
             }
         }
         try {
             //code...
-            DB::beginTransaction();
+            DB::connection('sulutweb_man_management')->beginTransaction();
             if ($image) {
-                $ext      = $image->getClientOriginalExtension();
-                $filename = Str::slug($validated['label'])  . '-logo-' . time() . '.' . $ext;
-                $disk   = 'public';
+                $ext = $image->getClientOriginalExtension();
+                $filename = Str::slug($validated['label']) . '-logo-' . time() . '.' . $ext;
+                $disk = 'public';
                 $folder = 'images/logo';
                 $new_path = $image->storeAs($folder, $filename, $disk);
                 $validated['image_path'] = $new_path;
             }
             unset($validated['image']);
             AppManagement::create($validated);
-            DB::commit();
+            DB::connection('sulutweb_man_management')->commit();
             return redirect()->route('man-management.app-management.index')->with('success', 'Informasi aplikasi berhasil ditambahkan');
         } catch (\Throwable $th) {
             //throw $th;
-            DB::rollBack();
+            DB::connection('sulutweb_man_management')->rollBack();
             if (isset($new_path) && Storage::disk('public')->exists($new_path)) {
                 Storage::disk('public')->delete($new_path);
             }
@@ -111,17 +118,18 @@ class AppController extends Controller
     {
         try {
             //code...
-            DB::beginTransaction();
+            DB::connection('sulutweb_man_management')->beginTransaction();
             $app_to_delete = AppManagement::findOrFail($id);
             if ($app_to_delete) {
-                if (Storage::disk('public')->exists($app_to_delete->image_path)) Storage::disk('public')->delete($app_to_delete->image_path);
+                if (Storage::disk('public')->exists($app_to_delete->image_path))
+                    Storage::disk('public')->delete($app_to_delete->image_path);
                 $app_to_delete->delete();
             }
-            DB::commit();
+            DB::connection('sulutweb_man_management')->commit();
             return redirect()->route('man-management.app-management.index')->with('success', 'aplikasi berhasil dihapus');
         } catch (\Throwable $th) {
             //throw $th;
-            DB::rollBack();
+            DB::connection('sulutweb_man_management')->rollBack();
             return redirect()->route('man-management.app-management.index')->with('error', 'aplikasi gagal dihapus, error: ' . $th->getMessage());
         }
     }

@@ -3,7 +3,9 @@
   <AppLayout>
     <div class="card">
       <div class="mb-4 flex flex-wrap items-center justify-between">
-        <div class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0">
+        <div
+          class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0"
+        >
           Daftar Pegawai
         </div>
         <div class="flex space-x-2 items-center w-full md:w-full lg:w-auto">
@@ -23,6 +25,14 @@
             class="md:w-24-rem"
           />
           <Button
+            icon="pi pi-sync"
+            @click="syncDialog = true"
+            rounded
+            aria-label="Sync"
+            severity="warn"
+            class="mr-2 mb-2 lg:mb-0"
+          />
+          <Button
             icon="pi pi-download"
             @click="exportPegawai"
             rounded
@@ -37,7 +47,7 @@
             class="mb-2 lg:mb-0"
           >
             <i class="pi pi-plus"></i>
-            Tambah Pengguna Baru
+            Tambah Pegawai Baru
           </Button>
         </div>
       </div>
@@ -78,7 +88,13 @@
                 class="mr-2"
                 @click="updatePegawai(slotProps.data)"
               />
-              <Button icon="pi pi-trash" variant="outlined" rounded severity="danger" />
+              <Button
+                @click="deletePegawai(slotProps.data.id)"
+                icon="pi pi-trash"
+                variant="outlined"
+                rounded
+                severity="danger"
+              />
             </div>
           </template>
         </Column>
@@ -103,7 +119,9 @@
             />
           </div>
           <div>
-            <label for="satker" class="block font-bold mb-3">Satuan Kerja</label>
+            <label for="satker" class="block font-bold mb-3"
+              >Satuan Kerja</label
+            >
             <InputText
               id="satker"
               v-model.trim="editedPegawai.satker"
@@ -190,7 +208,9 @@
           </div>
           <template v-if="form.tipe == 'manual'">
             <div>
-              <label for="nip_lama" class="block font-bold mb-3">NIP Lama</label>
+              <label for="nip_lama" class="block font-bold mb-3"
+                >NIP Lama</label
+              >
               <div class="flex flex-row space-x-2">
                 <InputText
                   v-model="searchNIP"
@@ -209,7 +229,9 @@
               </div>
             </div>
             <div>
-              <label for="name" class="block font-bold mb-3">Nama Pegawai</label>
+              <label for="name" class="block font-bold mb-3"
+                >Nama Pegawai</label
+              >
               <InputText
                 id="name"
                 v-model="form.pegawai.nama"
@@ -220,7 +242,9 @@
               />
             </div>
             <div>
-              <label for="satker" class="block font-bold mb-3">Satuan Kerja</label>
+              <label for="satker" class="block font-bold mb-3"
+                >Satuan Kerja</label
+              >
               <InputText
                 id="satker"
                 v-model="form.pegawai.kabupaten"
@@ -268,6 +292,39 @@
           />
         </template>
       </Dialog>
+      <Dialog
+        v-model:visible="syncDialog"
+        modal
+        header="Sync Pegawai"
+        position="top"
+        class="min-w-[30vw]"
+      >
+        <div class="flex flex-col gap-6">
+          <div>
+            <label class="block font-bold mb-2">Fetch NIP Pegawai :</label>
+            <div class="flex flex-row items-center space-x-2">
+              <Button
+                @click="fetchAllPegawai"
+                label="Ambil NIP Seluruh Pegawai"
+                severity="secondary"
+              />
+              <i
+                v-if="nipAllPegawai.length > 0"
+                class="pi pi-check text-green-500"
+              />
+            </div>
+          </div>
+        </div>
+        <template #footer>
+          <Button
+            v-if="nipAllPegawai.length > 0"
+            size="small"
+            @click="syncAllPegawai"
+            label="Sync Pegawai"
+            severity="success"
+          />
+        </template>
+      </Dialog>
     </div>
   </AppLayout>
 </template>
@@ -278,9 +335,11 @@ import AppLayout from "@/Layouts/ManManagement/AppLayout.vue";
 import { ref } from "vue";
 import { debounce } from "@/Layouts/ManManagement/Composables/debounce";
 import { watch } from "vue";
+import { useConfirm, useToast } from "primevue";
 import * as XLSX from "xlsx";
 import axios from "axios";
 
+const toast = useToast();
 //props data defined
 const props = defineProps({
   pegawai: {
@@ -297,10 +356,17 @@ const allColumns = [
   { field: "jabatan", header: "Jabatan" },
   { field: "username", header: "Username SSO" },
 ];
-const selectedColumns = ref([allColumns[0], allColumns[1], allColumns[2], allColumns[3]]);
+const selectedColumns = ref([
+  allColumns[0],
+  allColumns[1],
+  allColumns[2],
+  allColumns[3],
+]);
 const searchField = ref(null);
 //paginated and search
-const currentPage = ref((props.pegawai.current_page - 1) * props.pegawai.per_page);
+const currentPage = ref(
+  (props.pegawai.current_page - 1) * props.pegawai.per_page
+);
 const paginated = ref(props?.pegawai?.per_page ?? 10);
 const sortField = ref(null);
 const sortOrder = ref(null);
@@ -340,12 +406,15 @@ const updatePegawai = (data) => {
 const searchNIP = ref(null);
 const getPegawai = async () => {
   try {
-    const { data } = await axios.get(route("sso-api", { nip_lama: searchNIP.value }));
+    const { data } = await axios.get(
+      route("sso-api", { nip_lama: searchNIP.value })
+    );
     if (data?.[0]?.attributes ?? null) {
       form.pegawai.nama =
         data?.[0]?.attributes?.["attribute-nama"]?.[0] ?? "Tidak ditemukan";
       form.pegawai.kabupaten =
-        data?.[0]?.attributes?.["attribute-kabupaten"]?.[0] ?? "Tidak ditemukan";
+        data?.[0]?.attributes?.["attribute-kabupaten"]?.[0] ??
+        "Tidak ditemukan";
     }
   } catch (error) {
     console.error(error);
@@ -417,23 +486,36 @@ const uploadPegawai = async ({ update = false }) => {
     const data = !searchNIP.value
       ? selectedFile.value.map((item) => item[0]).slice(1)
       : [searchNIP.value];
-    const { data: check } = await axios.get(route("man-management.check-pegawai"));
+    const { data: check } = await axios.get(
+      route("man-management.check-pegawai")
+    );
     const setCheck = new Set(check);
     const toUpload = data.filter((item) => !setCheck.has(item));
     if (toUpload.length > 0) {
       for (const n of toUpload) {
-        router.post(
-          route("man-management.upload-pegawai"),
-          {
-            _token: tokens,
-            nip: n,
-          },
-          {
-            preserveScroll: true,
-            preserveState: true,
-          }
-        );
+        await new Promise((resolve) => {
+          router.post(
+            route("man-management.upload-pegawai"),
+            {
+              _token: tokens,
+              nip: n,
+            },
+            {
+              preserveScroll: true,
+              preserveState: true,
+              onFinish: resolve,
+            }
+          );
+        });
       }
+      createDialog.value = false;
+    } else {
+      toast.add({
+        severity: "warn",
+        summary: "Peringatan",
+        detail: "Semua pegawai sudah ada di database",
+        life: 3000,
+      });
       createDialog.value = false;
     }
   }
@@ -476,6 +558,65 @@ watch(createDialog, () => {
     errorForm.value = { nip: null, file: null };
   }
 });
+const syncDialog = ref(false);
+const nipAllPegawai = ref([]);
+const fetchAllPegawai = async () => {
+  const { data: check } = await axios.get(
+    route("man-management.check-pegawai")
+  );
+  nipAllPegawai.value = check;
+};
+const syncAllPegawai = async () => {
+  const { data: tokens } = await axios.get(route("api.token.csrf"));
+  for (const n of nipAllPegawai.value) {
+    await new Promise((resolve) => {
+      router.patch(
+        route("man-management.sync-pegawai"),
+        {
+          _token: tokens,
+          nip: n,
+        },
+        {
+          preserveScroll: true,
+          preserveState: true,
+          onFinish: resolve,
+        }
+      );
+    });
+  }
+  syncDialog.value = false;
+};
+const confirm = useConfirm();
+const deletePegawai = (id) => {
+  confirm.require({
+    message: "Apakah kamu yakin menghapus Pegawai ini?",
+    header: "Konfirmasi",
+    icon: "pi pi-info-circle",
+    rejectLabel: "Cancel",
+    acceptLabel: "Hapus",
+    rejectProps: {
+      label: "Cancel",
+      size: "small",
+      severity: "danger",
+    },
+    acceptProps: {
+      label: "Hapus",
+      size: "small",
+      severity: "success",
+    },
+    accept: async () => {
+      const { data: tokens } = await axios.get(route("api.token.csrf"));
+      router.delete(route("man-management.pegawai.destroy", { id: id }), {
+        _token: tokens,
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          fetchData();
+        },
+      });
+    },
+  });
+};
 </script>
 
 <style scoped></style>
