@@ -850,7 +850,9 @@ const deletePegawai = (data) => {
     accept: async () => {
       const { data: tokens } = await axios.get(route("api.token.csrf"));
       router.delete(route("simple.lembur.destroy-pegawai", { id: data.id }), {
-        _token: tokens,
+        data: {
+          _token: tokens,
+        },
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
@@ -880,7 +882,9 @@ const deleteData = (data) => {
     accept: async () => {
       const { data: tokens } = await axios.get(route("api.token.csrf"));
       router.delete(route("simple.lembur.destroy", { id: data.id }), {
-        _token: tokens,
+        data: {
+          _token: tokens,
+        },
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {

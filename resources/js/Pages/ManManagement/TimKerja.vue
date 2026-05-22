@@ -390,7 +390,9 @@ const deleteTimKerja = (data) => {
     accept: async () => {
       const { data: tokens } = await axios.get(route("api.token.csrf"));
       router.delete(route("man-management.tim-kerja.destroy", { id: data.id }), {
-        _token: tokens,
+        data: {
+          _token: tokens,
+        },
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
