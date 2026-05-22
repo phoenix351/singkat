@@ -783,7 +783,7 @@ const updateData = (data) => {
 const submit = async ({ patch = false, add_pegawai = false }) => {
   try {
     const { data: tokens } = await axios.get(route("api.token.csrf"));
-    form._token = tokens._token;
+    form._token = tokens;
     if (patch) {
       let dataToUpdate = add_pegawai ? editedData.value : editedLembur.value;
       router.patch(

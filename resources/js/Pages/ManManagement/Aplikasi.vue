@@ -3,7 +3,9 @@
   <AppLayout>
     <div class="card">
       <div class="mb-4 flex flex-wrap items-center justify-between">
-        <div class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0">
+        <div
+          class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0"
+        >
           Daftar Aplikasi
         </div>
         <div class="flex space-x-2 items-center w-full md:w-full lg:w-auto">
@@ -65,7 +67,12 @@
           </template>
         </Column>
         <Column header="Prefix" field="prefix" />
-        <Column class="min-w-[300px]" header="Deskripsi" field="deskripsi" sortable />
+        <Column
+          class="min-w-[300px]"
+          header="Deskripsi"
+          field="deskripsi"
+          sortable
+        />
         <Column header="Link Aplikasi" field="route_link" sortable>
           <template #body="{ data }">
             <Badge
@@ -150,6 +157,27 @@
           </div>
         </div>
         <div>
+          <label class="block font-bold mb-3">Prefix</label>
+          <InputText
+            v-if="!isUpdated"
+            v-model="form.prefix"
+            placeholder="Isi prefix"
+            class="w-full"
+          />
+          <InputText
+            v-if="isUpdated"
+            v-model="editedData.prefix"
+            placeholder="Isi prefix"
+            class="w-full"
+          />
+          <div
+            v-if="page.props.errors.prefix"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.prefix }}
+          </div>
+        </div>
+        <div>
           <label class="block font-bold mb-3">Deskripsi</label>
           <InputText
             v-if="!isUpdated"
@@ -163,7 +191,10 @@
             placeholder="Isi deskripsi"
             class="w-full"
           />
-          <div v-if="page.props.errors.deskripsi" class="text-red-500 text-sm mt-2">
+          <div
+            v-if="page.props.errors.deskripsi"
+            class="text-red-500 text-sm mt-2"
+          >
             {{ page.props.errors?.deskripsi }}
           </div>
         </div>
@@ -181,7 +212,10 @@
             placeholder="Isi link aplikasi"
             class="w-full"
           />
-          <div v-if="page.props.errors.route_link" class="text-red-500 text-sm mt-2">
+          <div
+            v-if="page.props.errors.route_link"
+            class="text-red-500 text-sm mt-2"
+          >
             {{ page.props.errors?.route_link }}
           </div>
         </div>
@@ -213,7 +247,10 @@
             v-model="editedData.navigation"
             placeholder="Isi navigation"
           />
-          <div v-if="page.props.errors.navigation" class="text-red-500 text-sm mt-2">
+          <div
+            v-if="page.props.errors.navigation"
+            class="text-red-500 text-sm mt-2"
+          >
             {{ page.props.errors?.navigation }}
           </div>
         </div>
@@ -255,7 +292,10 @@
               <label for="maintenance_false">Tidak</label>
             </div>
           </div>
-          <div v-if="page.props.errors.maintenance" class="text-red-500 text-sm mt-2">
+          <div
+            v-if="page.props.errors.maintenance"
+            class="text-red-500 text-sm mt-2"
+          >
             {{ page.props.errors?.maintenance }}
           </div>
         </div>
@@ -330,6 +370,7 @@ const props = defineProps({
 const form = useForm({
   _token: null,
   label: null,
+  prefix: null,
   deskripsi: null,
   route_link: null,
   navigation: null,
@@ -457,16 +498,19 @@ const deleteData = (data) => {
     },
     accept: async () => {
       const { data: tokens } = await axios.get(route("api.token.csrf"));
-      router.delete(route("man-management.app-management.destroy", { id: data.id }), {
-        data: {
-          _token: tokens,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-          fetchData();
-        },
-      });
+      router.delete(
+        route("man-management.app-management.destroy", { id: data.id }),
+        {
+          data: {
+            _token: tokens,
+          },
+          preserveScroll: true,
+          preserveState: true,
+          onSuccess: () => {
+            fetchData();
+          },
+        }
+      );
     },
   });
 };
