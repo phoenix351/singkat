@@ -427,7 +427,9 @@ const deleteData = (data) => {
       router.delete(
         route("man-management.role-management.destroy", { id: data.id }),
         {
-          _token: tokens,
+          data: {
+            _token: tokens,
+          },
           preserveScroll: true,
           preserveState: true,
           onSuccess: () => {

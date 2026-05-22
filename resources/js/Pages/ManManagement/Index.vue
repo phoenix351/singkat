@@ -607,7 +607,9 @@ const deletePegawai = (id) => {
     accept: async () => {
       const { data: tokens } = await axios.get(route("api.token.csrf"));
       router.delete(route("man-management.pegawai.destroy", { id: id }), {
-        _token: tokens,
+        data: {
+          _token: tokens,
+        },
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
