@@ -49,14 +49,24 @@
         <Column header="Maksud Lembur" field="maksud_lembur" />
         <Column header="Jumlah Lembur yang Disetujui Kabag" field="jumlah">
           <template #body="{ data }">
-            <Badge :value="`${data.jumlah} pegawai`" severity="info"></Badge>
+            <Badge
+              size="small"
+              :value="`${data.jumlah} pegawai`"
+              severity="info"
+            ></Badge>
           </template>
         </Column>
-        <Column header="Nomor SPKL" field="no_spkl">
+        <Column class="whitespace-nowrap" header="Nomor SPKL" field="no_spkl">
           <template #body="{ data }">
-            <Badge v-if="data.no_spkl" :value="data.no_spkl" severity="info" />
+            <Badge
+              v-if="data.no_spkl"
+              :value="data.no_spkl"
+              severity="info"
+              size="small"
+            />
             <Badge
               v-else
+              size="small"
               value="Belum diajukan"
               severity="secondary"
             /> </template

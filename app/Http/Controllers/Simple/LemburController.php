@@ -131,7 +131,10 @@ class LemburController extends Controller
             ->where('mkt.pegawai_id', Auth::user()->id)->get();
         $role = Role::currentRole();
         if ($role == 'admin') {
-            $myTeam = TimKerja::where('tahun', date('Y'))->select(['id as tim_id', 'label as tim_kerja'])->get();
+            $myTeam = TimKerja::where('tahun', date('Y'))
+                ->orderBy('label', 'asc')
+                ->select(['id as tim_id', 'label as tim_kerja'])
+                ->get();
         }
         $keanggotaan = $myTeam->pluck('keanggotaan')->toArray();
 
@@ -698,7 +701,7 @@ class LemburController extends Controller
 
     public function fetchMaksud($tim_id)
     {
-        $maksudLembur = Lembur::where('tim_id', $tim_id)->pluck('maksud_lembur')->toArray();
+        $maksudLembur = Lembur::where('tim_id', $tim_id)->distinct()->pluck('maksud_lembur')->toArray();
         return response()->json($maksudLembur);
     }
 }
