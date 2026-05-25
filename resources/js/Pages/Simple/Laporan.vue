@@ -228,7 +228,9 @@ import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
 import { Head, useForm } from "@inertiajs/vue3";
 import axios from "axios";
 import { onMounted, ref, watch } from "vue";
+import { useToast } from "primevue";
 
+const toast = useToast();
 const props = defineProps({
   lembur: Object,
 });
@@ -324,6 +326,7 @@ const prepareLaporan = async (lembur) => {
       route("simple.fetch-lembur", { lembur_id: lembur.lembur_id })
     );
     currentListPegawai.value = data?.pegawai;
+    console.log(lembur.lembur_id);
   } catch (error) {
     console.error(error);
   }

@@ -29,36 +29,41 @@ class RoleController extends Controller
 
         $query = Role::query()->from('sulutweb_man_management.roles as mmr');
         $query->join('sulutweb_man_management.application_management as mma', 'mma.id', '=', 'mmr.app_id');
+        $query->leftJoin('sulutweb_man_management.pegawai as mmp', function ($join) {
+            $join->on('mmp.id', '=', 'mmr.to_role_id')
+                ->where('mmr.type', '=', 'unit');
+        });
+        $query->leftJoin('sulutweb_man_management.timkerja as mmtk', function ($join) {
+            $join->on('mmtk.id', '=', 'mmr.to_role_id')
+                ->where('mmr.type', '=', 'tim');
+        });
+
         if ($request->sortOrder) {
             $order = $request->sortOrder == 1 ? 'asc' : 'desc';
-            $query->orderBy($request->sortField, $order);
-        } else
+            if ($request->sortField == 'pengguna') {
+                $query->orderBy(DB::raw('COALESCE(mmp.name, mmtk.label)'), $order);
+            } elseif ($request->sortField == 'app') {
+                $query->orderBy('mma.label', $order);
+            } else {
+                $query->orderBy('mmr.' . $request->sortField, $order);
+            }
+        } else {
             $query->orderBy('mma.label', 'asc');
+        }
+
         if ($request->searchField) {
-            $tim = TimKerja::where('label', 'like', '%' . $request->searchField . '%')->pluck('id')->toArray();
-            $unit = Pegawai::where('name', 'like', '%' . $request->searchField . '%')->pluck('id')->toArray();
-            $query->where(function ($q) use ($request, $tim, $unit) {
+            $query->where(function ($q) use ($request) {
                 $q->where('mma.label', 'like', '%' . $request->searchField . '%')
                     ->orWhere('mmr.type', 'like', '%' . $request->searchField . '%')
                     ->orWhere('mmr.roles', 'like', '%' . $request->searchField . '%')
-                    ->orWhereIn('mmr.to_role_id', $tim)
-                    ->orWhereIn('mmr.to_role_id', $unit);
-
+                    ->orWhere('mmp.name', 'like', '%' . $request->searchField . '%')
+                    ->orWhere('mmtk.label', 'like', '%' . $request->searchField . '%');
             });
         }
-        $query->select(['mmr.*', 'mma.label as app']);
+        $query->select(['mmr.*', 'mma.label as app', DB::raw('COALESCE(mmp.name, mmtk.label) as pengguna')]);
         $roles = $query->paginate($paginated, ['*'], 'page', $currentPage)
             ->through(function ($item) {
                 $data = $item->attributesToArray();
-                $toRoles = null;
-                if ($item->type == 'unit') {
-                    $to_search = Pegawai::findOrFail($item->to_role_id);
-                    $toRoles = $to_search->name;
-                } else if ($item->type == 'tim') {
-                    $to_search = TimKerja::findOrFail($item->to_role_id);
-                    $toRoles = $to_search->label;
-                }
-                $data['pengguna'] = $toRoles;
                 return $data;
             });
         $apps = AppManagement::select(['id as value', 'label'])->get();

@@ -16,16 +16,22 @@ class HomeController extends Controller
     //
     public function index(Request $request)
     {
-        if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
 
         $query = Pegawai::query();
         if ($request->sortOrder) {
             $order = $request->sortOrder == 1 ? 'asc' : 'desc';
-            if ($request->sortField == 'satker') $query->orderBy('organisasi',  $order);
-            else $query->orderBy($request->sortField, $order);
+            if ($request->sortField == 'satker')
+                $query->orderBy('organisasi', $order);
+            else
+                $query->orderBy($request->sortField, $order);
         } else
             $query->orderBy('organisasi', 'asc')
                 ->orderBy('name', 'asc');
@@ -78,10 +84,14 @@ class HomeController extends Controller
 
     public function tkIndex(Request $request)
     {
-        if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
 
         $query = TimKerja::query();
         if ($request->sortOrder) {
@@ -102,16 +112,32 @@ class HomeController extends Controller
 
     public function atIndex(Request $request)
     {
-        if ($request->paginated) $paginated = $request->paginated;
-        else $paginated = 10;
-        if ($request->currentPage) $currentPage = $request->currentPage;
-        else $currentPage = 1;
+        if ($request->paginated)
+            $paginated = $request->paginated;
+        else
+            $paginated = 10;
+        if ($request->currentPage)
+            $currentPage = $request->currentPage;
+        else
+            $currentPage = 1;
 
         $query = AnggotaTimKerja::query()->from('sulutweb_man_management.keanggotaan_timkerja as mmktk');
         $query->join('sulutweb_man_management.pegawai as mmp', 'mmp.id', '=', 'mmktk.pegawai_id');
         $query->join('sulutweb_man_management.timkerja as mmtk', 'mmtk.id', '=', 'mmktk.tim_id');
 
-        $query->orderBy('mmtk.label', 'asc')->orderBy('mmktk.keanggotaan', 'desc')->orderBy('mmp.name', 'asc');
+        if ($request->sortOrder) {
+            $order = $request->sortOrder == 1 ? 'asc' : 'desc';
+            $query->orderBy($request->sortField, $order);
+        } else {
+            $query->orderBy('mmtk.label', 'asc')->orderBy('mmktk.keanggotaan', 'desc')->orderBy('mmp.name', 'asc');
+        }
+        if ($request->searchField) {
+            $query->where(function ($q) use ($request) {
+                $q->where('mmp.name', 'like', '%' . $request->searchField . '%')
+                    ->orWhere('mmktk.keanggotaan', 'like', '%' . $request->searchField . '%')
+                    ->orWhere('mmtk.label', 'like', '%' . $request->searchField . '%');
+            });
+        }
         $query->with(['tim', 'pegawai']);
         $query->select(['mmktk.*']);
         $anggota = $query->paginate($paginated, ['*'], 'page', $currentPage);
