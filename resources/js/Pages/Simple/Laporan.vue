@@ -326,7 +326,6 @@ const prepareLaporan = async (lembur) => {
       route("simple.fetch-lembur", { lembur_id: lembur.lembur_id })
     );
     currentListPegawai.value = data?.pegawai;
-    console.log(lembur.lembur_id);
   } catch (error) {
     console.error(error);
   }
