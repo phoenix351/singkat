@@ -467,6 +467,9 @@ class SpklController extends Controller
                 $rekap[$nip_lama] = [];
             }
 
+            $tgl = Carbon::parse($l->tanggal);
+            $dayOfWeek = $tgl->dayOfWeekIso;
+
             $durasi = $l->jumlah_jam;
             $durasi_final = 0;
             if ($l->jam_berangkat && $l->jam_pulang) {
@@ -477,19 +480,25 @@ class SpklController extends Controller
                     $pulang->addDay();
                 }
 
-                $selisih = floor($masuk->diffInMinutes($pulang) / 60);
-                if ($selisih < $durasi) {
-                    $durasi_final = $selisih;
+                if ($dayOfWeek <= 5) {
+                    $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
+                    $batas_pulang = Carbon::parse($batas_pulang_str);
+
+                    $mulai_lembur = $masuk->greaterThan($batas_pulang) ? $masuk : $batas_pulang;
+
+                    if ($pulang->greaterThan($mulai_lembur)) {
+                        $selisih = floor($mulai_lembur->diffInMinutes($pulang) / 60);
+                    } else {
+                        $selisih = 0;
+                    }
+                } else {
+                    $selisih = floor($masuk->diffInMinutes($pulang) / 60);
                 }
-                if ($selisih > $durasi) {
-                    $durasi_final = $durasi;
-                }
+
+                $durasi_final = ($selisih > $durasi) ? $durasi : $selisih;
             }
             if ($durasi_final <= 0)
                 continue;
-
-            $tgl = Carbon::parse($l->tanggal);
-            $dayOfWeek = $tgl->dayOfWeekIso;
 
             $tipe = ($dayOfWeek >= 6) ? 'HL' : 'HB';
             $kolom = $tipe . $durasi_final;
