@@ -142,7 +142,7 @@ class SpklController extends Controller
             ->whereYear('tanggal', $request->tahun)
             ->whereMonth('tanggal', $request->bulan)
             ->with(['pegawai', 'lembur']);
-        $query->orderBy('sp.name', 'asc');
+        $query->orderBy('sp.name', 'asc')->orderBy('tanggal', 'asc');
         $lembur = $query->get()->groupBy('pegawai_id');
 
         $kpaId = Role::where('roles', 'kaprov')->value('to_role_id');

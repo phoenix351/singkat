@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ManManagement\AnggotaTimKerja;
 use App\Models\ManManagement\Pegawai;
 use App\Models\ManManagement\Role;
+use App\Models\ManManagement\TimKerja;
 use App\Models\Simple\Lembur;
 use App\Models\Simple\LemburPegawai;
 use Illuminate\Http\Request;
@@ -128,6 +129,13 @@ class LemburController extends Controller
             ->join('sulutweb_man_management.timkerja as ttk', 'mkt.tim_id', 'ttk.id')
             ->select(['mkt.*', 'ttk.label as tim_kerja'])
             ->where('mkt.pegawai_id', Auth::user()->id)->get();
+        $role = Role::currentRole();
+        if ($role == 'admin') {
+            $myTeam = TimKerja::where('tahun', date('Y'))
+                ->orderBy('label', 'asc')
+                ->select(['id as tim_id', 'label as tim_kerja'])
+                ->get();
+        }
         $keanggotaan = $myTeam->pluck('keanggotaan')->toArray();
 
         if ($request->paginated) {
@@ -693,7 +701,7 @@ class LemburController extends Controller
 
     public function fetchMaksud($tim_id)
     {
-        $maksudLembur = Lembur::where('tim_id', $tim_id)->pluck('maksud_lembur')->toArray();
+        $maksudLembur = Lembur::where('tim_id', $tim_id)->distinct()->pluck('maksud_lembur')->toArray();
         return response()->json($maksudLembur);
     }
 }

@@ -176,6 +176,15 @@
           <template #body="slotProps">
             <div class="flex justify-end gap-2 w-full">
               <Button
+                @click="copyData(slotProps.data)"
+                icon="pi pi-copy"
+                variant="outlined"
+                rounded
+                class="mr-2"
+                severity="success"
+                v-tooltip.top="'Copy'"
+              />
+              <Button
                 @click="
                   isProcessed(slotProps.data)
                     ? null
@@ -332,6 +341,7 @@
       modal
       header="Tambah Data Baru"
       class="min-w-[40vw]"
+      position="top"
     >
       <div class="flex flex-col gap-4">
         <div>
@@ -341,6 +351,7 @@
             :options="tim"
             class="w-full"
             showClear
+            filter
             option-label="tim_kerja"
             option-value="tim_id"
             v-model="form.tim_id"
@@ -467,6 +478,7 @@
     <Dialog
       v-model:visible="updateDialog"
       modal
+      position="top"
       header="Edit Data"
       class="min-w-[40vw]"
     >
@@ -554,6 +566,7 @@
     <Dialog
       v-model:visible="pegawaiDialog"
       modal
+      position="top"
       header="Tambah Pegawai"
       class="min-w-[40vw]"
     >
@@ -747,24 +760,27 @@ const form = useForm({
 });
 const anggotaTim = ref([]);
 const maksudLembur = ref([]);
+let skipWatch = false;
 watch(
   () => form.tim_id,
   async (tim) => {
     if (tim) {
-      form.anggotalembur = [];
+      if (!skipWatch) form.anggotalembur = [];
       const { data: anggota } = await axios.get(
         route("man-management.fetch-anggota-tim", { id: tim })
       );
       anggotaTim.value = anggota;
-      form.anggotalembur = [...anggota.map((a) => a.value)];
+      if (!skipWatch) form.anggotalembur = [...anggota.map((a) => a.value)];
 
-      form.maksud_lembur = null;
+      if (!skipWatch) form.maksud_lembur = null;
       const { data: maksud } = await axios.get(
         route("simple.fetch-maksud", { tim_id: tim })
       );
       maksudLembur.value = maksud;
+      skipWatch = false;
     } else {
       form.anggotalembur = [];
+      skipWatch = false;
     }
   }
 );
@@ -783,7 +799,7 @@ const updateData = (data) => {
 const submit = async ({ patch = false, add_pegawai = false }) => {
   try {
     const { data: tokens } = await axios.get(route("api.token.csrf"));
-    form._token = tokens._token;
+    form._token = tokens;
     if (patch) {
       let dataToUpdate = add_pegawai ? editedData.value : editedLembur.value;
       router.patch(
@@ -894,16 +910,41 @@ const deleteData = (data) => {
     },
   });
 };
-watch(createDialog, () => {
-  form.reset();
-  anggotaTim.value = [];
+watch(createDialog, (val) => {
+  if (!val) {
+    form.reset();
+    anggotaTim.value = [];
+  }
 });
-watch(pegawaiDialog, () => {
-  anggotaTim.value = [];
+watch(pegawaiDialog, (val) => {
+  if (!val) anggotaTim.value = [];
 });
 const toDocumentation = (link) => {
   const url = link.startsWith("http") ? link : `https://${link}`;
   window.open(url, "_blank", "noopener,noreferrer");
+};
+const copyData = async (data) => {
+  if (form.tim_id !== data.tim_id) {
+    skipWatch = true;
+  } else {
+    if (anggotaTim.value.length === 0) {
+      const { data: anggota } = await axios.get(route("man-management.fetch-anggota-tim", { id: data.tim_id }));
+      anggotaTim.value = anggota;
+    }
+    if (maksudLembur.value.length === 0) {
+      const { data: maksud } = await axios.get(route("simple.fetch-maksud", { tim_id: data.tim_id }));
+      maksudLembur.value = maksud;
+    }
+  }
+
+  form.tim_id = data.tim_id;
+  form.anggotalembur = data.pegawai ? data.pegawai.map((p) => p.pegawai_id) : [];
+  form.tanggal = null;
+  form.jumlah_jam = data.pegawai && data.pegawai.length > 0 ? data.pegawai[0].jumlah_jam : null;
+  form.maksud_lembur = data.maksud_lembur;
+  form.add_pegawai = false;
+  form.link_dokumentasi = null;
+  createDialog.value = true;
 };
 </script>
 

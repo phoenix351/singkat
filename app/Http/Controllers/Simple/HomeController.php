@@ -31,10 +31,10 @@ class HomeController extends Controller
         } else
             $query->whereYear('tanggal', date('Y'));
 
-        $myTeam = AnggotaTimKerja::where('pegawai_id', Auth::id())->pluck('tim_id')->toArray();
-        $query->whereHas('lembur', function ($q) use ($myTeam) {
-            $q->whereIn('tim_id', $myTeam);
-        });
+        // $myTeam = AnggotaTimKerja::where('pegawai_id', Auth::id())->pluck('tim_id')->toArray();
+        // $query->whereHas('lembur', function ($q) use ($myTeam) {
+        //     $q->whereIn('tim_id', $myTeam);
+        // });
 
         $fivePegawaiMost = $query->with('pegawai')->get()->groupBy('pegawai.name')
             ->map(function ($group) {
