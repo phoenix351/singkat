@@ -161,6 +161,12 @@
             fluid
             showClear
           />
+          <div
+            v-if="page.props.errors.tahun_dipa"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.tahun_dipa }}
+          </div>
         </div>
         <div>
           <label class="block font-bold mb-2">Tanggal Pengajuan</label>
@@ -172,6 +178,12 @@
             dateFormat="dd MM yy"
             placeholder="Isi tanggal pengajuan"
           />
+          <div
+            v-if="page.props.errors.tanggal_pengajuan"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.tanggal_pengajuan }}
+          </div>
         </div>
         <div>
           <label class="block font-bold mb-2">Nomor SPKL</label>
@@ -180,6 +192,31 @@
             v-model="form.nomor_spkl"
             fluid
           />
+          <div
+            v-if="page.props.errors.nomor_spkl"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.nomor_spkl }}
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold mb-2">Ttd di Rekap Presensi</label>
+          <Select
+            v-model="form.ttd_rekap"
+            placeholder="Pilih Yang Ttd Rekap Presensi"
+            :options="tim_kerja"
+            optionLabel="label"
+            optionValue="value"
+            fluid
+            filter
+            showClear
+          />
+          <div
+            v-if="page.props.errors.ttd_rekap"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.ttd_rekap }}
+          </div>
         </div>
       </div>
       <template #footer>
@@ -269,12 +306,13 @@
 <script setup>
 import { debounce } from "@/Layouts/ManManagement/Composables/debounce";
 import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
-import { Head, router, useForm } from "@inertiajs/vue3";
+import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { computed, onMounted, ref, watch } from "vue";
 import * as XLSX from "xlsx";
 
 const isSidebarOpen = ref(true);
+const page = usePage();
 onMounted(() => {
   isSidebarOpen.value = false;
 });
@@ -319,6 +357,9 @@ const search = ref({
 const props = defineProps({
   lembur: {
     type: Object,
+  },
+  tim_kerja: {
+    type: Array,
   },
 });
 const paginatedItem = ref(props.lembur);
@@ -503,6 +544,7 @@ const form = useForm({
     2,
     "0"
   )}/KP.300/${currentYear}`,
+  ttd_rekap: null,
 });
 watch(
   () => createDialog.value,

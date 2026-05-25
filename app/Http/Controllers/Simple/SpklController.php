@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ManManagement\AnggotaTimKerja;
 use App\Models\ManManagement\Pegawai;
 use App\Models\ManManagement\Role;
+use App\Models\ManManagement\TimKerja;
 use App\Models\Simple\LaporanUpload;
 use App\Models\Simple\Lembur;
 use App\Models\Simple\LemburPegawai;
@@ -45,10 +46,15 @@ class SpklController extends Controller
 
         $query->with(['pegawai', 'lembur.tim', 'lembur.spkl']);
         $lembur = $query->paginate($paginated, ['*'], 'page', $currentPage);
+        $tim_kerja = TimKerja::orderBy('label')->select(['id as value', 'label'])->get()
+            ->map(function ($item) {
+                return ['value' => $item->value, 'label' => 'Ketua ' . $item->label];
+            });
         if ($request->paginated)
             return response()->json($lembur);
         return Inertia::render('Simple/Spkl', [
-            'lembur' => $lembur
+            'lembur' => $lembur,
+            'tim_kerja' => $tim_kerja
         ]);
     }
 
@@ -60,12 +66,14 @@ class SpklController extends Controller
             'tahun_dipa' => 'required',
             'tanggal_pengajuan' => 'required',
             'nomor_spkl' => 'required',
+            'ttd_rekap' => 'required',
         ], [
             'bulan.required' => 'Bulan wajib diisi',
             'tahun.required' => 'Tahun wajib diisi',
             'tahun_dipa.required' => 'Tahun DIPA wajib diisi',
             'tanggal_pengajuan.required' => 'Tanggal pengajuan wajib diisi',
             'nomor_spkl.required' => 'Nomor SPKL wajib diisi',
+            'ttd_rekap.required' => 'Ttd di Rekap Presensi wajib diisi',
         ]);
 
         $validated['tanggal_pengajuan'] = Carbon::parse($validated['tanggal_pengajuan'])->setTimezone('Asia/Makassar')->format('Y-m-d');
@@ -146,7 +154,7 @@ class SpklController extends Controller
         $lembur = $query->get()->groupBy('pegawai_id');
 
         $kpaId = Role::where('roles', 'kaprov')->value('to_role_id');
-        $kpa = Pegawai::findOrFail($kpaId);
+        $kpa = $kpaId ? Pegawai::find($kpaId) : null;
 
         $template_path = public_path('document/template_spkl.docx');
         $template_processor = new TemplateProcessor($template_path);
@@ -249,11 +257,18 @@ class SpklController extends Controller
                 $presensi->addCell(2000)->addText(str_replace('.', ',', (string) abs($lamanya)));
             }
         }
-        $template_processor->setValue('kpa', $kpa->name);
+        $template_processor->setValue('kpa', $kpa ? $kpa->name : '-');
         $template_processor->setComplexBlock('table', $table);
         $template_processor->setValue('presensiMonth', $request->bulan);
         $template_processor->setValue('presensiYear', $request->tahun);
         $template_processor->setComplexBlock('presensiData', $presensi);
+
+        //ttd rekap
+        $ttd_rekap = TimKerja::where('id', $request->ttd_rekap)->value('label');
+        $ketua_ttd_rekap = AnggotaTimKerja::where('tim_id', $request->ttd_rekap)->where('keanggotaan', 'ketua')->with(['pegawai'])->first();
+        $template_processor->setValue('ttd_rekap', $ttd_rekap ?? '-');
+        $template_processor->setValue('ketua_ttd_rekap', $ketua_ttd_rekap->pegawai->name ?? '-');
+
         $filename = "SPKL_" . $request->bulan . "_" . $request->tahun . ".docx";
         if (ob_get_length())
             ob_end_clean();
@@ -452,7 +467,11 @@ class SpklController extends Controller
                 $rekap[$nip_lama] = [];
             }
 
+            $tgl = Carbon::parse($l->tanggal);
+            $dayOfWeek = $tgl->dayOfWeekIso;
+
             $durasi = $l->jumlah_jam;
+            $durasi_final = 0;
             if ($l->jam_berangkat && $l->jam_pulang) {
                 $masuk = Carbon::parse($l->jam_berangkat);
                 $pulang = Carbon::parse($l->jam_pulang);
@@ -461,19 +480,28 @@ class SpklController extends Controller
                     $pulang->addDay();
                 }
 
-                $selisih = floor($masuk->diffInMinutes($pulang) / 60);
-                if ($selisih < $durasi) {
-                    $durasi = $selisih;
+                if ($dayOfWeek <= 5) {
+                    $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
+                    $batas_pulang = Carbon::parse($batas_pulang_str);
+
+                    $mulai_lembur = $masuk->greaterThan($batas_pulang) ? $masuk : $batas_pulang;
+
+                    if ($pulang->greaterThan($mulai_lembur)) {
+                        $selisih = floor($mulai_lembur->diffInMinutes($pulang) / 60);
+                    } else {
+                        $selisih = 0;
+                    }
+                } else {
+                    $selisih = floor($masuk->diffInMinutes($pulang) / 60);
                 }
+
+                $durasi_final = ($selisih > $durasi) ? $durasi : $selisih;
             }
-            if ($durasi <= 0)
+            if ($durasi_final <= 0)
                 continue;
 
-            $tgl = Carbon::parse($l->tanggal);
-            $dayOfWeek = $tgl->dayOfWeekIso;
-
             $tipe = ($dayOfWeek >= 6) ? 'HL' : 'HB';
-            $kolom = $tipe . $durasi;
+            $kolom = $tipe . $durasi_final;
             if (!isset($rekap[$nip_lama][$kolom])) {
                 $rekap[$nip_lama][$kolom] = 0;
             }

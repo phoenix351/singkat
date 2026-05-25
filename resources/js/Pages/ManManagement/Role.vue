@@ -228,7 +228,7 @@
             showClear
             option-label="label"
             option-value="value"
-            v-model="form.roles"
+            v-model="editedData.roles"
             placeholder="Pilih Role"
           />
           <div v-if="page.props.errors.roles" class="text-red-500 text-sm mt-2">

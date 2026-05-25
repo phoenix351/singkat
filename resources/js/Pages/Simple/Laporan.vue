@@ -228,7 +228,9 @@ import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
 import { Head, useForm } from "@inertiajs/vue3";
 import axios from "axios";
 import { onMounted, ref, watch } from "vue";
+import { useToast } from "primevue";
 
+const toast = useToast();
 const props = defineProps({
   lembur: Object,
 });

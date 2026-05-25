@@ -117,7 +117,8 @@ const checkAvailability = (role) => {
   const keanggotaan = page.props.auth.keanggotaan;
   if (currentRole == "admin") return true;
   if (!role) return true;
-  if (role == "ketua") return keanggotaan == role;
+  if (role == "ketua") return role == keanggotaan;
   if (role == "validator") return role == currentRole;
+  if (role == "operator") return role == currentRole;
 };
 </script>
