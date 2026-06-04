@@ -683,6 +683,28 @@ class LemburController extends Controller
         ]);
     }
 
+    public function fillOutput(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => ['required'],
+            'output' => ['string', 'required']
+        ]);
+        try {
+            DB::connection('sulutweb_simple')->beginTransaction();
+            $updateData = [
+                'output' => $validated['output']
+            ];
+            $lembur_to_update = LemburPegawai::where('id', $validated['id']);
+            $lembur_to_update->update($updateData);
+            DB::connection('sulutweb_simple')->commit();
+            return redirect()->route('simple.my-lembur')->with('success', 'Berhasil mengisi output');
+
+        } catch (\Throwable $th) {
+            DB::connection('sulutweb_simple')->rollBack();
+            return redirect()->route('simple.my-lembur')->with('error', 'Gagal menambahkan output, error: ' . $th->getMessage());
+        }
+    }
+
     public function fetchLembur($lembur_id)
     {
         $lembur = Lembur::whereHas('pegawai', function ($q) {

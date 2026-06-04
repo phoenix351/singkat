@@ -144,7 +144,7 @@
           </template>
         </Column>
         <Column
-          header="Maksud"
+          header="Alasan Lembur"
           field="maksud_lembur"
           sortable
           :show-filter-menu="false"
@@ -154,7 +154,7 @@
               v-model="filterModel.maksud_lembur"
               class="text-sm"
               fluid
-              placeholder="Cari maksud lembur"
+              placeholder="Cari alasan lembur"
             />
           </template>
         </Column>
@@ -255,6 +255,18 @@
               </Column>
               <Column header="NIP">
                 <template #body="{ data }">{{ data.pegawai?.nip }}</template>
+              </Column>
+              <Column header="Output Lembur">
+                <template #body="{ data }">
+                  <Badge
+                    v-if="!data.output"
+                    severity="secondary"
+                    value="Belum diisi"
+                  />
+                  <span v-if="data.output" class="whitespace-pre-wrap">{{
+                    data.output
+                  }}</span>
+                </template>
               </Column>
               <Column
                 header="Status"
@@ -364,13 +376,13 @@
           </div>
         </div>
         <div>
-          <label class="block font-bold mb-2">Maksud Lembur</label>
+          <label class="block font-bold mb-2">Alasan Lembur</label>
           <Select
-            placeholder="Pilih maksud lembur yang sudah ada atau tambah baru"
+            placeholder="Pilih alasan lembur yang sudah ada atau tambah baru"
             :options="maksudLembur"
             showClear
             editable
-            emptyMessage="Ketik untuk menambah maksud baru..."
+            emptyMessage="Ketik untuk menambah alasan baru..."
             v-model="form.maksud_lembur"
             fluid
           />
@@ -484,9 +496,9 @@
     >
       <div class="flex flex-col gap-4">
         <div>
-          <label class="block font-bold mb-2">Maksud Lembur</label>
+          <label class="block font-bold mb-2">Alasan Lembur</label>
           <InputText
-            placeholder="Pilih maksud lembur yang sudah ada atau tambah baru"
+            placeholder="Pilih alasan lembur yang sudah ada atau tambah baru"
             v-model="editedLembur.maksud_lembur"
             fluid
           />
@@ -928,19 +940,26 @@ const copyData = async (data) => {
     skipWatch = true;
   } else {
     if (anggotaTim.value.length === 0) {
-      const { data: anggota } = await axios.get(route("man-management.fetch-anggota-tim", { id: data.tim_id }));
+      const { data: anggota } = await axios.get(
+        route("man-management.fetch-anggota-tim", { id: data.tim_id })
+      );
       anggotaTim.value = anggota;
     }
     if (maksudLembur.value.length === 0) {
-      const { data: maksud } = await axios.get(route("simple.fetch-maksud", { tim_id: data.tim_id }));
+      const { data: maksud } = await axios.get(
+        route("simple.fetch-maksud", { tim_id: data.tim_id })
+      );
       maksudLembur.value = maksud;
     }
   }
 
   form.tim_id = data.tim_id;
-  form.anggotalembur = data.pegawai ? data.pegawai.map((p) => p.pegawai_id) : [];
+  form.anggotalembur = data.pegawai
+    ? data.pegawai.map((p) => p.pegawai_id)
+    : [];
   form.tanggal = null;
-  form.jumlah_jam = data.pegawai && data.pegawai.length > 0 ? data.pegawai[0].jumlah_jam : null;
+  form.jumlah_jam =
+    data.pegawai && data.pegawai.length > 0 ? data.pegawai[0].jumlah_jam : null;
   form.maksud_lembur = data.maksud_lembur;
   form.add_pegawai = false;
   form.link_dokumentasi = null;

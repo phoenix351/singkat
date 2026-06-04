@@ -19,6 +19,29 @@
         </div>
 
         <div class="flex items-center space-x-4">
+          <!-- Notification Bell -->
+          <div class="relative flex items-center">
+            <button
+              @click="toggleNotificationMenu"
+              class="relative p-2 text-gray-500 hover:text-gray-700 transition-colors flex items-center justify-center focus:outline-none"
+              title="Anda memiliki lembur yang belum diisi outputnya"
+            >
+              <OverlayBadge
+                :value="page.props.pendingOutputCount"
+                severity="danger"
+                size="small"
+              >
+                <i class="pi pi-bell text-xl"></i>
+              </OverlayBadge>
+            </button>
+            <Menu
+              ref="notificationMenu"
+              :model="notificationItems"
+              :popup="true"
+              class="w-75 text-sm"
+            />
+          </div>
+
           <div
             class="flex items-center gap-3 pl-4 cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition-colors"
             @click="toggleProfileMenu"
@@ -73,6 +96,7 @@ import { ref, computed, watch, nextTick, onMounted } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
 import Menu from "primevue/menu";
 import Avatar from "primevue/avatar";
+import OverlayBadge from "primevue/overlaybadge";
 import Sidebar from "./Sidebar.vue";
 import { useToast, Toast, ConfirmDialog } from "primevue";
 import SpinnerBorder from "@/Components/ManManagement/SpinnerBorder.vue";
@@ -87,6 +111,7 @@ const props = defineProps({
 });
 const isSidebarOpen = ref(props.isOpen);
 const profileMenu = ref();
+const notificationMenu = ref();
 
 onMounted(() => {
   if (window.innerWidth >= 1024) {
@@ -109,6 +134,26 @@ const toggleProfileMenu = (event) => {
   profileMenu.value.toggle(event);
 };
 
+const toggleNotificationMenu = (event) => {
+  notificationMenu.value.toggle(event);
+};
+
+const page = usePage();
+
+const notificationItems = computed(() => {
+  const items = page.props.pendingOutputs || [];
+  if (items.length === 0) {
+    return [{ label: "Tidak ada notifikasi", disabled: true }];
+  }
+  return items.map((item) => ({
+    label: `Ada pengajuan lembur dari ${item.tim_kerja} terkait ${item.maksud_lembur}`,
+    icon: "pi pi-file-edit",
+    command: () => {
+      router.visit(route("simple.my-lembur"));
+    },
+  }));
+});
+
 const profileItems = ref([
   {
     label: "Keluar",
@@ -124,7 +169,6 @@ const profileItems = ref([
     },
   },
 ]);
-const page = usePage();
 const toast = useToast();
 watch(
   () => page.props.flash,

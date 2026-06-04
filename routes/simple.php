@@ -12,7 +12,9 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
     ->group(function () {
         Route::get('/', [HomeController::class, 'index'])->name('index');
 
+        //my-lembur
         Route::get('/my-lembur', [LemburController::class, 'myLembur'])->name('my-lembur');
+        Route::post('/my-lembur/fill-output', [LemburController::class, 'fillOutput'])->name('my-lembur.fill-output');
 
         Route::get('/pengajuan-lembur', [LemburController::class, 'index'])->name('lembur');
         Route::post('/pengajuan-lembur/store', [LemburController::class, 'store'])->name('lembur.store');

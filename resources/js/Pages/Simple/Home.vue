@@ -101,34 +101,110 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">5 Tim dengan Lembur Terbanyak</h2>
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">
+          5 Tim dengan Lembur Terbanyak
+        </h2>
         <div class="flex-grow h-64">
-          <Chart v-if="Object.keys(timsData || {}).length > 0" type="bar" :data="timChartData" :options="chartOptions" class="h-full w-full" />
-          <div v-else class="h-full flex items-center justify-center text-gray-400">Belum ada data</div>
+          <Chart
+            v-if="Object.keys(timsData || {}).length > 0"
+            type="bar"
+            :data="timChartData"
+            :options="chartOptions"
+            class="h-full w-full"
+          />
+          <div
+            v-else
+            class="h-full flex items-center justify-center text-gray-400"
+          >
+            Belum ada data
+          </div>
         </div>
       </div>
       <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">5 Pegawai dengan Lembur Terbanyak</h2>
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">
+          5 Pegawai dengan Lembur Terbanyak
+        </h2>
         <div class="flex-grow h-64">
-          <Chart v-if="Object.keys(pegawaisData || {}).length > 0" type="bar" :data="pegawaiChartData" :options="chartOptions" class="h-full w-full" />
-          <div v-else class="h-full flex items-center justify-center text-gray-400">Belum ada data</div>
+          <Chart
+            v-if="Object.keys(pegawaisData || {}).length > 0"
+            type="bar"
+            :data="pegawaiChartData"
+            :options="chartOptions"
+            class="h-full w-full"
+          />
+          <div
+            v-else
+            class="h-full flex items-center justify-center text-gray-400"
+          >
+            Belum ada data
+          </div>
         </div>
       </div>
     </div>
+
+    <Dialog
+      v-model:visible="showNotificationDialog"
+      modal
+      header="Pemberitahuan"
+      :style="{ width: '30rem' }"
+    >
+      <div class="flex flex-col items-center justify-center p-4">
+        <i class="pi pi-bell text-5xl text-red-500 mb-4"></i>
+        <p class="text-center text-lg text-gray-700 mb-6">
+          Anda memiliki
+          <span class="font-bold text-red-600">{{
+            page.props.pendingOutputCount
+          }}</span>
+          pengajuan lembur yang belum diisi outputnya.
+        </p>
+        <div class="flex justify-center gap-2 w-full">
+          <Button
+            size="small"
+            label="Nanti Saja"
+            icon="pi pi-times"
+            severity="danger"
+            @click="showNotificationDialog = false"
+          />
+          <Button
+            size="small"
+            label="Isi Output Sekarang"
+            icon="pi pi-check"
+            severity="success"
+            @click="goToMyLembur"
+          />
+        </div>
+      </div>
+    </Dialog>
   </SimpleLayout>
 </template>
 
 <script setup>
-import { Head } from "@inertiajs/vue3";
+import { Head, usePage, router } from "@inertiajs/vue3";
 import SimpleLayout from "../../Layouts/Simple/SimpleLayout.vue";
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import Chart from "primevue/chart";
+import Dialog from "primevue/dialog";
+import Button from "primevue/button";
 
 const props = defineProps({
   result: Object,
   pegawais: Object,
   tims: Object,
 });
+
+const page = usePage();
+const showNotificationDialog = ref(false);
+
+onMounted(() => {
+  if (page.props.pendingOutputCount > 0) {
+    showNotificationDialog.value = true;
+  }
+});
+
+const goToMyLembur = () => {
+  showNotificationDialog.value = false;
+  router.visit(route("simple.my-lembur"));
+};
 
 const result = ref(props.result);
 const pegawaisData = ref(props.pegawais);
