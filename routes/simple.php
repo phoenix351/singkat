@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Simple\HomeController;
 use App\Http\Controllers\Simple\LemburController;
-use App\Http\Controllers\Simple\PresensiController;
 use App\Http\Controllers\Simple\SpklController;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +10,9 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
     ->middleware(['auth', 'use.vue.inertia'])
     ->group(function () {
         Route::get('/', [HomeController::class, 'index'])->name('index');
+
+        //summary
+        Route::get('/summary', [HomeController::class, 'summary'])->name('summary');
 
         //my-lembur
         Route::get('/my-lembur', [LemburController::class, 'myLembur'])->name('my-lembur');
