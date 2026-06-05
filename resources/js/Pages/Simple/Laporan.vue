@@ -110,7 +110,13 @@
             ></Button>
             <Badge
               v-else
-              @click="openUploadDialog(data.lembur_id, data.upload_status)"
+              @click="
+                openUploadDialog(
+                  data.lembur_id,
+                  data.upload_status,
+                  data.file_path
+                )
+              "
               class="cursor-pointer"
               :value="'Terkirim, ' + formatDateTime(data.upload_status)"
               severity="success"
@@ -210,9 +216,10 @@
             chooseLabel="Pilih File"
           />
         </div>
-        <div class="space-x-2">
+        <div v-if="uploadForm.file_path" class="space-x-2">
           <label>File yang sudah diupload :</label>
           <Button
+            @click="downloadLaporan"
             severity="warn"
             size="small"
             icon="pi pi-download"
@@ -375,11 +382,13 @@ const uploadForm = useForm({
   lembur_id: null,
   file: null,
   upload_status: null,
+  file_path: null,
 });
-const openUploadDialog = (lemburId, upload_status) => {
+const openUploadDialog = (lemburId, upload_status, file_path) => {
   uploadForm.reset();
   uploadForm.lembur_id = lemburId;
   uploadForm.upload_status = upload_status;
+  uploadForm.file_path = file_path;
   uploadDialog.value = true;
 };
 const onSelectFile = (event) => {
@@ -398,6 +407,11 @@ const toUpload = async () => {
       }
       fetchData();
     },
+  });
+};
+const downloadLaporan = () => {
+  window.location.href = route("simple.download.laporan-lembur", {
+    lembur_id: uploadForm.lembur_id,
   });
 };
 </script>

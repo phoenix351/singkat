@@ -42,6 +42,7 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
         Route::get('/laporan-lembur', [SpklController::class, 'laporan'])->name('laporan-lembur');
         Route::get('/print/laporan-lembur', [SpklController::class, 'printLaporan'])->name('print.laporan-lembur');
         Route::post('/laporan-lembur/upload', [SpklController::class, 'uploadLaporan'])->name('upload.laporan-lembur');
+        Route::get('/laporan-lembur/download/{lembur_id}', [SpklController::class, 'downloadLaporan'])->name('download.laporan-lembur');
 
         //presensi-lembur
         Route::patch('/presensi/patch', [SpklController::class, 'patch'])->name('presensi.patch');
