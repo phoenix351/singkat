@@ -34,9 +34,7 @@
           <i class="pi pi-hourglass text-2xl"></i>
         </div>
         <div>
-          <h3 class="text-gray-500 text-sm font-medium">
-            Sedang diperiksa Katim
-          </h3>
+          <h3 class="text-gray-500 text-sm font-medium">Sedang diperiksa Katim</h3>
           <p class="text-2xl font-bold text-gray-800">{{ result.pending }}</p>
         </div>
       </div>
@@ -62,9 +60,7 @@
           <i class="pi pi-send text-2xl"></i>
         </div>
         <div>
-          <h3 class="text-gray-500 text-sm font-medium">
-            Sedang diperiksa Kabag
-          </h3>
+          <h3 class="text-gray-500 text-sm font-medium">Sedang diperiksa Kabag</h3>
           <p class="text-2xl font-bold text-gray-800">
             {{ result.setuju_katim }}
           </p>
@@ -101,9 +97,17 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">
-          5 Tim dengan Lembur Terbanyak
-        </h2>
+        <div class="flex flex-wrap justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-gray-800">
+            5 Tim dengan Lembur Terbanyak
+          </h2>
+          <Link :href="route('simple.summary')">
+            <i
+              class="pi pi-info-circle cursor-pointer"
+              v-tooltip.top="'Tekan untuk lihat detail'"
+            ></i>
+          </Link>
+        </div>
         <div class="flex-grow h-64">
           <Chart
             v-if="Object.keys(timsData || {}).length > 0"
@@ -112,18 +116,23 @@
             :options="chartOptions"
             class="h-full w-full"
           />
-          <div
-            v-else
-            class="h-full flex items-center justify-center text-gray-400"
-          >
+          <div v-else class="h-full flex items-center justify-center text-gray-400">
             Belum ada data
           </div>
         </div>
       </div>
       <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">
-          5 Pegawai dengan Lembur Terbanyak
-        </h2>
+        <div class="flex flex-wrap justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-gray-800">
+            5 Pegawai dengan Pengajuan Lembur Terbanyak
+          </h2>
+          <Link :href="route('simple.summary')">
+            <i
+              class="pi pi-info-circle cursor-pointer"
+              v-tooltip.top="'Tekan untuk lihat detail'"
+            ></i>
+          </Link>
+        </div>
         <div class="flex-grow h-64">
           <Chart
             v-if="Object.keys(pegawaisData || {}).length > 0"
@@ -132,10 +141,7 @@
             :options="chartOptions"
             class="h-full w-full"
           />
-          <div
-            v-else
-            class="h-full flex items-center justify-center text-gray-400"
-          >
+          <div v-else class="h-full flex items-center justify-center text-gray-400">
             Belum ada data
           </div>
         </div>
@@ -152,9 +158,7 @@
         <i class="pi pi-bell text-5xl text-red-500 mb-4"></i>
         <p class="text-center text-lg text-gray-700 mb-6">
           Anda memiliki
-          <span class="font-bold text-red-600">{{
-            page.props.pendingOutputCount
-          }}</span>
+          <span class="font-bold text-red-600">{{ page.props.pendingOutputCount }}</span>
           pengajuan lembur yang belum diisi outputnya.
         </p>
         <div class="flex justify-center gap-2 w-full">
@@ -179,7 +183,7 @@
 </template>
 
 <script setup>
-import { Head, usePage, router } from "@inertiajs/vue3";
+import { Head, usePage, router, Link } from "@inertiajs/vue3";
 import SimpleLayout from "../../Layouts/Simple/SimpleLayout.vue";
 import { ref, watch, computed, onMounted } from "vue";
 import Chart from "primevue/chart";

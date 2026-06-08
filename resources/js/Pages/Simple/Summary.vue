@@ -4,28 +4,6 @@
     <div class="text-xl font-bold mb-4">Ringkasan Data Lembur</div>
     <div class="flex flex-wrap items-end gap-2">
       <div class="flex flex-col gap-2">
-        <label class="font-bold">Tahun</label>
-        <Select
-          v-model="search.tahun"
-          placeholder="Pilih tahun"
-          :options="yearDrop"
-          optionLabel="label"
-          optionValue="value"
-          class="w-40"
-        />
-      </div>
-      <!-- <div class="flex flex-col gap-2">
-        <label class="font-bold">Bulan</label>
-        <Select
-          v-model="search.bulan"
-          placeholder="Pilih bulan"
-          :options="monthDrop"
-          optionLabel="label"
-          optionValue="value"
-          class="w-48"
-        />
-      </div> -->
-      <div class="flex flex-col gap-2">
         <label class="font-bold">Rentang Waktu</label>
         <DatePicker
           v-model="search.range_waktu"
@@ -64,10 +42,7 @@
           <InputIcon>
             <i class="pi pi-search" />
           </InputIcon>
-          <InputText
-            placeholder="Cari Pegawai/Tim"
-            v-model="search.pegawai_tim"
-          />
+          <InputText placeholder="Cari Pegawai/Tim" v-model="search.pegawai_tim" />
         </IconField>
       </div>
       <DataTable
@@ -89,12 +64,11 @@
         current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data"
       >
         <template #empty>
-          <div class="text-center">
-            Data bulan ini belum ada yang sudah disetujui
-          </div>
+          <div class="text-center">Data bulan ini belum ada yang sudah disetujui</div>
         </template>
         <Column field="label" header="Nama Pegawai/Tim"></Column>
-        <Column field="total_lembur" header="Total Lembur"></Column>
+        <Column field="total_lembur" header="Total Pengajuan Lembur"></Column>
+        <Column field="durasi_lembur" header="Total Durasi Lembur"></Column>
       </DataTable>
     </div>
   </SimpleLayout>
@@ -110,30 +84,6 @@ import { computed, ref, watch } from "vue";
 const page = usePage();
 
 const currentYear = new Date().getFullYear();
-const currentMonth = new Date().getMonth() + 1;
-
-const yearDrop = ref(
-  Array.from({ length: 10 }, (_, i) => ({
-    label: (currentYear - i).toString(),
-    value: currentYear - i,
-  }))
-);
-const monthDrop = ref([
-  { label: "Semua Bulan", value: 0 },
-  { label: "Januari", value: 1 },
-  { label: "Februari", value: 2 },
-  { label: "Maret", value: 3 },
-  { label: "April", value: 4 },
-  { label: "Mei", value: 5 },
-  { label: "Juni", value: 6 },
-  { label: "Juli", value: 7 },
-  { label: "Agustus", value: 8 },
-  { label: "September", value: 9 },
-  { label: "Oktober", value: 10 },
-  { label: "November", value: 11 },
-  { label: "Desember", value: 12 },
-]);
-
 const search = ref({
   tahun: currentYear,
   bulan: 0,
@@ -191,4 +141,4 @@ watch(
     delayedFetchData();
   }
 );
-</script> 
+</script>
