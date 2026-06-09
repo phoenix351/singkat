@@ -22,14 +22,12 @@ declare module 'vue' {
     InputIcon: typeof import('primevue/inputicon')['default']
     InputText: typeof import('primevue/inputtext')['default']
     MultiSelect: typeof import('primevue/multiselect')['default']
-    OverlayBadge: typeof import('primevue/overlaybadge')['default']
     RadioButton: typeof import('primevue/radiobutton')['default']
     Select: typeof import('primevue/select')['default']
     SelectButton: typeof import('primevue/selectbutton')['default']
     Textarea: typeof import('primevue/textarea')['default']
   }
   export interface GlobalDirectives {
-    BadgeDirective: typeof import('primevue/badgedirective')['default']
     StyleClass: typeof import('primevue/styleclass')['default']
     Tooltip: typeof import('primevue/tooltip')['default']
   }

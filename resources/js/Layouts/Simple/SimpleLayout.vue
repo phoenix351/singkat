@@ -27,7 +27,11 @@
               title="Anda memiliki lembur yang belum diisi outputnya"
             >
               <OverlayBadge
-                :value="page.props.pendingOutputCount"
+                :value="
+                  page.props.pendingOutputCount +
+                  page.props.lemburPending +
+                  page.props.lemburToVerify
+                "
                 severity="danger"
                 size="small"
               >
@@ -46,11 +50,7 @@
             class="flex items-center gap-3 pl-4 cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition-colors"
             @click="toggleProfileMenu"
           >
-            <Avatar
-              icon="pi pi-user"
-              class="bg-blue-100 text-blue-600"
-              shape="circle"
-            />
+            <Avatar icon="pi pi-user" class="bg-blue-100 text-blue-600" shape="circle" />
             <div class="hidden md:block text-sm">
               <p class="font-semibold text-gray-700 leading-none">
                 {{ page.props.auth.user.name }}
@@ -77,7 +77,7 @@
       <footer
         class="bg-white py-4 px-6 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-sm text-gray-500"
       >
-        <div>&copy; 2026 Simple v.1.1.0 - Sistem Pengajuan Lembur</div>
+        <div>&copy; 2026 Simple v.1.2.0 - Sistem Pengajuan Lembur</div>
         <div class="mt-2 md:mt-0 space-x-4"></div>
       </footer>
     </div>
@@ -145,13 +145,44 @@ const notificationItems = computed(() => {
   if (items.length === 0) {
     return [{ label: "Tidak ada notifikasi", disabled: true }];
   }
-  return items.map((item) => ({
+  const pendingNotification = items.map((item) => ({
     label: `Ada pengajuan lembur dari ${item.tim_kerja} terkait ${item.maksud_lembur}`,
     icon: "pi pi-file-edit",
     command: () => {
       router.visit(route("simple.my-lembur"));
     },
   }));
+  const pendingLembur = [
+    {
+      label: `Anda sebagai Ketua Tim masih memiliki lembur sebanyak ${page.props.lemburPending} yang perlu diverifikasi`,
+      icon: "pi pi-file-edit",
+      command: () => {
+        router.visit(route("simple.lembur.verify"));
+      },
+    },
+  ];
+  const pendingLemburToVerify = [
+    {
+      label: `Anda sebagai Kepala Bagian masih memiliki lembur sebanyak ${page.props.lemburToVerify} yang perlu diverifikasi`,
+      icon: "pi pi-file-edit",
+      command: () => {
+        router.visit(route("simple.lembur.verify-kabag"));
+      },
+    },
+  ];
+  let Notifications = [];
+  Notifications.push(...pendingNotification);
+  if (
+    (page.props.auth.keanggotaan == "role" || page.props.auth.role == "admin") &&
+    page.props.lemburPending > 0
+  )
+    Notifications.push(...pendingLembur);
+  if (
+    (page.props.auth.role == "validator" || page.props.auth.role == "admin") &&
+    page.props.lemburToVerify > 0
+  )
+    Notifications.push(...pendingLemburToVerify);
+  return Notifications;
 });
 
 const profileItems = ref([
