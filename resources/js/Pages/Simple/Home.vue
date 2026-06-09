@@ -151,31 +151,93 @@
     <Dialog
       v-model:visible="showNotificationDialog"
       modal
-      header="Pemberitahuan"
-      :style="{ width: '30rem' }"
+      header="Pemberitahuan Kontrol Lembur"
+      :style="{ width: '36rem' }"
+      :breakpoints="{ '960px': '75vw', '641px': '90vw' }"
     >
-      <div class="flex flex-col items-center justify-center p-4">
-        <i class="pi pi-bell text-5xl text-red-500 mb-4"></i>
-        <p class="text-center text-lg text-gray-700 mb-6">
-          Anda memiliki
-          <span class="font-bold text-red-600">{{ page.props.pendingOutputCount }}</span>
-          pengajuan lembur yang belum diisi outputnya.
-        </p>
-        <div class="flex justify-center gap-2 w-full">
+      <div class="flex flex-col divide-y divide-gray-100 p-2">
+        <div
+          v-if="page.props.pendingOutputCount > 0"
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4"
+        >
+          <p class="text-sm text-gray-600 leading-relaxed max-w-md">
+            Anda memiliki
+            <span class="font-semibold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+              {{ page.props.pendingOutputCount }}
+            </span>
+            pengajuan lembur yang belum diisi outputnya.
+          </p>
           <Button
             size="small"
-            label="Nanti Saja"
-            icon="pi pi-times"
+            label="Isi Output"
+            icon="pi pi-pencil"
             severity="danger"
-            @click="showNotificationDialog = false"
-          />
-          <Button
-            size="small"
-            label="Isi Output Sekarang"
-            icon="pi pi-check"
-            severity="success"
+            class="w-full sm:w-auto shrink-0"
             @click="goToMyLembur"
           />
+        </div>
+
+        <div
+          v-if="
+            page.props.lemburPending > 0 &&
+            (page.props.auth.keanggotaan == 'ketua' || page.props.auth.role == 'admin')
+          "
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4"
+        >
+          <p class="text-sm text-gray-600 leading-relaxed max-w-md">
+            Anda selaku <span class="font-medium text-gray-800">Ketua Tim</span> memiliki
+            <span
+              class="font-semibold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded"
+            >
+              {{ page.props.lemburPending }}
+            </span>
+            pengajuan lembur yang belum diperiksa.
+          </p>
+          <Button
+            size="small"
+            label="Periksa"
+            icon="pi pi-search"
+            severity="warn"
+            class="w-full sm:w-auto shrink-0"
+            @click="goToVerify"
+          />
+        </div>
+
+        <div
+          v-if="
+            page.props.lemburToVerify > 0 &&
+            (page.props.auth.role == 'validator' || page.props.auth.role == 'admin')
+          "
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4"
+        >
+          <p class="text-sm text-gray-600 leading-relaxed max-w-md">
+            Anda selaku
+            <span class="font-medium text-gray-800">Kepala Bagian Umum</span> memiliki
+            <span class="font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+              {{ page.props.lemburToVerify }}
+            </span>
+            pengajuan lembur yang perlu diverifikasi.
+          </p>
+          <Button
+            size="small"
+            label="Verifikasi"
+            icon="pi pi-check-circle"
+            severity="info"
+            class="w-full sm:w-auto shrink-0"
+            @click="goToVerifyKabag"
+          />
+        </div>
+
+        <div
+          v-if="
+            page.props.pendingOutputCount === 0 &&
+            page.props.lemburPending === 0 &&
+            page.props.lemburToVerify === 0
+          "
+          class="text-center py-8 text-gray-500 text-sm"
+        >
+          <i class="pi pi-check-circle text-green-500 text-3xl mb-2 block"></i>
+          Tidak ada pengajuan lembur yang memerlukan tindakan Anda saat ini.
         </div>
       </div>
     </Dialog>
@@ -200,7 +262,10 @@ const page = usePage();
 const showNotificationDialog = ref(false);
 
 onMounted(() => {
-  if (page.props.pendingOutputCount > 0) {
+  if (
+    page.props.pendingOutputCount + page.props.lemburPending + page.props.lemburToVerify >
+    0
+  ) {
     showNotificationDialog.value = true;
   }
 });
@@ -208,6 +273,16 @@ onMounted(() => {
 const goToMyLembur = () => {
   showNotificationDialog.value = false;
   router.visit(route("simple.my-lembur"));
+};
+
+const goToVerify = () => {
+  showNotificationDialog.value = false;
+  router.visit(route("simple.lembur.verify"));
+};
+
+const goToVerifyKabag = () => {
+  showNotificationDialog.value = false;
+  router.visit(route("simple.lembur.verify-kabag"));
 };
 
 const result = ref(props.result);

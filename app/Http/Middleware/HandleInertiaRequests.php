@@ -35,6 +35,8 @@ class HandleInertiaRequests extends Middleware
     {
         $route = Route::currentRouteName();
         $pendingOutputCount = 0;
+        $lemburPending = 0;
+        $lemburToVerify = 0;
         $pendingOutputs = [];
         
         if (Auth::check() && str_starts_with($route, 'simple.')) {
@@ -42,6 +44,14 @@ class HandleInertiaRequests extends Middleware
                 ->where('pegawai_id', Auth::id())
                 ->whereNull('output')
                 ->get();
+
+            if (Role::currentRole() == 'admin'|| Role::statusKeanggotaan() == 'ketua') {
+                $lemburPending = LemburPegawai::where('status', 1)->get()->count();
+            }
+
+            if (Role::currentRole() == 'admin'|| Role::currentRole() == 'validator') {
+                $lemburToVerify = LemburPegawai::where('status', 2)->get()->count();
+            }
             
             $pendingOutputCount = $lemburData->count();
             $pendingOutputs = $lemburData->map(function($lp) {
@@ -63,6 +73,8 @@ class HandleInertiaRequests extends Middleware
             'route' => $route,
             'pendingOutputCount' => $pendingOutputCount,
             'pendingOutputs' => $pendingOutputs,
+            'lemburPending' => $lemburPending,
+            'lemburToVerify' => $lemburToVerify,
             "flash" => [
                 "success" => fn() => $request->session()->get("success"),
                 "error" => fn() => $request->session()->get("error"),
