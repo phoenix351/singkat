@@ -129,7 +129,16 @@
             </div>
           </template>
         </Column>
-        <Column header="Maksud" field="maksud_lembur" sortable />
+        <Column header="Alasan Lembur" field="maksud_lembur" sortable>
+          <template #filter>
+            <InputText
+              v-model="filterModel.maksud_lembur"
+              class="text-sm"
+              fluid
+              placeholder="Cari alasan lembur"
+            />
+          </template>
+        </Column>
         <Column header="Link" field="link_dokumentasi">
           <template #body="{ data }">
             <Button
@@ -208,6 +217,18 @@
               </Column>
               <Column header="NIP">
                 <template #body="{ data }">{{ data.pegawai?.nip }}</template>
+              </Column>
+              <Column header="Output Lembur">
+                <template #body="{ data }">
+                  <Badge
+                    v-if="!data.output"
+                    severity="secondary"
+                    value="Belum diisi"
+                  />
+                  <span v-if="data.output" class="whitespace-pre-wrap">{{
+                    data.output
+                  }}</span>
+                </template>
               </Column>
               <Column
                 class="whitespace-nowrap"

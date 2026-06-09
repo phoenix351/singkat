@@ -125,7 +125,12 @@
             >
           </template>
         </Column>
-        <Column header="Maksud Lembur" field="lembur.maksud_lembur" />
+        <Column header="Alasan Lembur" field="lembur.maksud_lembur" />
+        <Column header="Output Lembur">
+          <template #body="{ data }">
+            <span class="whitespace-pre-wrap">{{ data.output }}</span>
+          </template>
+        </Column>
         <Column header="Link" field="link_dokumentasi">
           <template #body="{ data }">
             <Button

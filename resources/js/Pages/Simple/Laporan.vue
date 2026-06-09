@@ -46,7 +46,7 @@
           <template #body="slotProps">{{ slotProps.index + 1 }}</template>
         </Column>
         <Column header="Tim" field="tim" />
-        <Column header="Maksud Lembur" field="maksud_lembur" />
+        <Column header="Alasan Lembur" field="maksud_lembur" />
         <Column header="Jumlah Lembur yang Disetujui Kabag" field="jumlah">
           <template #body="{ data }">
             <Badge
@@ -110,7 +110,13 @@
             ></Button>
             <Badge
               v-else
-              @click="openUploadDialog(data.lembur_id)"
+              @click="
+                openUploadDialog(
+                  data.lembur_id,
+                  data.upload_status,
+                  data.file_path
+                )
+              "
               class="cursor-pointer"
               :value="'Terkirim, ' + formatDateTime(data.upload_status)"
               severity="success"
@@ -200,6 +206,7 @@
             >Pilih Laporan yang Sudah di-Ttd</label
           >
           <FileUpload
+            size="small"
             ref="fileupload"
             name="file"
             accept=".docx,.pdf"
@@ -207,6 +214,16 @@
             :max-file-size="2000000"
             @select="onSelectFile"
             chooseLabel="Pilih File"
+          />
+        </div>
+        <div v-if="uploadForm.file_path" class="space-x-2">
+          <label>File yang sudah diupload :</label>
+          <Button
+            @click="downloadLaporan"
+            severity="warn"
+            size="small"
+            icon="pi pi-download"
+            label="Download"
           />
         </div>
       </div>
@@ -364,10 +381,14 @@ const uploadForm = useForm({
   _token: null,
   lembur_id: null,
   file: null,
+  upload_status: null,
+  file_path: null,
 });
-const openUploadDialog = (lemburId) => {
+const openUploadDialog = (lemburId, upload_status, file_path) => {
   uploadForm.reset();
   uploadForm.lembur_id = lemburId;
+  uploadForm.upload_status = upload_status;
+  uploadForm.file_path = file_path;
   uploadDialog.value = true;
 };
 const onSelectFile = (event) => {
@@ -384,7 +405,13 @@ const toUpload = async () => {
       if (fileupload.value) {
         fileupload.value.clear();
       }
+      fetchData();
     },
+  });
+};
+const downloadLaporan = () => {
+  window.location.href = route("simple.download.laporan-lembur", {
+    lembur_id: uploadForm.lembur_id,
   });
 };
 </script>

@@ -177,7 +177,7 @@ class SpklController extends Controller
         $table->addCell(2000)->addText('Nama Pegawai', ['bold' => true]);
         $table->addCell(2500)->addText('Jabatan', ['bold' => true]);
         $table->addCell(2000)->addText('Tanggal', ['bold' => true]);
-        $table->addCell(3000)->addText('Maksud Lembur', ['bold' => true]);
+        $table->addCell(3000)->addText('Alasan Lembur', ['bold' => true]);
 
         $presensi = new Table([
             'borderSize' => 6,
@@ -312,6 +312,7 @@ class SpklController extends Controller
                     'link_dokumentasi' => $first_item->lembur->link_dokumentasi ?? null,
                     'no_spkl' => $first_item->lembur->spkl->nomor_spkl ?? null,
                     'upload_status' => $upload_status ? $upload_status->updated_at : null,
+                    'file_path' => $upload_status->file_path ?? null,
                 ];
                 return $result;
             })->values();
@@ -407,7 +408,8 @@ class SpklController extends Controller
             $table->addCell(2000)->addText('Nama Pegawai', ['bold' => true]);
             $table->addCell(2500)->addText('Jabatan', ['bold' => true]);
             $table->addCell(2000)->addText('Tanggal', ['bold' => true]);
-            $table->addCell(3000)->addText('Maksud Lembur', ['bold' => true]);
+            $table->addCell(3000)->addText('Alasan Lembur', ['bold' => true]);
+            $table->addCell(3000)->addText('Output', ['bold' => true]);
 
             $no = 1;
             foreach ($lembur as $pegawaiId => $items) {
@@ -424,10 +426,11 @@ class SpklController extends Controller
                     }
                     $table->addCell(2000)->addText(Carbon::parse($i->tanggal)->locale('id')->translatedFormat('j F Y'));
                     $table->addCell(3000)->addText($i->lembur->maksud_lembur);
+                    $table->addCell(3000)->addText($i->output);
                 }
             }
             $template_processor->setComplexBlock('table', $table);
-            $filename = 'Laporan Lembur Tim ' . $nama_tim . '_' . $bulan . '_' . $tahun . '.docx';
+            $filename = 'Laporan Lembur ' . $nama_tim . '_' . $bulan . '_' . $tahun . '.docx';
             if (ob_get_length())
                 ob_end_clean();
             return response()->streamDownload(function () use ($template_processor) {
@@ -436,6 +439,19 @@ class SpklController extends Controller
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             ]);
         }
+    }
+
+    public function downloadLaporan($lembur_id)
+    {
+        $file = LaporanUpload::where('lembur_id', $lembur_id)->first();
+        if (!$file || !$file->file_path) {
+            return redirect()->back()->with('error', 'File tidak ditemukan');
+        }
+        $fullPath = Storage::disk('public')->path($file->file_path);
+        if (!file_exists($fullPath)) {
+            return redirect()->back()->with('error', 'File fisik tidak ditemukan');
+        }
+        return response()->download($fullPath);
     }
 
     public function printKeuangan(Request $request)
@@ -458,6 +474,39 @@ class SpklController extends Controller
             ->with(['pegawai', 'lembur']);
 
         $lembur = $query->get();
+
+        $file1 = $this->buildRekapUang($lembur, $request->bulan, $request->tahun);
+        $file2 = $this->buildLemburBos($lembur, $request->bulan, $request->tahun);
+        $file3 = $this->buildLemburWebGaji($lembur, $request->bulan, $request->tahun);
+
+        $zip = new \ZipArchive();
+        $zipFileName = "Rekap_Lembur_{$request->bulan}_{$request->tahun}.zip";
+        $zipFilePath = tempnam(sys_get_temp_dir(), 'zip');
+
+        if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            if ($file1)
+                $zip->addFile($file1, "Rekap_Uang_{$request->bulan}_{$request->tahun}.xlsx");
+            if ($file2)
+                $zip->addFile($file2, "Lembur_Bos_{$request->bulan}_{$request->tahun}.xlsx");
+            if ($file3)
+                $zip->addFile($file3, "Lembur_Web_Gaji_{$request->bulan}_{$request->tahun}.xlsx");
+            $zip->close();
+            foreach ([$file1, $file2, $file3] as $file) {
+                if ($file && file_exists($file)) {
+                    unlink($file);
+                }
+            }
+
+            return response()->download($zipFilePath, $zipFileName, [
+                'Content-Type' => 'application/zip',
+            ])->deleteFileAfterSend(true);
+        } else {
+            return redirect()->back()->with('error', 'Gagal membuat file arsip ZIP');
+        }
+    }
+
+    private function buildRekapUang($lembur, $bulan, $tahun)
+    {
         $pegawaiMap = [];
         $rekap = [];
         foreach ($lembur as $l) {
@@ -507,7 +556,11 @@ class SpklController extends Controller
             }
             $rekap[$nip_lama][$kolom]++;
         }
+
         $template_path = public_path('document/template_rekap utk uang.xlsx');
+        if (!file_exists($template_path))
+            return null;
+
         $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($template_path);
         $worksheet = $spreadsheet->getActiveSheet();
 
@@ -540,17 +593,157 @@ class SpklController extends Controller
             $row++;
         }
 
-        $filename = "Rekap_Uang_" . $request->bulan . "_" . $request->tahun . ".xlsx";
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $tempPath = tempnam(sys_get_temp_dir(), 'xls') . '.xlsx';
+        $writer->save($tempPath);
+        return $tempPath;
+    }
 
-        if (ob_get_length()) {
-            ob_end_clean();
+    private function buildLemburBos($lembur, $bulan, $tahun)
+    {
+        $rekap = [];
+        foreach ($lembur as $l) {
+            $nip_lama = $l->pegawai->nip_lama;
+            if (!isset($rekap[$nip_lama])) {
+                $rekap[$nip_lama] = [
+                    'nama' => $l->pegawai->name,
+                    'tanggal' => [],
+                    'kegiatan_dates' => []
+                ];
+            }
+
+            $hari = Carbon::parse($l->tanggal)->format('j');
+            if (!in_array($hari, $rekap[$nip_lama]['tanggal'])) {
+                $rekap[$nip_lama]['tanggal'][] = $hari;
+            }
+
+            $maksud = trim($l->lembur->maksud_lembur);
+            if ($maksud) {
+                if (!isset($rekap[$nip_lama]['kegiatan_dates'][$maksud])) {
+                    $rekap[$nip_lama]['kegiatan_dates'][$maksud] = [];
+                }
+                if (!in_array($hari, $rekap[$nip_lama]['kegiatan_dates'][$maksud])) {
+                    $rekap[$nip_lama]['kegiatan_dates'][$maksud][] = $hari;
+                }
+            }
         }
 
-        return response()->streamDownload(function () use ($writer) {
-            $writer->save('php://output');
-        }, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ]);
+        $template_path = public_path('document/template_lembur_bos.xlsx');
+        if (!file_exists($template_path))
+            return null;
+
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($template_path);
+        $worksheet = $spreadsheet->getActiveSheet();
+
+        $row = 2;
+        foreach ($rekap as $nip_lama => $data) {
+            $kegiatanFormatted = [];
+            foreach ($data['kegiatan_dates'] as $kegiatan => $dates) {
+                sort($dates, SORT_NUMERIC);
+                $kegiatanFormatted[] = $kegiatan . '(' . implode(',', $dates) . ')';
+            }
+
+            $worksheet->setCellValueExplicit('A' . $row, $nip_lama, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $worksheet->setCellValue('B' . $row, $data['nama']);
+            $worksheet->setCellValueExplicit('C' . $row, implode(',', $data['tanggal']), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $worksheet->setCellValueExplicit('D' . $row, implode(', ', $kegiatanFormatted), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $row++;
+        }
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $tempPath = tempnam(sys_get_temp_dir(), 'xls') . '.xlsx';
+        $writer->save($tempPath);
+        return $tempPath;
+    }
+
+    private function buildLemburWebGaji($lembur, $bulan, $tahun)
+    {
+        $rekap = [];
+        foreach ($lembur as $l) {
+            $nip = $l->pegawai->nip;
+            if (!isset($rekap[$nip])) {
+                $rekap[$nip] = [
+                    'nama' => $l->pegawai->name,
+                    'durasi' => []
+                ];
+            }
+
+            $tgl = Carbon::parse($l->tanggal);
+            $hari = $tgl->format('j');
+            $dayOfWeek = $tgl->dayOfWeekIso;
+
+            $durasi = $l->jumlah_jam;
+            $durasi_final = 0;
+            if ($l->jam_berangkat && $l->jam_pulang) {
+                $masuk = Carbon::parse($l->jam_berangkat);
+                $pulang = Carbon::parse($l->jam_pulang);
+
+                if ($pulang->lessThan($masuk)) {
+                    $pulang->addDay();
+                }
+
+                if ($dayOfWeek <= 5) {
+                    $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
+                    $batas_pulang = Carbon::parse($batas_pulang_str);
+
+                    $mulai_lembur = $masuk->greaterThan($batas_pulang) ? $masuk : $batas_pulang;
+
+                    if ($pulang->greaterThan($mulai_lembur)) {
+                        $selisih = floor($mulai_lembur->diffInMinutes($pulang) / 60);
+                    } else {
+                        $selisih = 0;
+                    }
+                } else {
+                    $selisih = floor($masuk->diffInMinutes($pulang) / 60);
+                }
+
+                $durasi_final = ($selisih > $durasi) ? $durasi : $selisih;
+            }
+            if ($durasi_final > 0) {
+                if (!isset($rekap[$nip]['durasi'][$hari])) {
+                    $rekap[$nip]['durasi'][$hari] = 0;
+                }
+                $rekap[$nip]['durasi'][$hari] += $durasi_final;
+            }
+        }
+
+        $template_path = public_path('document/template_lembur_web_gaji.xlsx');
+        if (!file_exists($template_path))
+            return null;
+
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($template_path);
+        $worksheet = $spreadsheet->getActiveSheet();
+
+        $worksheet->setCellValue('C1', $tahun);
+        $worksheet->setCellValue('C2', $bulan);
+
+        $daysInMonth = Carbon::create($tahun, $bulan, 1)->daysInMonth;
+        for ($i = 1; $i <= $daysInMonth; $i++) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(3 + $i);
+            $worksheet->setCellValue($colLetter . '3', $i);
+        }
+
+        $row = 4;
+        $no = 1;
+        foreach ($rekap as $nip => $data) {
+            $worksheet->setCellValue('A' . $row, $no++);
+            $worksheet->setCellValueExplicit('B' . $row, $nip, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $worksheet->setCellValue('C' . $row, $data['nama']);
+
+            foreach ($data['durasi'] as $hari => $durasi_final) {
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(3 + (int) $hari);
+                $worksheet->setCellValue($colLetter . $row, $durasi_final);
+            }
+            $row++;
+        }
+
+        foreach ($spreadsheet->getDefinedNames() as $definedName) {
+            $spreadsheet->removeDefinedName($definedName->getName());
+        }
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $tempPath = tempnam(sys_get_temp_dir(), 'xls') . '.xlsx';
+        $writer->save($tempPath);
+        return $tempPath;
     }
 }

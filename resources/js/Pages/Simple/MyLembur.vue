@@ -1,5 +1,5 @@
 <template>
-  <Head title="Lembur" />
+  <Head title="MyLembur" />
   <SimpleLayout :is-open="isSidebarOpen">
     <div class="card">
       <div class="mb-4 flex flex-wrap items-center justify-between">
@@ -71,7 +71,7 @@
           </template>
         </Column>
         <Column
-          header="Maksud"
+          header="Alasan Lembur"
           field="lembur.maksud_lembur"
           sortable
           :show-filter-menu="false"
@@ -83,6 +83,34 @@
               fluid
               placeholder="Cari maksud"
             />
+          </template>
+        </Column>
+        <Column header="Output Lembur">
+          <template #body="{ data }">
+            <div class="flex flex-wrap gap-6 items-center">
+              <Badge
+                v-if="!data.output"
+                severity="secondary"
+                value="Belum diisi"
+              />
+              <Button
+                v-if="!data.output && data.status != '4' && data.status != '2'"
+                @click="fillOutput(data)"
+                v-tooltip.top="'Isi output'"
+                icon="pi pi-pencil"
+                variant="outlined"
+                rounded
+                class="mr-2"
+                severity="success"
+              />
+            </div>
+            <span
+              @click="fillOutput(data)"
+              v-if="data.output"
+              class="cursor-pointer whitespace-pre-wrap"
+              v-tooltip.top="'Klik untuk update output'"
+              >{{ data.output }}</span
+            >
           </template>
         </Column>
         <Column header="Catatan" class="min-w-[180px]">
@@ -139,6 +167,49 @@
         </Column>
       </DataTable>
     </div>
+    <Dialog
+      v-model:visible="outputDialog"
+      modal
+      header="Isi Output Lembur"
+      class="min-w-[40vw]"
+      position="top"
+    >
+      <div class="flex flex-col gap-4">
+        <div>
+          <label class="block font-bold mb-2">Tim Kerja</label>
+          <InputText v-model="editedData.lembur.tim.label" fluid disabled />
+        </div>
+        <div>
+          <label class="block font-bold mb-2">Alasan Lembur</label>
+          <InputText v-model="editedData.lembur.maksud_lembur" fluid disabled />
+        </div>
+        <div>
+          <label class="block font-bold mb-2">Output Lembur</label>
+          <Textarea
+            v-model="form.output"
+            placeholder="Masukkan Output Lembur"
+            rows="4"
+            fluid
+          />
+        </div>
+      </div>
+      <template #footer>
+        <Button
+          label="Cancel"
+          @click="outputDialog = false"
+          size="small"
+          severity="danger"
+          autofocus
+        />
+        <Button
+          @click="submit"
+          label="Simpan"
+          size="small"
+          severity="success"
+          autofocus
+        />
+      </template>
+    </Dialog>
   </SimpleLayout>
 </template>
 
@@ -238,6 +309,34 @@ const delayedFetchData = debounce(() => {
 });
 watch(searchField, () => delayedFetchData());
 watch(filterModel, () => delayedFetchData(), { deep: true });
+
+const editedData = ref({});
+const outputDialog = ref(false);
+const fillOutput = (data) => {
+  editedData.value = { ...data };
+  outputDialog.value = true;
+  form.id = editedData.value.id;
+  form.output = editedData.value.output;
+};
+const form = useForm({
+  _token: null,
+  id: null,
+  output: null,
+});
+const submit = async (params) => {
+  try {
+    const { data: tokens } = await axios.get(route("api.token.csrf"));
+    form._token = tokens;
+    form.post(route("simple.my-lembur.fill-output"), {
+      preserveScroll: true,
+      preserveState: true,
+      onSuccess: () => {
+        outputDialog.value = false;
+        form.reset();
+      },
+    });
+  } catch (error) {}
+};
 </script>
 
 <style scoped></style>

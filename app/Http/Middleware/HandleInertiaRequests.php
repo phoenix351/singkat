@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\ManManagement\Role;
+use App\Models\Simple\LemburPegawai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +34,35 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $route = Route::currentRouteName();
+        $pendingOutputCount = 0;
+        $lemburPending = 0;
+        $lemburToVerify = 0;
+        $pendingOutputs = [];
+        
+        if (Auth::check() && str_starts_with($route, 'simple.')) {
+            $lemburData = LemburPegawai::with('lembur.tim')
+                ->where('pegawai_id', Auth::id())
+                ->whereNull('output')
+                ->get();
+
+            if (Role::currentRole() == 'admin'|| Role::statusKeanggotaan() == 'ketua') {
+                $lemburPending = LemburPegawai::where('status', 1)->get()->count();
+            }
+
+            if (Role::currentRole() == 'admin'|| Role::currentRole() == 'validator') {
+                $lemburToVerify = LemburPegawai::where('status', 2)->get()->count();
+            }
+            
+            $pendingOutputCount = $lemburData->count();
+            $pendingOutputs = $lemburData->map(function($lp) {
+                return [
+                    'id' => $lp->id,
+                    'maksud_lembur' => $lp->lembur->maksud_lembur ?? '-',
+                    'tim_kerja' => $lp->lembur->tim->label ?? '-',
+                ];
+            });
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -41,6 +71,10 @@ class HandleInertiaRequests extends Middleware
                 'keanggotaan' => Role::statusKeanggotaan()
             ],
             'route' => $route,
+            'pendingOutputCount' => $pendingOutputCount,
+            'pendingOutputs' => $pendingOutputs,
+            'lemburPending' => $lemburPending,
+            'lemburToVerify' => $lemburToVerify,
             "flash" => [
                 "success" => fn() => $request->session()->get("success"),
                 "error" => fn() => $request->session()->get("error"),

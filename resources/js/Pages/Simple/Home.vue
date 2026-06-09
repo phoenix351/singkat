@@ -34,9 +34,7 @@
           <i class="pi pi-hourglass text-2xl"></i>
         </div>
         <div>
-          <h3 class="text-gray-500 text-sm font-medium">
-            Sedang diperiksa Katim
-          </h3>
+          <h3 class="text-gray-500 text-sm font-medium">Sedang diperiksa Katim</h3>
           <p class="text-2xl font-bold text-gray-800">{{ result.pending }}</p>
         </div>
       </div>
@@ -62,9 +60,7 @@
           <i class="pi pi-send text-2xl"></i>
         </div>
         <div>
-          <h3 class="text-gray-500 text-sm font-medium">
-            Sedang diperiksa Kabag
-          </h3>
+          <h3 class="text-gray-500 text-sm font-medium">Sedang diperiksa Kabag</h3>
           <p class="text-2xl font-bold text-gray-800">
             {{ result.setuju_katim }}
           </p>
@@ -101,34 +97,193 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">5 Tim dengan Lembur Terbanyak</h2>
+        <div class="flex flex-wrap justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-gray-800">
+            5 Tim dengan Lembur Terbanyak
+          </h2>
+          <Link :href="route('simple.summary')">
+            <i
+              class="pi pi-info-circle cursor-pointer"
+              v-tooltip.top="'Tekan untuk lihat detail'"
+            ></i>
+          </Link>
+        </div>
         <div class="flex-grow h-64">
-          <Chart v-if="Object.keys(timsData || {}).length > 0" type="bar" :data="timChartData" :options="chartOptions" class="h-full w-full" />
-          <div v-else class="h-full flex items-center justify-center text-gray-400">Belum ada data</div>
+          <Chart
+            v-if="Object.keys(timsData || {}).length > 0"
+            type="bar"
+            :data="timChartData"
+            :options="chartOptions"
+            class="h-full w-full"
+          />
+          <div v-else class="h-full flex items-center justify-center text-gray-400">
+            Belum ada data
+          </div>
         </div>
       </div>
       <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">5 Pegawai dengan Lembur Terbanyak</h2>
+        <div class="flex flex-wrap justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-gray-800">
+            5 Pegawai dengan Pengajuan Lembur Terbanyak
+          </h2>
+          <Link :href="route('simple.summary')">
+            <i
+              class="pi pi-info-circle cursor-pointer"
+              v-tooltip.top="'Tekan untuk lihat detail'"
+            ></i>
+          </Link>
+        </div>
         <div class="flex-grow h-64">
-          <Chart v-if="Object.keys(pegawaisData || {}).length > 0" type="bar" :data="pegawaiChartData" :options="chartOptions" class="h-full w-full" />
-          <div v-else class="h-full flex items-center justify-center text-gray-400">Belum ada data</div>
+          <Chart
+            v-if="Object.keys(pegawaisData || {}).length > 0"
+            type="bar"
+            :data="pegawaiChartData"
+            :options="chartOptions"
+            class="h-full w-full"
+          />
+          <div v-else class="h-full flex items-center justify-center text-gray-400">
+            Belum ada data
+          </div>
         </div>
       </div>
     </div>
+
+    <Dialog
+      v-model:visible="showNotificationDialog"
+      modal
+      header="Pemberitahuan Kontrol Lembur"
+      :style="{ width: '36rem' }"
+      :breakpoints="{ '960px': '75vw', '641px': '90vw' }"
+    >
+      <div class="flex flex-col divide-y divide-gray-100 p-2">
+        <div
+          v-if="page.props.pendingOutputCount > 0"
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4"
+        >
+          <p class="text-sm text-gray-600 leading-relaxed max-w-md">
+            Anda memiliki
+            <span class="font-semibold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+              {{ page.props.pendingOutputCount }}
+            </span>
+            pengajuan lembur yang belum diisi outputnya.
+          </p>
+          <Button
+            size="small"
+            label="Isi Output"
+            icon="pi pi-pencil"
+            severity="danger"
+            class="w-full sm:w-auto shrink-0"
+            @click="goToMyLembur"
+          />
+        </div>
+
+        <div
+          v-if="
+            page.props.lemburPending > 0 &&
+            (page.props.auth.keanggotaan == 'ketua' || page.props.auth.role == 'admin')
+          "
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4"
+        >
+          <p class="text-sm text-gray-600 leading-relaxed max-w-md">
+            Anda selaku <span class="font-medium text-gray-800">Ketua Tim</span> memiliki
+            <span
+              class="font-semibold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded"
+            >
+              {{ page.props.lemburPending }}
+            </span>
+            pengajuan lembur yang belum diperiksa.
+          </p>
+          <Button
+            size="small"
+            label="Periksa"
+            icon="pi pi-search"
+            severity="warn"
+            class="w-full sm:w-auto shrink-0"
+            @click="goToVerify"
+          />
+        </div>
+
+        <div
+          v-if="
+            page.props.lemburToVerify > 0 &&
+            (page.props.auth.role == 'validator' || page.props.auth.role == 'admin')
+          "
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4"
+        >
+          <p class="text-sm text-gray-600 leading-relaxed max-w-md">
+            Anda selaku
+            <span class="font-medium text-gray-800">Kepala Bagian Umum</span> memiliki
+            <span class="font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+              {{ page.props.lemburToVerify }}
+            </span>
+            pengajuan lembur yang perlu diverifikasi.
+          </p>
+          <Button
+            size="small"
+            label="Verifikasi"
+            icon="pi pi-check-circle"
+            severity="info"
+            class="w-full sm:w-auto shrink-0"
+            @click="goToVerifyKabag"
+          />
+        </div>
+
+        <div
+          v-if="
+            page.props.pendingOutputCount === 0 &&
+            page.props.lemburPending === 0 &&
+            page.props.lemburToVerify === 0
+          "
+          class="text-center py-8 text-gray-500 text-sm"
+        >
+          <i class="pi pi-check-circle text-green-500 text-3xl mb-2 block"></i>
+          Tidak ada pengajuan lembur yang memerlukan tindakan Anda saat ini.
+        </div>
+      </div>
+    </Dialog>
   </SimpleLayout>
 </template>
 
 <script setup>
-import { Head } from "@inertiajs/vue3";
+import { Head, usePage, router, Link } from "@inertiajs/vue3";
 import SimpleLayout from "../../Layouts/Simple/SimpleLayout.vue";
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import Chart from "primevue/chart";
+import Dialog from "primevue/dialog";
+import Button from "primevue/button";
 
 const props = defineProps({
   result: Object,
   pegawais: Object,
   tims: Object,
 });
+
+const page = usePage();
+const showNotificationDialog = ref(false);
+
+onMounted(() => {
+  if (
+    page.props.pendingOutputCount + page.props.lemburPending + page.props.lemburToVerify >
+    0
+  ) {
+    showNotificationDialog.value = true;
+  }
+});
+
+const goToMyLembur = () => {
+  showNotificationDialog.value = false;
+  router.visit(route("simple.my-lembur"));
+};
+
+const goToVerify = () => {
+  showNotificationDialog.value = false;
+  router.visit(route("simple.lembur.verify"));
+};
+
+const goToVerifyKabag = () => {
+  showNotificationDialog.value = false;
+  router.visit(route("simple.lembur.verify-kabag"));
+};
 
 const result = ref(props.result);
 const pegawaisData = ref(props.pegawais);

@@ -130,7 +130,7 @@
           </template>
         </Column>
         <Column
-          header="Maksud"
+          header="Alasan Lembur"
           field="maksud_lembur"
           sortable
           :show-filter-menu="false"
@@ -140,7 +140,7 @@
               v-model="filterModel.maksud_lembur"
               class="text-sm"
               fluid
-              placeholder="Cari maksud lembur"
+              placeholder="Cari alasan lembur"
             /> </template
         ></Column>
         <Column header="Link" field="link_dokumentasi">
@@ -277,6 +277,18 @@
               </Column>
               <Column header="NIP">
                 <template #body="{ data }">{{ data.pegawai?.nip }}</template>
+              </Column>
+              <Column header="Output Lembur">
+                <template #body="{ data }">
+                  <Badge
+                    v-if="!data.output"
+                    severity="secondary"
+                    value="Belum diisi"
+                  />
+                  <span v-if="data.output" class="whitespace-pre-wrap">{{
+                    data.output
+                  }}</span>
+                </template>
               </Column>
               <Column
                 header="Status"

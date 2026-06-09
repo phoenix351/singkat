@@ -20,11 +20,86 @@
         :class="isOpen ? 'opacity-0' : 'opacity-100'"
       ></i>
     </div>
-    <nav class="py-4" :class="isOpen ? 'px-4' : 'px-4 lg:px-3'">
+    <nav
+      class="py-4 overflow-y-auto flex-1"
+      :class="isOpen ? 'px-4' : 'px-4 lg:px-3'"
+    >
       <ul class="space-y-1">
         <li v-for="(item, index) in menuItems" :key="index">
+          <template v-if="item.children">
+            <button
+              v-if="checkAvailability(item.role)"
+              @click="toggleDropdown(index)"
+              :title="!isOpen ? item.label : ''"
+              class="w-full flex items-center py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all group overflow-hidden"
+              :class="
+                isOpen ? 'px-4 justify-start' : 'px-4 lg:px-0 lg:justify-center'
+              "
+            >
+              <i
+                :class="[
+                  item.icon,
+                  'text-lg w-6 flex-shrink-0 group-hover:text-white transition-all text-center',
+                  isOpen ? 'mr-3' : 'mr-3 lg:mr-0',
+                ]"
+              ></i>
+              <span
+                class="flex-1 text-left transition-opacity duration-300 whitespace-nowrap"
+                :class="isOpen ? 'opacity-100 block' : 'opacity-0 lg:hidden'"
+                >{{ item.label }}</span
+              >
+              <i
+                class="pi pi-chevron-down text-xs transition-transform duration-300"
+                :class="[
+                  openDropdowns.has(index) ? 'rotate-180' : 'rotate-0',
+                  isOpen ? 'opacity-100' : 'opacity-0 lg:hidden',
+                ]"
+              ></i>
+            </button>
+            <ul
+              v-show="openDropdowns.has(index) && isOpen"
+              class="mt-1 ml-3 pl-3 border-l border-slate-700 space-y-1"
+            >
+              <li
+                v-for="(child, childIndex) in item.children"
+                :key="childIndex"
+              >
+                <Link
+                  v-if="child.route"
+                  :href="route(child.route)"
+                  class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all group text-sm"
+                  :class="
+                    page.props.route == child.route
+                      ? 'text-white bg-slate-800 font-bold'
+                      : ''
+                  "
+                >
+                  <i
+                    :class="[
+                      child.icon || 'pi pi-minus',
+                      'text-sm w-5 mr-2 flex-shrink-0 text-center group-hover:text-white',
+                    ]"
+                  ></i>
+                  <span class="whitespace-nowrap">{{ child.label }}</span>
+                </Link>
+                <span
+                  v-else
+                  class="flex items-center px-3 py-2 rounded-lg text-slate-500 text-sm cursor-not-allowed"
+                >
+                  <i
+                    :class="[
+                      child.icon || 'pi pi-minus',
+                      'text-sm w-5 mr-2 flex-shrink-0 text-center',
+                    ]"
+                  ></i>
+                  <span class="whitespace-nowrap">{{ child.label }}</span>
+                </span>
+              </li>
+            </ul>
+          </template>
+
           <Link
-            v-if="checkAvailability(item.role)"
+            v-else-if="checkAvailability(item.role)"
             :href="route(item.route)"
             :title="!isOpen ? item.label : ''"
             class="flex items-center py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all group overflow-hidden"
@@ -49,13 +124,6 @@
               >{{ item.label }}</span
             >
           </Link>
-          <!-- <a
-            v-else
-            class="flex items-center px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer group"
-          >
-            <i :class="[item.icon, 'mr-3 text-lg w-6 group-hover:text-white']"></i>
-            <span class="font-medium">{{ item.label }}</span>
-          </a> -->
         </li>
       </ul>
     </nav>
@@ -72,11 +140,26 @@ const props = defineProps({
   },
 });
 const page = usePage();
+
+const openDropdowns = ref(new Set());
+const toggleDropdown = (index) => {
+  if (openDropdowns.value.has(index)) {
+    openDropdowns.value.delete(index);
+  } else {
+    openDropdowns.value.add(index);
+  }
+};
+
 const menuItems = ref([
   {
     label: "Dashboard",
     icon: "pi pi-home",
     route: "simple.index",
+  },
+  {
+    label: "Summary",
+    icon: "pi pi-building-columns",
+    route: "simple.summary",
   },
   {
     label: "MyLembur",

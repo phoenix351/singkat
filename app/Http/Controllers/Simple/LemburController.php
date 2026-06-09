@@ -595,7 +595,9 @@ class LemburController extends Controller
             if ($validated['individual'] == true)
                 LemburPegawai::whereIn('id', $validated['lembur_pegawai'])->update($updateData);
             else
-                LemburPegawai::where('lembur_id', $validated['lembur_id'])->update($updateData);
+                LemburPegawai::where('lembur_id', $validated['lembur_id'])
+                    ->whereIn('status', ['2', '5'])
+                    ->update($updateData);
             DB::connection('sulutweb_simple')->commit();
             return redirect()->route('simple.lembur.verify-kabag')->with('success', 'Berhasil mengubah status lembur');
 
@@ -681,6 +683,28 @@ class LemburController extends Controller
         return Inertia::render('Simple/MyLembur', [
             'lembur' => $lembur,
         ]);
+    }
+
+    public function fillOutput(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => ['required'],
+            'output' => ['string', 'required']
+        ]);
+        try {
+            DB::connection('sulutweb_simple')->beginTransaction();
+            $updateData = [
+                'output' => $validated['output']
+            ];
+            $lembur_to_update = LemburPegawai::where('id', $validated['id']);
+            $lembur_to_update->update($updateData);
+            DB::connection('sulutweb_simple')->commit();
+            return redirect()->route('simple.my-lembur')->with('success', 'Berhasil mengisi output');
+
+        } catch (\Throwable $th) {
+            DB::connection('sulutweb_simple')->rollBack();
+            return redirect()->route('simple.my-lembur')->with('error', 'Gagal menambahkan output, error: ' . $th->getMessage());
+        }
     }
 
     public function fetchLembur($lembur_id)

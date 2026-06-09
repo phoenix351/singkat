@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Simple\HomeController;
 use App\Http\Controllers\Simple\LemburController;
-use App\Http\Controllers\Simple\PresensiController;
 use App\Http\Controllers\Simple\SpklController;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
@@ -12,7 +11,12 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
     ->group(function () {
         Route::get('/', [HomeController::class, 'index'])->name('index');
 
+        //summary
+        Route::get('/summary', [HomeController::class, 'summary'])->name('summary');
+
+        //my-lembur
         Route::get('/my-lembur', [LemburController::class, 'myLembur'])->name('my-lembur');
+        Route::post('/my-lembur/fill-output', [LemburController::class, 'fillOutput'])->name('my-lembur.fill-output');
 
         Route::get('/pengajuan-lembur', [LemburController::class, 'index'])->name('lembur');
         Route::post('/pengajuan-lembur/store', [LemburController::class, 'store'])->name('lembur.store');
@@ -40,6 +44,7 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
         Route::get('/laporan-lembur', [SpklController::class, 'laporan'])->name('laporan-lembur');
         Route::get('/print/laporan-lembur', [SpklController::class, 'printLaporan'])->name('print.laporan-lembur');
         Route::post('/laporan-lembur/upload', [SpklController::class, 'uploadLaporan'])->name('upload.laporan-lembur');
+        Route::get('/laporan-lembur/download/{lembur_id}', [SpklController::class, 'downloadLaporan'])->name('download.laporan-lembur');
 
         //presensi-lembur
         Route::patch('/presensi/patch', [SpklController::class, 'patch'])->name('presensi.patch');
