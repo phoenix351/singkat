@@ -50,3 +50,4 @@ require __DIR__ .'/singkat.php';
 require __DIR__ .'/simple.php';
 require __DIR__ . '/meeting.php';
 require __DIR__ . '/mmanagement.php';
+require __DIR__ . '/se2026.php';
