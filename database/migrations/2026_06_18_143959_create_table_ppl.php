@@ -11,11 +11,10 @@ return new class extends Migration {
     public $connection = 'sulutweb_se2026';
     public function up(): void
     {
-        Schema::create('master_subsls', function (Blueprint $table) {
-            $table->string('code', 16)->primary();
-            $table->string('label', 100);
-            $table->string('desa_code', 10);
-            $table->foreign('desa_code')->references('code')->on('master_desa');
+        Schema::create('ppl', function (Blueprint $table) {
+            $table->id();
+            $table->string('nama')->nullable();
+            $table->string('email');
         });
     }
 
@@ -24,6 +23,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('master_sls');
+        Schema::dropIfExists('ppl');
     }
 };

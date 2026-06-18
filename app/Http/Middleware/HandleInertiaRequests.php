@@ -38,23 +38,23 @@ class HandleInertiaRequests extends Middleware
         $lemburPending = 0;
         $lemburToVerify = 0;
         $pendingOutputs = [];
-        
+
         if (Auth::check() && str_starts_with($route, 'simple.')) {
             $lemburData = LemburPegawai::with('lembur.tim')
                 ->where('pegawai_id', Auth::id())
                 ->whereNull('output')
                 ->get();
 
-            if (Role::currentRole() == 'admin'|| Role::statusKeanggotaan() == 'ketua') {
+            if (Role::currentRole() == 'admin' || Role::statusKeanggotaan() == 'ketua') {
                 $lemburPending = LemburPegawai::where('status', 1)->get()->count();
             }
 
-            if (Role::currentRole() == 'admin'|| Role::currentRole() == 'validator') {
+            if (Role::currentRole() == 'admin' || Role::currentRole() == 'validator') {
                 $lemburToVerify = LemburPegawai::where('status', 2)->get()->count();
             }
-            
+
             $pendingOutputCount = $lemburData->count();
-            $pendingOutputs = $lemburData->map(function($lp) {
+            $pendingOutputs = $lemburData->map(function ($lp) {
                 return [
                     'id' => $lp->id,
                     'maksud_lembur' => $lp->lembur->maksud_lembur ?? '-',
