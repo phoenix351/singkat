@@ -10,4 +10,7 @@ Route::prefix('se2026')->middleware(['auth', 'use.vue.inertia'])->name('se2026.'
     Route::post('/upload-data-batch', [DataController::class, 'uploadDataBatch'])->name('upload-data-batch');
 
     Route::get('/fetch-data-ppl', [DataController::class, 'fetchDataPpl'])->name('fetch-data-ppl');
+    Route::get('/fetch-kec/{kabkot}', [DataController::class, 'fetchKec'])->name('fetch-kec');
+    Route::get('/fetch-desa/{kec}', [DataController::class, 'fetchDesa'])->name('fetch-desa');
+    Route::get('/fetch-sls/{desa}', [DataController::class, 'fetchSls'])->name('fetch-sls');
 });

@@ -178,11 +178,16 @@
           PML
         </button>
       </div>
-      <div class="flex flex-wrap space-x-2" v-if="activeTab === 'ppl'">
-        <div class="mt-4 flex flex-col gap-2">
+      <div
+        class="flex flex-wrap items-end mt-4 space-x-2"
+        v-if="activeTab === 'ppl'"
+      >
+        <div class="flex flex-col gap-2">
           <label class="font-bold">Kabupaten/Kota</label>
           <Select
             :options="kabkot"
+            v-model="selectedKabkot"
+            @change="fetchKec"
             filter
             showClear
             placeholder="Pilih kabupaten/kota"
@@ -191,10 +196,12 @@
             class="w-64"
           />
         </div>
-        <div class="mt-4 flex flex-col gap-2">
+        <div class="flex flex-col gap-2">
           <label class="font-bold">Kecamatan</label>
           <Select
-            :options="kabkot"
+            :options="kec"
+            v-model="selectedKec"
+            @change="fetchDesa"
             filter
             showClear
             placeholder="Pilih kecamatan"
@@ -202,6 +209,36 @@
             optionValue="code"
             class="w-64"
           />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="font-bold">Desa</label>
+          <Select
+            :options="desa"
+            v-model="selectedDesa"
+            @change="fetchSls"
+            filter
+            showClear
+            placeholder="Pilih desa"
+            optionLabel="label"
+            optionValue="code"
+            class="w-64"
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="font-bold">SLS</label>
+          <Select
+            :options="sls"
+            v-model="selectedSls"
+            filter
+            showClear
+            placeholder="Pilih sls"
+            optionLabel="label"
+            optionValue="code"
+            class="w-64"
+          />
+        </div>
+        <div class="space-x-2">
+          <Button @click="fetchDataPpl" icon="pi pi-search" class="mb-0" />
         </div>
       </div>
     </div>
@@ -477,7 +514,7 @@
               </Column>
               <Column
                 field="submitted_p"
-                header="Submit (P)"
+                header="Submit (by Pencacah)"
                 style="width: 5rem; text-align: center"
               >
                 <template #body="{ data: row }">
@@ -489,7 +526,7 @@
               </Column>
               <Column
                 field="submitted_r"
-                header="Submit (R)"
+                header="Submit (by Respondent)"
                 style="width: 5rem; text-align: center"
               >
                 <template #body="{ data: row }">
@@ -596,6 +633,34 @@ const props = defineProps({
   lastThreeUpdate: Object,
   kabkot: Array,
 });
+
+const selectedKabkot = ref(null);
+const selectedKec = ref(null);
+const selectedDesa = ref(null);
+const selectedSls = ref(null);
+const kec = ref([]);
+const desa = ref([]);
+const sls = ref([]);
+const fetchKec = async () => {
+  const { data } = await axios.get(
+    route("se2026.fetch-kec", { kabkot: selectedKabkot.value })
+  );
+  kec.value = data;
+};
+
+const fetchDesa = async () => {
+  const { data } = await axios.get(
+    route("se2026.fetch-desa", { kec: selectedKec.value })
+  );
+  desa.value = data;
+};
+
+const fetchSls = async () => {
+  const { data } = await axios.get(
+    route("se2026.fetch-sls", { desa: selectedDesa.value })
+  );
+  sls.value = data;
+};
 
 const activeTab = ref("wilayah"); // wilayah | ppl | pml
 
@@ -806,6 +871,10 @@ const fetchDataPpl = async (event) => {
         sortField: sortFieldPpl.value,
         sortOrder: sortOrderPpl.value,
         nama: pplSearchNama.value || undefined,
+        kabkot: selectedKabkot.value || undefined,
+        kec: selectedKec.value || undefined,
+        desa: selectedDesa.value || undefined,
+        sls: selectedSls.value || undefined,
       },
     });
     paginatedItem.value = data;

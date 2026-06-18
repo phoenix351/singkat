@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Se2026;
 use App\Http\Controllers\Controller;
 use App\Models\Se2026\DataFasih;
 use App\Models\Se2026\Logs;
+use App\Models\Se2026\MasterDesa;
 use App\Models\Se2026\MasterKabkot;
+use App\Models\Se2026\MasterKec;
 use App\Models\Se2026\MasterSubSls;
 use App\Models\Se2026\Ppl;
 use Illuminate\Http\Request;
@@ -136,7 +138,12 @@ class DataController extends Controller
             $item->formatted_time = $item->created_at->format('H:i d M Y');
             return $item;
         });
-        $kabkot = MasterKabkot::get();
+        $kabkot = MasterKabkot::get()->map(function ($item) {
+            return [
+                'code' => $item->code,
+                'label' => '[' . $item->code . '] ' . $item->label,
+            ];
+        });
         return Inertia::render('Se2026/Dashboard', [
             'open' => $open,
             'draft' => $draft,
@@ -295,5 +302,38 @@ class DataController extends Controller
 
         return response()->json($dataPpl);
 
+    }
+
+    public function fetchKec($kabkot)
+    {
+        $kec = MasterKec::where('kabkot_code', $kabkot)->get()->map(function ($item) {
+            return [
+                'code' => $item->code,
+                'label' => '[' . $item->code . '] ' . $item->label,
+            ];
+        });
+        return response()->json($kec);
+    }
+
+    public function fetchDesa($kec)
+    {
+        $desa = MasterDesa::where('kec_code', $kec)->get()->map(function ($item) {
+            return [
+                'code' => $item->code,
+                'label' => '[' . $item->code . '] ' . $item->label,
+            ];
+        });
+        return response()->json($desa);
+    }
+
+    public function fetchSls($desa)
+    {
+        $sls = MasterSubSls::where('desa_code', $desa)->get()->map(function ($item) {
+            return [
+                'code' => $item->code,
+                'label' => '[' . $item->code . '] ' . $item->label,
+            ];
+        });
+        return response()->json($sls);
     }
 }
