@@ -24,7 +24,7 @@
         <div class="stat-footer">
           <span class="stat-pct text-emerald-600">{{ pctRealisasi }}%</span>
         </div>
-        <span class="stat-note">*Selain status OPEN</span>
+        <span class="stat-note">*Selain status OPEN dan DRAFT</span>
       </div>
 
       <!-- REALISASI VIA FASIH SM -->
@@ -232,7 +232,7 @@
           <div>
             <h2 class="text-base font-bold text-slate-800">Progres Realisasi</h2>
             <p class="text-xs text-slate-500">
-              Distribusi persentase realisasi (Selain status Open)
+              Distribusi persentase realisasi (Selain status Open dan Draft)
             </p>
           </div>
         </div>
@@ -703,7 +703,6 @@ const kabkotTotal = (item) => {
 
 const kabkotRealisasi = (item) => {
   return (
-    (item.draft || 0) +
     (item.submitted_p || 0) +
     (item.submitted_r || 0) +
     (item.approved || 0) +
@@ -760,7 +759,6 @@ const getVisibility = (level) => {
 // Realisasi = semua selain Open
 const realisasi = computed(
   () =>
-    (props.draft || 0) +
     (props.submitted_p || 0) +
     (props.submitted_r || 0) +
     (props.approved || 0) +

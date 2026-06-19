@@ -260,13 +260,15 @@ class DataController extends Controller
                         $mapped[$field] = $row[$index];
                     }
                 }
+                $subsls_code = (string) ($mapped['subsls_code'] ?? '');
+                $mapped['subsls_code'] = $subsls_code;
 
-                $cek_subsls = MasterSubSls::where('code', $mapped['subsls_code'])->first();
+                $cek_subsls = MasterSubSls::where('code', (string) $mapped['subsls_code'])->first();
                 if ($cek_subsls) {
                     DataFasih::updateOrCreate(
                         [
                             'email' => $mapped['email'] ?? null,
-                            'subsls_code' => $mapped['subsls_code'] ?? null,
+                            'subsls_code' => (string) $mapped['subsls_code'] ?? null,
                         ],
                         $mapped
                     );
