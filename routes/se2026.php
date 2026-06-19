@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
 
-Route::prefix('se2026')->middleware(['auth', 'use.vue.inertia'])->name('se2026.')->group(function () {
+Route::prefix('se2026')->middleware(['auth', 'use.vue.inertia', 'permission'])->name('se2026.')->group(function () {
     // Route::get('/', function () {});
     Route::get('/', [DataController::class, 'index'])->name('data.index');
     Route::post('/upload-data', [DataController::class, 'uploadData'])->name('upload-data');
