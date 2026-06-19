@@ -19,4 +19,8 @@ class Logs extends Model
     {
         return $this->belongsTo(Pegawai::class, 'pegawai_id');
     }
+
+    public function kabkot() {
+        return $this->belongsTo(MasterKabkot::class, 'kode', 'code');
+    }
 }

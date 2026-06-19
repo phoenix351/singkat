@@ -8,15 +8,11 @@
           class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"
         >
           <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-xl p-1 shadow-md border border-slate-200 dark:border-slate-700"
-            >
-              <img
-                src="/icon.png"
-                alt="Logo BPS"
-                class="w-8 h-8 object-contain"
-              />
-            </div>
+            <img
+              src="../../../../public/images/logo/logo-se2026-singkat.png"
+              alt="Logo BPS"
+              class="w-10 h-10 rounded-full shadow-lg opacity-80"
+            />
             <div>
               <h1
                 class="text-sm sm:text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2"
@@ -24,7 +20,7 @@
                 Dashboard Sensus Ekonomi 2026
               </h1>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Provinsi Sulawesi Utara
+                Provinsi Sulawesi Utara (versi beta-1.0)
               </p>
             </div>
           </div>
@@ -38,32 +34,15 @@
               severity="secondary"
               label="Upload Data"
             />
-            <nav
-              class="flex items-center gap-1 border border-slate-200 dark:border-slate-800 rounded-[12px] p-1 bg-slate-50/50 dark:bg-slate-950/50"
-            >
-              <a
-                href="/"
-                class="px-3 py-1.5 rounded-[9px] text-xs font-bold transition-all bg-orange-500 text-white shadow-sm"
-              >
-                Dashboard
-              </a>
-              <a
-                href="/tabulasi"
-                class="px-3 py-1.5 rounded-[9px] text-xs font-medium transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-              >
-                Tabulasi
-              </a>
-            </nav>
-
-            <button
-              class="p-2.5 rounded-[9px] border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
-              title="Ganti Tema"
-            ></button>
-
-            <button
-              class="p-2.5 rounded-[9px] border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors disabled:opacity-50"
-              title="Segarkan Data"
-            ></button>
+            <Button
+              @click="openLogsDialog"
+              icon="pi pi-list"
+              size="small"
+              class="rounded-[12px]"
+              severity="warn"
+              variant="outlined"
+              label="Logs Upload"
+            />
           </div>
         </div>
       </header>
@@ -95,7 +74,7 @@
         <p class="text-xs text-slate-500 mb-3">
           Bisa pilih banyak file sekaligus. Format nama:
           <code class="bg-slate-100 px-1 rounded text-orange-600"
-            >scrapped_data_7171.csv</code
+            >scraped_data_7171.csv</code
           >
         </p>
         <input
@@ -140,9 +119,7 @@
               :style="{ width: overallProgress + '%' }"
             ></div>
           </div>
-          <p class="text-xs text-slate-500 mt-1 text-right">
-            {{ overallProgress }}%
-          </p>
+          <p class="text-xs text-slate-500 mt-1 text-right">{{ overallProgress }}%</p>
         </div>
 
         <div class="max-h-[40vh] overflow-y-auto">
@@ -199,26 +176,17 @@
               >
                 {{ file.name }}
               </p>
-              <p
-                v-if="file.status === 'success'"
-                class="text-xs text-emerald-600"
-              >
+              <p v-if="file.status === 'success'" class="text-xs text-emerald-600">
                 {{ file.rowsProcessed }} baris diproses dari
                 {{ file.rowsTotal }}
               </p>
               <p v-if="file.status === 'error'" class="text-xs text-red-500">
                 {{ file.errorMessage }}
               </p>
-              <p
-                v-if="file.status === 'uploading'"
-                class="text-xs text-blue-500"
-              >
+              <p v-if="file.status === 'uploading'" class="text-xs text-blue-500">
                 Sedang memproses...
               </p>
-              <p
-                v-if="file.status === 'cancelled'"
-                class="text-xs text-slate-400"
-              >
+              <p v-if="file.status === 'cancelled'" class="text-xs text-slate-400">
                 Dibatalkan
               </p>
             </div>
@@ -240,9 +208,7 @@
         v-if="isCompleted"
         class="rounded-xl p-4 border"
         :class="
-          hasErrors
-            ? 'bg-amber-50 border-amber-200'
-            : 'bg-emerald-50 border-emerald-200'
+          hasErrors ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'
         "
       >
         <div class="flex items-center gap-2 mb-2">
@@ -322,6 +288,33 @@
       </div>
     </template>
   </Dialog>
+
+  <Dialog
+    v-model:visible="logsDialog"
+    modal
+    class="w-[50vw]"
+    header="Log Upload"
+    position="top"
+  >
+    <DataTable
+      :value="logPaginatedItem.data"
+      class="w-full text-sm"
+      lazy
+      paginator
+      showGridlines
+      stripedRows
+      :rows="logPaginatedItem.per_page"
+      :first="(logPaginatedItem.current_page - 1) * logPaginatedItem.per_page"
+      :total-records="logPaginatedItem.total"
+      :rows-per-page-options="[10, 20, 50, 100]"
+      paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+      current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data"
+    >
+      <Column field="formatted_time" header="Upload Tanggal" />
+      <Column field="kabkot.label" header="Data Kabupaten/Kota" />
+      <Column field="pegawai.name" header="Nama Pegawai" />
+    </DataTable>
+  </Dialog>
 </template>
 
 <script setup>
@@ -376,9 +369,8 @@ const dialogTitle = computed(() => {
 // ─── Computed Stats ───
 const completedCount = computed(
   () =>
-    selectedFiles.value.filter(
-      (f) => f.status === "success" || f.status === "error"
-    ).length
+    selectedFiles.value.filter((f) => f.status === "success" || f.status === "error")
+      .length
 );
 const successCount = computed(
   () => selectedFiles.value.filter((f) => f.status === "success").length
@@ -389,9 +381,7 @@ const errorCount = computed(
 const cancelledCount = computed(
   () => selectedFiles.value.filter((f) => f.status === "cancelled").length
 );
-const hasErrors = computed(
-  () => errorCount.value > 0 || cancelledCount.value > 0
-);
+const hasErrors = computed(() => errorCount.value > 0 || cancelledCount.value > 0);
 const overallProgress = computed(() => {
   if (selectedFiles.value.length === 0) return 0;
   const done = selectedFiles.value.filter(
@@ -516,9 +506,7 @@ const startBatchUpload = async () => {
     } catch (err) {
       fileEntry.status = "error";
       fileEntry.errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Terjadi kesalahan tidak diketahui";
+        err.response?.data?.message || err.message || "Terjadi kesalahan tidak diketahui";
     }
 
     // Free memory
@@ -541,5 +529,17 @@ const startBatchUpload = async () => {
 
 const cancelUpload = () => {
   cancelRequested.value = true;
+};
+
+const logsDialog = ref(false);
+const logPaginatedItem = ref({});
+const openLogsDialog = async () => {
+  logsDialog.value = true;
+  try {
+    const { data } = await axios.get(route("se2026.fetch-log"));
+    logPaginatedItem.value = data;
+  } catch (error) {
+    console.error(error);
+  }
 };
 </script>

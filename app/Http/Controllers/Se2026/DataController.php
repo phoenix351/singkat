@@ -127,14 +127,13 @@ class DataController extends Controller
                         'completed' => $group->sum('completed'),
                     ];
                 })->values();
-
             } else {
                 $current_level = 'kabkot';
                 $data_progress = $groupKabkot;
             }
             return response()->json(['data_progress' => $data_progress, 'current_level' => $current_level]);
         }
-        $lastThreeUpdate = Logs::with('pegawai')->orderBy('created_at', 'desc')->limit(3)->get()->map(function ($item) {
+        $lastThreeUpdate = Logs::with(['pegawai', 'kabkot'])->orderBy('created_at', 'desc')->limit(3)->get()->map(function ($item) {
             $item->formatted_time = $item->created_at->format('H:i d M Y');
             return $item;
         });
@@ -211,7 +210,40 @@ class DataController extends Controller
         ]);
         $datas = $validated['file'];
         $fileName = $validated['file_name'] ?? 'unknown';
-
+        $array_kako = [
+            '7101',
+            '7102',
+            '7103',
+            '7104',
+            '7105',
+            '7106',
+            '7107',
+            '7108',
+            '7109',
+            '7110',
+            '7111',
+            '7171',
+            '7172',
+            '7173',
+            '7174'
+        ];
+        $kode = null;
+        if (preg_match('/^scraped_data_(.+?)\.csv$/', $fileName, $matches)) {
+            $kode = $matches[1];
+            if (!in_array($kode, $array_kako)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Gagal upload {$fileName}: " . "Kode tidak valid. Kode harus salah satu dari: " . implode(', ', $array_kako),
+                    'file_name' => $fileName,
+                ], 422);
+            }
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => "Gagal upload {$fileName}: " . "Format file tidak sesuai. Harus berupa scraped_data_{kode}.csv",
+                'file_name' => $fileName,
+            ], 422);
+        }
         // Slice to skip header row (index 0)
         $data = array_slice($datas, 1);
 
@@ -243,6 +275,7 @@ class DataController extends Controller
             }
 
             $logs = Logs::create([
+                'kode' => $kode,
                 'pegawai_id' => Auth::id(),
             ]);
 
@@ -285,7 +318,10 @@ class DataController extends Controller
             $query->where('subsls_code', 'like', $kabkot . '%');
 
         if ($nama) {
-            $email_selected = Ppl::where('nama', 'like', '%' . $nama . '%')->pluck('email')->toArray();
+            $email_selected = Ppl::where(function ($q) use ($nama) {
+                $q->where('nama', 'like', '%' . $nama . '%')
+                    ->orWhere('email', 'like', '%' . $nama . '%');
+            })->pluck('email')->toArray();
             $query->whereIn('email', $email_selected);
         }
 
@@ -301,7 +337,6 @@ class DataController extends Controller
             ->paginate($paginated, ['*'], 'page', $currentPage);
 
         return response()->json($dataPpl);
-
     }
 
     public function fetchKec($kabkot)
@@ -335,5 +370,19 @@ class DataController extends Controller
             ];
         });
         return response()->json($sls);
+    }
+
+    public function fetchLog(Request $request)
+    {
+        $paginated = $request->paginated ?? 10;
+        $currentPage = $request->currentPage ?? 1;
+        $logs = Logs::with(['pegawai', 'kabkot'])->orderBy('created_at', 'desc')
+            ->paginate($paginated, ['*'], 'page', $currentPage);
+
+        $mappedCollection = $logs->getCollection()->map(function ($item) {
+            $item->formatted_time = $item->created_at->format('H:i d M Y');
+            return $item;
+        });
+        return response()->json($logs->setCollection($mappedCollection));
     }
 }

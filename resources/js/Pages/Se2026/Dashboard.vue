@@ -14,9 +14,7 @@
       <!-- TOTAL REALISASI -->
       <div class="stat-card">
         <span class="stat-label">Realisasi Pendataan</span>
-        <span class="stat-value text-emerald-600">{{
-          formatNumber(realisasi)
-        }}</span>
+        <span class="stat-value text-emerald-600">{{ formatNumber(realisasi) }}</span>
         <div class="stat-bar-wrapper">
           <div
             class="stat-bar bg-emerald-500"
@@ -54,10 +52,7 @@
         <span class="stat-label">Status OPEN</span>
         <span class="stat-value text-amber-500">{{ formatNumber(open) }}</span>
         <div class="stat-bar-wrapper">
-          <div
-            class="stat-bar bg-yellow-500"
-            :style="{ width: pctOpen + '%' }"
-          ></div>
+          <div class="stat-bar bg-yellow-500" :style="{ width: pctOpen + '%' }"></div>
         </div>
         <div class="stat-footer">
           <span class="stat-pct text-amber-500">{{ pctOpen }}%</span>
@@ -67,9 +62,7 @@
       <!-- SUBMITTED BY PENCACAH -->
       <div class="stat-card">
         <span class="stat-label">Submitted by Pencacah</span>
-        <span class="stat-value text-green-600">{{
-          formatNumber(submitted_p)
-        }}</span>
+        <span class="stat-value text-green-600">{{ formatNumber(submitted_p) }}</span>
         <div class="stat-bar-wrapper">
           <div
             class="stat-bar bg-green-500"
@@ -84,14 +77,9 @@
       <!-- APPROVED BY PENGAWAS -->
       <div class="stat-card">
         <span class="stat-label">Approved by Pengawas</span>
-        <span class="stat-value text-green-600">{{
-          formatNumber(approved)
-        }}</span>
+        <span class="stat-value text-green-600">{{ formatNumber(approved) }}</span>
         <div class="stat-bar-wrapper">
-          <div
-            class="stat-bar bg-green-500"
-            :style="{ width: pctApproved + '%' }"
-          ></div>
+          <div class="stat-bar bg-green-500" :style="{ width: pctApproved + '%' }"></div>
         </div>
         <div class="stat-footer">
           <span class="stat-pct text-green-600">{{ pctApproved }}%</span>
@@ -103,10 +91,7 @@
         <span class="stat-label">Status Draft</span>
         <span class="stat-value text-blue-600">{{ formatNumber(draft) }}</span>
         <div class="stat-bar-wrapper">
-          <div
-            class="stat-bar bg-blue-500"
-            :style="{ width: pctDraft + '%' }"
-          ></div>
+          <div class="stat-bar bg-blue-500" :style="{ width: pctDraft + '%' }"></div>
         </div>
         <div class="stat-footer">
           <span class="stat-pct text-blue-600">{{ pctDraft }}%</span>
@@ -116,14 +101,9 @@
       <!-- REJECTED BY PENGAWAS -->
       <div class="stat-card">
         <span class="stat-label">Rejected by Pengawas</span>
-        <span class="stat-value text-red-600">{{
-          formatNumber(rejected)
-        }}</span>
+        <span class="stat-value text-red-600">{{ formatNumber(rejected) }}</span>
         <div class="stat-bar-wrapper">
-          <div
-            class="stat-bar bg-red-500"
-            :style="{ width: pctRejected + '%' }"
-          ></div>
+          <div class="stat-bar bg-red-500" :style="{ width: pctRejected + '%' }"></div>
         </div>
         <div class="stat-footer">
           <span class="stat-pct text-red-600">{{ pctRejected }}%</span>
@@ -136,16 +116,21 @@
           <i class="pi pi-history text-lg text-orange-500"></i>
           <div>
             <h2 class="text-base font-bold text-slate-800">Update Terakhir</h2>
-            <p class="text-xs text-slate-500">
-              User yang melakukan 3 update terakhir:
-            </p>
+            <p class="text-xs text-slate-500">User yang melakukan 3 update terakhir:</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
           <Badge
             v-for="(item, index) in lastThreeUpdate"
             :key="index"
-            :value="item.pegawai.username + ', (' + item.formatted_time + ')'"
+            :value="
+              item.pegawai.username +
+              ', (Kode ' +
+              item.kode +
+              ', ' +
+              item.formatted_time +
+              ')'
+            "
             :severity="getSeverity(item.level)"
           />
         </div>
@@ -178,10 +163,7 @@
           PML
         </button>
       </div>
-      <div
-        class="flex flex-wrap items-end mt-4 space-x-2"
-        v-if="activeTab === 'ppl'"
-      >
+      <div class="flex flex-wrap items-end mt-4 space-x-2" v-if="activeTab === 'ppl'">
         <div class="flex flex-col gap-2">
           <label class="font-bold">Kabupaten/Kota</label>
           <Select
@@ -248,9 +230,7 @@
         <div class="flex items-center gap-2">
           <i class="pi pi-chart-line text-lg text-orange-500"></i>
           <div>
-            <h2 class="text-base font-bold text-slate-800">
-              Progres Realisasi
-            </h2>
+            <h2 class="text-base font-bold text-slate-800">Progres Realisasi</h2>
             <p class="text-xs text-slate-500">
               Distribusi persentase realisasi (Selain status Open)
             </p>
@@ -323,9 +303,7 @@
                       >{{ formatNumber(kabkotRealisasi(item)) }} /
                       {{ formatNumber(kabkotTotal(item)) }}</span
                     >
-                    <span
-                      class="rank-pct"
-                      :class="rankPctColor(colIdx * 15 + idx)"
+                    <span class="rank-pct" :class="rankPctColor(colIdx * 15 + idx)"
                       >{{ kabkotPct(item) }}%</span
                     >
                   </div>
@@ -351,17 +329,23 @@
           <i class="pi pi-users text-lg text-orange-500"></i>
           <div>
             <h2 class="text-base font-bold text-slate-800">Progres Per PPL</h2>
-            <p class="text-xs text-slate-500">
-              Klik baris untuk melihat detail per SLS
-            </p>
+            <p class="text-xs text-slate-500">Klik baris untuk melihat detail per SLS</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
+          <Button
+            title="Download"
+            @click="downloadPpl"
+            rounded
+            icon="pi pi-download"
+            size="small"
+            severity="info"
+          />
           <InputText
             v-model="pplSearchNama"
-            placeholder="Cari nama PPL..."
+            placeholder="Cari nama/email PPL (Enter untuk cari)"
             size="small"
-            class="text-sm w-48"
+            class="text-sm w-96"
             @keyup.enter="fetchDataPpl()"
           />
           <Button
@@ -415,20 +399,14 @@
         <Column header="No" style="width: 3.5rem">
           <template #body="{ index }">
             <span class="text-xs text-slate-500">
-              {{
-                (paginatedItem.current_page - 1) * paginatedItem.per_page +
-                index +
-                1
-              }}
+              {{ (paginatedItem.current_page - 1) * paginatedItem.per_page + index + 1 }}
             </span>
           </template>
         </Column>
         <Column field="nama" header="Nama">
           <template #body="{ data }">
             <div>
-              <span class="font-semibold text-slate-800">{{
-                data.nama || "-"
-              }}</span>
+              <span class="font-semibold text-slate-800">{{ data.nama || "-" }}</span>
               <p class="text-xs text-slate-400">{{ data.email }}</p>
             </div>
           </template>
@@ -442,21 +420,16 @@
           <template #body="{ data }">
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-xs">
-                <span class="text-emerald-600 font-bold">{{
-                  pplRealisasi(data)
-                }}</span>
+                <span class="text-emerald-600 font-bold">{{ pplRealisasi(data) }}</span>
                 <span class="text-slate-400">/ {{ pplTotal(data) }}</span>
               </div>
-              <div
-                class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden"
-              >
+              <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
                   class="h-full bg-emerald-500 rounded-full transition-all"
                   :style="{ width: pplPct(data) + '%' }"
                 ></div>
               </div>
-              <span
-                class="text-[10px] text-emerald-600 font-semibold text-right"
+              <span class="text-[10px] text-emerald-600 font-semibold text-right"
                 >{{ pplPct(data) }}%</span
               >
             </div>
@@ -466,9 +439,7 @@
         <!-- EXPANDED ROW: per-SLS detail -->
         <template #expansion="{ data }">
           <div class="p-3 bg-slate-50/80">
-            <h4
-              class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2"
-            >
+            <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
               <i class="pi pi-list mr-1"></i>
               Detail SLS — {{ data.nama || data.email }}
             </h4>
@@ -479,20 +450,12 @@
               stripedRows
               size="small"
             >
-              <Column
-                field="subsls_code"
-                header="Kode SLS"
-                style="width: 10rem"
-              >
+              <Column field="subsls_code" header="Kode SLS" style="width: 10rem">
                 <template #body="{ data: row }">
                   <span class="font-mono text-xs">{{ row.subsls_code }}</span>
                 </template>
               </Column>
-              <Column
-                field="open"
-                header="Open"
-                style="width: 4rem; text-align: center"
-              >
+              <Column field="open" header="Open" style="width: 4rem; text-align: center">
                 <template #body="{ data: row }">
                   <Badge
                     :value="row.open || 0"
@@ -590,10 +553,7 @@
       </DataTable>
 
       <!-- Empty initial state -->
-      <div
-        v-else
-        class="flex flex-col items-center justify-center py-12 text-slate-400"
-      >
+      <div v-else class="flex flex-col items-center justify-center py-12 text-slate-400">
         <i class="pi pi-users text-4xl mb-3"></i>
         <p class="text-sm">Data PPL akan dimuat otomatis</p>
       </div>
@@ -601,9 +561,7 @@
 
     <!-- TAB: PML (placeholder) -->
     <div v-if="activeTab === 'pml'" class="rank-container">
-      <div
-        class="flex flex-col items-center justify-center py-16 text-slate-400"
-      >
+      <div class="flex flex-col items-center justify-center py-16 text-slate-400">
         <i class="pi pi-user text-4xl mb-3"></i>
         <p class="text-sm font-medium">Progres Per PML</p>
         <p class="text-xs">Segera hadir</p>
@@ -793,10 +751,7 @@ const getVisibility = (level) => {
       currentLevel.value == "sls")
   )
     return true;
-  if (
-    level == "desa" &&
-    (currentLevel.value == "desa" || currentLevel.value == "sls")
-  )
+  if (level == "desa" && (currentLevel.value == "desa" || currentLevel.value == "sls"))
     return true;
   if (level == "sls" && currentLevel.value == "sls") return true;
   return false;
@@ -885,6 +840,20 @@ const fetchDataPpl = async (event) => {
   }
 };
 
+const downloadPpl = () => {
+  const url =
+    route("se2026.download-report-ppl") +
+    "?" +
+    new URLSearchParams({
+      kabkot: selectedKabkot.value || "",
+      kec: selectedKec.value || "",
+      desa: selectedDesa.value || "",
+      sls: selectedSls.value || "",
+      nama: pplSearchNama.value || "",
+    });
+  window.location.href = url;
+};
+
 const onPplPage = (event) => {
   pplCurrentPage.value = Math.floor(event.first / event.rows) + 1;
   pplPageSize.value = event.rows;
@@ -960,12 +929,7 @@ const pplPct = (ppl) => {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(148, 163, 184, 0.15),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.15), transparent);
 }
 
 .stat-card:hover {

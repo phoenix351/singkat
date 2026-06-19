@@ -13,6 +13,7 @@ return new class extends Migration {
     {
         Schema::create('upload_logs', function (Blueprint $table) {
             $table->id();
+            $table->string('kode', 4);
             $table->foreignId('pegawai_id')
                 ->constrained('sulutweb_man_management.pegawai')
                 ->onUpdate('restrict')
