@@ -1,0 +1,388 @@
+<?php
+
+namespace App\Http\Controllers\Se2026;
+
+use App\Http\Controllers\Controller;
+use App\Models\Se2026\DataFasih;
+use App\Models\Se2026\Logs;
+use App\Models\Se2026\MasterDesa;
+use App\Models\Se2026\MasterKabkot;
+use App\Models\Se2026\MasterKec;
+use App\Models\Se2026\MasterSubSls;
+use App\Models\Se2026\Ppl;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+
+class DataController extends Controller
+{
+    //
+    public function index(Request $request)
+    {
+        $fasih = DataFasih::with('subsls.desa.kec.kabkot')->get();
+        $open = 0;
+        $draft = 0;
+        $submitted_p = 0;
+        $submitted_r = 0;
+        $approved = 0;
+        $rejected = 0;
+        $revoked = 0;
+        $completed = 0;
+        foreach ($fasih as $f) {
+            # code...
+            $open = $open + $f->open;
+            $draft = $draft + $f->draft;
+            $submitted_p = $submitted_p + $f->submitted_p;
+            $submitted_r = $submitted_r + $f->submitted_r;
+            $approved = $approved + $f->approved;
+            $rejected = $rejected + $f->rejected;
+            $revoked = $revoked + $f->revoked;
+            $completed = $completed + $f->completed;
+        }
+        $total = $open + $draft + $submitted_p + $submitted_r + $approved + $rejected + $revoked + $completed;
+
+        $groupKabkot = $fasih->groupBy(function ($item) {
+            return $item->subsls?->desa?->kec?->kabkot?->code;
+        })->map(function ($group) {
+            $firstItem = $group->first();
+            return [
+                'name' => $firstItem->subsls?->desa?->kec?->kabkot?->label ?? 'Tidak Diketahui',
+                'code' => $firstItem->subsls?->desa?->kec?->kabkot?->code ?? 'Unknown',
+                'open' => $group->sum('open'),
+                'draft' => $group->sum('draft'),
+                'submitted_p' => $group->sum('submitted_p'),
+                'submitted_r' => $group->sum('submitted_r'),
+                'approved' => $group->sum('approved'),
+                'rejected' => $group->sum('rejected'),
+                'revoked' => $group->sum('revoked'),
+                'completed' => $group->sum('completed'),
+            ];
+        })->values();
+        $current_level = 'kabkot';
+        $goToFilter = $request->code ?? null;
+        if ($goToFilter) {
+            $length_code = Str::length((string) $goToFilter);
+            $data_progress = [];
+            if ($length_code == 4) {
+                $current_level = 'kec';
+                $data_progress = $fasih->filter(function ($item) use ($goToFilter) {
+                    return Str::startsWith((string) $item->subsls_code, (string) $goToFilter);
+                })->groupBy(function ($item) {
+                    return $item->subsls?->desa?->kec?->code;
+                })->map(function ($group) {
+                    $firstItem = $group->first();
+                    return [
+                        'name' => $firstItem->subsls?->desa?->kec?->label ?? 'Tidak Diketahui',
+                        'code' => $firstItem->subsls?->desa?->kec?->code ?? 'Unknown',
+                        'open' => $group->sum('open'),
+                        'draft' => $group->sum('draft'),
+                        'submitted_p' => $group->sum('submitted_p'),
+                        'submitted_r' => $group->sum('submitted_r'),
+                        'approved' => $group->sum('approved'),
+                        'rejected' => $group->sum('rejected'),
+                        'revoked' => $group->sum('revoked'),
+                        'completed' => $group->sum('completed'),
+                    ];
+                })->values();
+            } else if ($length_code == 7) {
+                $current_level = 'desa';
+                $data_progress = $fasih->filter(function ($item) use ($goToFilter) {
+                    return Str::startsWith((string) $item->subsls_code, (string) $goToFilter);
+                })->groupBy(function ($item) {
+                    return $item->subsls?->desa?->code;
+                })->map(function ($group) {
+                    $firstItem = $group->first();
+                    return [
+                        'name' => $firstItem->subsls?->desa?->label ?? 'Tidak Diketahui',
+                        'code' => $firstItem->subsls?->desa?->code ?? 'Unknown',
+                        'open' => $group->sum('open'),
+                        'draft' => $group->sum('draft'),
+                        'submitted_p' => $group->sum('submitted_p'),
+                        'submitted_r' => $group->sum('submitted_r'),
+                        'approved' => $group->sum('approved'),
+                        'rejected' => $group->sum('rejected'),
+                        'revoked' => $group->sum('revoked'),
+                        'completed' => $group->sum('completed'),
+                    ];
+                })->values();
+            } else if ($length_code == 10) {
+                $current_level = 'sls';
+                $data_progress = $fasih->filter(function ($item) use ($goToFilter) {
+                    return Str::startsWith((string) $item->subsls_code, (string) $goToFilter);
+                })->groupBy(function ($item) {
+                    return $item->subsls?->code;
+                })->map(function ($group) {
+                    $firstItem = $group->first();
+                    return [
+                        'name' => $firstItem->subsls?->code . ' - ' . $firstItem->subsls?->label ?? 'Tidak Diketahui',
+                        'code' => $firstItem->subsls?->code ?? 'Unknown',
+                        'open' => $group->sum('open'),
+                        'draft' => $group->sum('draft'),
+                        'submitted_p' => $group->sum('submitted_p'),
+                        'submitted_r' => $group->sum('submitted_r'),
+                        'approved' => $group->sum('approved'),
+                        'rejected' => $group->sum('rejected'),
+                        'revoked' => $group->sum('revoked'),
+                        'completed' => $group->sum('completed'),
+                    ];
+                })->values();
+            } else {
+                $current_level = 'kabkot';
+                $data_progress = $groupKabkot;
+            }
+            return response()->json(['data_progress' => $data_progress, 'current_level' => $current_level]);
+        }
+        $lastThreeUpdate = Logs::with(['pegawai', 'kabkot'])->orderBy('created_at', 'desc')->limit(3)->get()->map(function ($item) {
+            $item->formatted_time = $item->created_at->format('H:i d M Y');
+            return $item;
+        });
+        $kabkot = MasterKabkot::get()->map(function ($item) {
+            return [
+                'code' => $item->code,
+                'label' => '[' . $item->code . '] ' . $item->label,
+            ];
+        });
+        return Inertia::render('Se2026/Dashboard', [
+            'open' => $open,
+            'draft' => $draft,
+            'submitted_p' => $submitted_p,
+            'submitted_r' => $submitted_r,
+            'approved' => $approved,
+            'rejected' => $rejected,
+            'revoked' => $revoked,
+            'completed' => $completed,
+            'total' => $total,
+            'data_progress' => $groupKabkot,
+            'current_level' => $current_level,
+            'lastThreeUpdate' => $lastThreeUpdate,
+            'kabkot' => $kabkot,
+        ]);
+    }
+
+    public function uploadData(Request $request)
+    {
+        $validated = $request->validate([
+            'file' => 'required|array'
+        ]);
+        $datas = $validated['file'];
+
+        // Slice to skip header row (index 0)
+        $data = array_slice($datas, 1);
+
+        // Fillable keys in order matching the array indices
+        $fields = (new DataFasih())->getFillable();
+
+        try {
+            foreach ($data as $row) {
+                // Map numeric keys to fillable field names
+                $mapped = [];
+                foreach ($fields as $index => $field) {
+                    if (array_key_exists($index, $row)) {
+                        $mapped[$field] = $row[$index];
+                    }
+                }
+
+                $cek_subsls = MasterSubSls::where('code', $mapped['subsls_code'])->first();
+                if ($cek_subsls) {
+                    DataFasih::updateOrCreate(
+                        [
+                            'email' => $mapped['email'] ?? null,
+                            'subsls_code' => $mapped['subsls_code'] ?? null,
+                        ],
+                        $mapped
+                    );
+                }
+                // Upsert: match on email + subsls_code
+            }
+
+            return back()->with('success', 'Data berhasil diupload.');
+        } catch (\Throwable $th) {
+            return back()->with('error', 'Gagal upload data: ' . $th->getMessage());
+        }
+    }
+
+    public function uploadDataBatch(Request $request)
+    {
+        $validated = $request->validate([
+            'file' => 'required|array',
+            'file_name' => 'nullable|string',
+        ]);
+        $datas = $validated['file'];
+        $fileName = $validated['file_name'] ?? 'unknown';
+        $array_kako = [
+            '7101',
+            '7102',
+            '7103',
+            '7104',
+            '7105',
+            '7106',
+            '7107',
+            '7108',
+            '7109',
+            '7110',
+            '7111',
+            '7171',
+            '7172',
+            '7173',
+            '7174'
+        ];
+        $kode = null;
+        if (preg_match('/^scraped_data_(.+?)\.csv$/', $fileName, $matches)) {
+            $kode = $matches[1];
+            if (!in_array($kode, $array_kako)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Gagal upload {$fileName}: " . "Kode tidak valid. Kode harus salah satu dari: " . implode(', ', $array_kako),
+                    'file_name' => $fileName,
+                ], 422);
+            }
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => "Gagal upload {$fileName}: " . "Format file tidak sesuai. Harus berupa scraped_data_{kode}.csv",
+                'file_name' => $fileName,
+            ], 422);
+        }
+        // Slice to skip header row (index 0)
+        $data = array_slice($datas, 1);
+
+        // Fillable keys in order matching the array indices
+        $fields = (new DataFasih())->getFillable();
+
+        $processedCount = 0;
+
+        try {
+            foreach ($data as $row) {
+                $mapped = [];
+                foreach ($fields as $index => $field) {
+                    if (array_key_exists($index, $row)) {
+                        $mapped[$field] = $row[$index];
+                    }
+                }
+
+                $cek_subsls = MasterSubSls::where('code', $mapped['subsls_code'])->first();
+                if ($cek_subsls) {
+                    DataFasih::updateOrCreate(
+                        [
+                            'email' => $mapped['email'] ?? null,
+                            'subsls_code' => $mapped['subsls_code'] ?? null,
+                        ],
+                        $mapped
+                    );
+                    $processedCount++;
+                }
+            }
+
+            $logs = Logs::create([
+                'kode' => $kode,
+                'pegawai_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil upload: {$fileName}",
+                'file_name' => $fileName,
+                'rows_processed' => $processedCount,
+                'rows_total' => count($data),
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => "Gagal upload {$fileName}: " . $th->getMessage(),
+                'file_name' => $fileName,
+                'rows_processed' => $processedCount,
+                'rows_total' => count($data),
+            ], 422);
+        }
+    }
+
+    public function fetchDataPpl(Request $request)
+    {
+        $paginated = $request->paginated ?? 10;
+        $currentPage = $request->currentPage ?? 1;
+        $kabkot = $request->kabkot ?? null;
+        $kec = $request->kec ?? null;
+        $desa = $request->desa ?? null;
+        $sls = $request->sls ?? null;
+        $nama = $request->nama ?? null;
+
+        $query = DataFasih::query();
+        if ($sls)
+            $query->where('subsls_code', $sls);
+        else if ($desa)
+            $query->where('subsls_code', 'like', $desa . '%');
+        else if ($kec)
+            $query->where('subsls_code', 'like', $kec . '%');
+        else if ($kabkot)
+            $query->where('subsls_code', 'like', $kabkot . '%');
+
+        if ($nama) {
+            $email_selected = Ppl::where(function ($q) use ($nama) {
+                $q->where('nama', 'like', '%' . $nama . '%')
+                    ->orWhere('email', 'like', '%' . $nama . '%');
+            })->pluck('email')->toArray();
+            $query->whereIn('email', $email_selected);
+        }
+
+        $idDataFasih = $query->pluck('id')->toArray();
+        $dataPpl = Ppl::with([
+            'fasih' => function ($q) use ($idDataFasih) {
+                $q->whereIn('id', $idDataFasih);
+            }
+        ])
+            ->whereHas('fasih', function ($q) use ($idDataFasih) {
+                $q->whereIn('id', $idDataFasih);
+            })
+            ->paginate($paginated, ['*'], 'page', $currentPage);
+
+        return response()->json($dataPpl);
+    }
+
+    public function fetchKec($kabkot)
+    {
+        $kec = MasterKec::where('kabkot_code', $kabkot)->get()->map(function ($item) {
+            return [
+                'code' => $item->code,
+                'label' => '[' . $item->code . '] ' . $item->label,
+            ];
+        });
+        return response()->json($kec);
+    }
+
+    public function fetchDesa($kec)
+    {
+        $desa = MasterDesa::where('kec_code', $kec)->get()->map(function ($item) {
+            return [
+                'code' => $item->code,
+                'label' => '[' . $item->code . '] ' . $item->label,
+            ];
+        });
+        return response()->json($desa);
+    }
+
+    public function fetchSls($desa)
+    {
+        $sls = MasterSubSls::where('desa_code', $desa)->get()->map(function ($item) {
+            return [
+                'code' => $item->code,
+                'label' => '[' . $item->code . '] ' . $item->label,
+            ];
+        });
+        return response()->json($sls);
+    }
+
+    public function fetchLog(Request $request)
+    {
+        $paginated = $request->paginated ?? 10;
+        $currentPage = $request->currentPage ?? 1;
+        $logs = Logs::with(['pegawai', 'kabkot'])->orderBy('created_at', 'desc')
+            ->paginate($paginated, ['*'], 'page', $currentPage);
+
+        $mappedCollection = $logs->getCollection()->map(function ($item) {
+            $item->formatted_time = $item->created_at->format('H:i d M Y');
+            return $item;
+        });
+        return response()->json($logs->setCollection($mappedCollection));
+    }
+}

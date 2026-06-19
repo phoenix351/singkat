@@ -30,6 +30,9 @@ const setNameApp = () => {
         case 'simple':
             result = 'Simple'
             break;
+        case 'se2026':
+            result = 'SE2026'
+            break;
         default:
             result = 'superapp'
             break;
@@ -47,6 +50,9 @@ const colornProgress = () => {
             break;
         case 'simple':
             result = "#3B82F6" // Blue
+            break;
+        case 'se2026':
+            result = "#10B981" // Green
             break;
         default:
             result = "#4B5563"
@@ -71,7 +77,7 @@ createInertiaApp({
             const { default: VueTailwindDatepicker } = await import("vue-tailwind-datepicker")
             vueApp.use(VueTailwindDatepicker)
         }
-        if (prefix === "man-management" || prefix === "simple") {
+        if (prefix === "man-management" || prefix === "simple" || prefix === "se2026") {
             await import('../css/manment/styles.scss')
             await import('../css/manment/tailwind.css')
             const { default: PrimeVue } = await import("primevue/config");

@@ -21,6 +21,7 @@ declare module 'vue' {
     IconField: typeof import('primevue/iconfield')['default']
     InputIcon: typeof import('primevue/inputicon')['default']
     InputText: typeof import('primevue/inputtext')['default']
+    MenuBar: typeof import('primevue/menubar')['default']
     MultiSelect: typeof import('primevue/multiselect')['default']
     OverlayBadge: typeof import('primevue/overlaybadge')['default']
     RadioButton: typeof import('primevue/radiobutton')['default']
