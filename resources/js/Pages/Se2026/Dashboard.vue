@@ -1328,7 +1328,7 @@ const fetchDataPetugas = async (tab) => {
 
 const downloadPetugas = () => {
   const url =
-    route("se2026.download-report-ppl") +
+    route(`se2026.download-report-petugas`) +
     "?" +
     new URLSearchParams({
       kabkot: selectedKabkot.value || "",
@@ -1336,6 +1336,7 @@ const downloadPetugas = () => {
       desa: selectedDesa.value || "",
       sls: selectedSls.value || "",
       nama: petugasSearchNama.value || "",
+      tab: activeTab.value,
     });
   window.location.href = url;
 };
