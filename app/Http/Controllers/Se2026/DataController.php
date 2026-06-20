@@ -233,9 +233,10 @@ class DataController extends Controller
         $kode = null;
         $cleanName = str_replace('.csv', '', $fileName);
         $exploded_fileName = explode('_', $cleanName);
-        $jam = $exploded_fileName[-1];
-        $tgl = $exploded_fileName[-2];
-        $updatedAtReal = Carbon::createFromFormat('YmdHis',$tgl.$jam)->toDateTimeString();
+        $totalElement = count($exploded_fileName);
+        $tgl = $exploded_fileName[$totalElement - 2];
+        $jam = $exploded_fileName[$totalElement - 1];
+        $updatedAtReal = Carbon::createFromFormat('YmdHis', $tgl . $jam)->toDateTimeString();
 
         $pregged_check = '/^scraped_data_(.+?)_\d{8}_\d{6}\.csv$/';
         $expected_format = 'scraped_data_{kode}_{Ymd}_{His}.csv';
@@ -541,8 +542,8 @@ class DataController extends Controller
                 $columnsToUpdate = array_keys($upsertData[0]);
                 $sourceModel::upsert(
                     $upsertData,
-                    ['email'],         
-                    $columnsToUpdate  
+                    ['email'],
+                    $columnsToUpdate
                 );
             }
 
