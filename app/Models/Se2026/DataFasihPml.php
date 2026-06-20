@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Se2026;
 
 use App\Models\Se2026\MasterSubSls;
 use Illuminate\Database\Eloquent\Model;

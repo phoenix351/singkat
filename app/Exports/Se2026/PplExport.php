@@ -3,6 +3,8 @@
 namespace App\Exports\Se2026;
 
 use App\Models\Se2026\DataFasih;
+use App\Models\Se2026\DataFasihPml;
+use App\Models\Se2026\Pml;
 use App\Models\Se2026\Ppl;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -23,14 +25,16 @@ class PplExport extends DefaultValueBinder implements FromCollection, WithHeadin
     protected $desa;
     protected $sls;
     protected $nama;
+    protected $tab;
 
-    public function __construct($kabkot, $kec, $desa, $sls, $nama)
+    public function __construct($kabkot, $kec, $desa, $sls, $nama, $tab)
     {
         $this->kabkot = $kabkot;
         $this->kec = $kec;
         $this->desa = $desa;
         $this->sls = $sls;
         $this->nama = $nama;
+        $this->tab = $tab;
     }
     public function collection()
     {
@@ -40,8 +44,9 @@ class PplExport extends DefaultValueBinder implements FromCollection, WithHeadin
         $desa = $this->desa ?? null;
         $sls = $this->sls ?? null;
         $nama = $this->nama ?? null;
+        $tab = $this->tab ?? null;
 
-        $query = DataFasih::query();
+        $query = $tab == 'ppl' ? DataFasih::query() : DataFasihPml::query();
         if ($sls)
             $query->where('subsls_code', $sls);
         else if ($desa)
@@ -52,10 +57,17 @@ class PplExport extends DefaultValueBinder implements FromCollection, WithHeadin
             $query->where('subsls_code', 'like', $kabkot . '%');
 
         if ($nama) {
-            $email_selected = Ppl::where(function ($q) use ($nama) {
-                $q->where('nama', 'like', '%' . $nama . '%')
-                    ->orWhere('email', 'like', '%' . $nama . '%');
-            })->pluck('email')->toArray();
+            if ($tab == 'ppl') {
+                $email_selected = Ppl::where(function ($q) use ($nama) {
+                    $q->where('nama', 'like', '%' . $nama . '%')
+                        ->orWhere('email', 'like', '%' . $nama . '%');
+                })->pluck('email')->toArray();
+            } else {
+                $email_selected = Pml::where(function ($q) use ($nama) {
+                    $q->where('nama', 'like', '%' . $nama . '%')
+                        ->orWhere('email', 'like', '%' . $nama . '%');
+                })->pluck('email')->toArray();
+            }
             $query->whereIn('email', $email_selected);
         }
 
