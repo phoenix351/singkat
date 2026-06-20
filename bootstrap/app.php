@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AppPermission;
+use App\Http\Middleware\LocalAuthenticate;
 use App\Http\Middleware\UseVueInertia;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
         $middleware->alias([
+            'auth'=> LocalAuthenticate::class,
             'use.vue.inertia' => UseVueInertia::class,
             'permission' => AppPermission::class,
         ]);
