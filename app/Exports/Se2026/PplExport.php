@@ -46,7 +46,15 @@ class PplExport extends DefaultValueBinder implements FromCollection, WithHeadin
         $nama = $this->nama ?? null;
         $tab = $this->tab ?? null;
 
-        $query = $tab == 'ppl' ? DataFasih::query() : DataFasihPml::query();
+        if ($tab == 'ppl') {
+            $query = DataFasih::query()
+                ->from('sulutweb_se2026.data_fasih as sdf')
+                ->leftJoin('sulutweb_se2026.ppl as pt', 'pt.email', '=', 'sdf.email');
+        } else {
+            $query = DataFasihPml::query()
+                ->from('sulutweb_se2026.data_fasih_pml as sdf')
+                ->leftJoin('sulutweb_se2026.pml as pt', 'pt.email', '=', 'sdf.email');
+        }
         if ($sls)
             $query->where('subsls_code', $sls);
         else if ($desa)
@@ -57,31 +65,24 @@ class PplExport extends DefaultValueBinder implements FromCollection, WithHeadin
             $query->where('subsls_code', 'like', $kabkot . '%');
 
         if ($nama) {
-            if ($tab == 'ppl') {
-                $email_selected = Ppl::where(function ($q) use ($nama) {
-                    $q->where('nama', 'like', '%' . $nama . '%')
-                        ->orWhere('email', 'like', '%' . $nama . '%');
-                })->pluck('email')->toArray();
-            } else {
-                $email_selected = Pml::where(function ($q) use ($nama) {
-                    $q->where('nama', 'like', '%' . $nama . '%')
-                        ->orWhere('email', 'like', '%' . $nama . '%');
-                })->pluck('email')->toArray();
-            }
-            $query->whereIn('email', $email_selected);
+            $query->where(function ($q) use ($nama) {
+                $q->where('pt.nama', 'like', '%' . $nama . '%')
+                    ->orWhere('sdf.email', 'like', '%' . $nama . '%');
+            });
         }
 
         $datafasih = $query->select([
-            'email',
-            'subsls_code',
-            'open',
-            'draft',
-            'submitted_p',
-            'approved',
-            'rejected',
-            'submitted_r',
-            'revoked',
-            'completed',
+            'pt.nama',
+            'sdf.email',
+            'sdf.subsls_code',
+            'sdf.open',
+            'sdf.draft',
+            'sdf.submitted_p',
+            'sdf.approved',
+            'sdf.rejected',
+            'sdf.submitted_r',
+            'sdf.revoked',
+            'sdf.completed',
         ])
             ->get();
         return $datafasih;
@@ -90,6 +91,7 @@ class PplExport extends DefaultValueBinder implements FromCollection, WithHeadin
     public function headings(): array
     {
         return [
+            "Nama",
             "Email",
             "Kode Identitas",
             "OPEN",
@@ -105,20 +107,18 @@ class PplExport extends DefaultValueBinder implements FromCollection, WithHeadin
 
     public function bindValue(Cell $cell, $value)
     {
-        // Cek apakah sel yang sedang diproses berada di kolom B
-        if ($cell->getColumn() === 'B') {
+        if ($cell->getColumn() === 'C') {
             $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
             return true;
         }
 
-        // Untuk kolom selain B, kembalikan ke aturan default bawaan library
         return parent::bindValue($cell, $value);
     }
 
     public function columnFormats(): array
     {
         return [
-            'B' => NumberFormat::FORMAT_TEXT
+            'C' => NumberFormat::FORMAT_TEXT
         ];
     }
 }

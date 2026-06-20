@@ -12,6 +12,7 @@ use App\Models\Se2026\MasterKec;
 use App\Models\Se2026\MasterSubSls;
 use App\Models\Se2026\Pml;
 use App\Models\Se2026\Ppl;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -136,7 +137,7 @@ class DataController extends Controller
             return response()->json(['data_progress' => $data_progress, 'current_level' => $current_level]);
         }
         $lastThreeUpdate = Logs::with(['pegawai', 'kabkot'])->orderBy('created_at', 'desc')->limit(3)->get()->map(function ($item) {
-            $item->formatted_time = $item->created_at->format('H:i d M Y');
+            $item->formatted_time = $item->updated_at->format('H:i d M Y');
             return $item;
         });
         $kabkot = MasterKabkot::get()->map(function ($item) {
@@ -230,13 +231,18 @@ class DataController extends Controller
             '7174'
         ];
         $kode = null;
-        $exploded_fileName = explode('_', $fileName);
-        $pregged_check = '/^scraped_data_(.+?)\.csv$/';
-        $expected_format = 'scraped_data_{kode}.csv';
+        $cleanName = str_replace('.csv', '', $fileName);
+        $exploded_fileName = explode('_', $cleanName);
+        $jam = $exploded_fileName[-1];
+        $tgl = $exploded_fileName[-2];
+        $updatedAtReal = Carbon::createFromFormat('YmdHis',$tgl.$jam)->toDateTimeString();
+
+        $pregged_check = '/^scraped_data_(.+?)_\d{8}_\d{6}\.csv$/';
+        $expected_format = 'scraped_data_{kode}_{Ymd}_{His}.csv';
 
         if (isset($exploded_fileName[2]) && $exploded_fileName[2] === 'pml') {
-            $pregged_check = '/^scraped_data_pml_(.+?)\.csv$/';
-            $expected_format = 'scraped_data_pml_{kode}.csv';
+            $pregged_check = '/^scraped_data_pml_(.+?)_\d{8}_\d{6}\.csv$/';
+            $expected_format = 'scraped_data_pml_{kode}_{Ymd}_{His}.csv';
         }
 
         if (preg_match($pregged_check, $fileName, $matches)) {
@@ -272,7 +278,6 @@ class DataController extends Controller
                 }
                 $subsls_code = (string) ($mapped['subsls_code'] ?? '');
                 $mapped['subsls_code'] = $subsls_code;
-
                 $cek_subsls = MasterSubSls::where('code', (string) $mapped['subsls_code'])->first();
                 if ($cek_subsls) {
                     if ($exploded_fileName[2] != 'pml') {
@@ -299,6 +304,7 @@ class DataController extends Controller
             $logs = Logs::create([
                 'kode' => $kode,
                 'pegawai_id' => Auth::id(),
+                'updated_at' => $updatedAtReal
             ]);
 
             return response()->json([
@@ -599,7 +605,7 @@ class DataController extends Controller
             ->paginate($paginated, ['*'], 'page', $currentPage);
 
         $mappedCollection = $logs->getCollection()->map(function ($item) {
-            $item->formatted_time = $item->created_at->format('H:i d M Y');
+            $item->formatted_time = $item->updated_at->format('H:i d M Y');
             return $item;
         });
         return response()->json($logs->setCollection($mappedCollection));
