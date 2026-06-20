@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Se2026;
 
 use App\Http\Controllers\Controller;
-use App\Models\DataFasihPml;
 use App\Models\Se2026\DataFasih;
+use App\Models\Se2026\DataFasihPml;
 use App\Models\Se2026\Logs;
 use App\Models\Se2026\MasterDesa;
 use App\Models\Se2026\MasterKabkot;
 use App\Models\Se2026\MasterKec;
 use App\Models\Se2026\MasterSubSls;
+use App\Models\Se2026\Pml;
 use App\Models\Se2026\Ppl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -254,10 +255,8 @@ class DataController extends Controller
                 'file_name' => $fileName,
             ], 422);
         }
-        // Slice to skip header row (index 0)
         $data = array_slice($datas, 1);
 
-        // Fillable keys in order matching the array indices
         $field_ppl = (new DataFasih())->getFillable();
         $field_pml = (new DataFasihPml())->getFillable();
         $fields = $exploded_fileName[2] != 'pml' ? $field_ppl : $field_pml;
@@ -373,6 +372,190 @@ class DataController extends Controller
             ->paginate($paginated, ['*'], 'page', $currentPage);
 
         return response()->json($dataPpl);
+    }
+
+    public function fetchDataPml(Request $request)
+    {
+        $paginated = $request->paginated ?? 10;
+        $currentPage = $request->currentPage ?? 1;
+        $kabkot = $request->kabkot ?? null;
+        $kec = $request->kec ?? null;
+        $desa = $request->desa ?? null;
+        $sls = $request->sls ?? null;
+        $nama = $request->nama ?? null;
+
+        $query = Pml::query();
+
+        $pmlTable = (new Pml)->getTable();
+        $fasihTable = (new DataFasihPml)->getTable();
+
+        if ($nama) {
+            $query->where(function ($q) use ($nama) {
+                $q->where('nama', 'like', '%' . $nama . '%')
+                    ->orWhere('email', 'like', '%' . $nama . '%');
+            });
+        }
+
+        $fasihFilter = function ($q) use ($sls, $desa, $kec, $kabkot) {
+            if ($sls) $q->where('subsls_code', $sls);
+            else if ($desa) $q->where('subsls_code', 'like', $desa . '%');
+            else if ($kec) $q->where('subsls_code', 'like', $kec . '%');
+            else if ($kabkot) $q->where('subsls_code', 'like', $kabkot . '%');
+        };
+
+        $query->whereHas('fasih', $fasihFilter);
+
+        // Default select
+        $query->select("$pmlTable.*");
+
+        if ($request->has('sortOrder') && $request->sortOrder) {
+            $order = $request->sortOrder == 1 ? 'asc' : 'desc';
+
+            $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
+            $sqlTotal = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
+            $query->addSelect([
+                'persentase_realisasi' => DataFasih::selectRaw("COALESCE(($sqlRealisasi / NULLIF($sqlTotal, 0)) * 100, 0)")
+                    ->whereColumn("$fasihTable.email", "$pmlTable.email")
+                    ->when($sls, fn($q) => $q->where('subsls_code', $sls))
+                    ->when($desa, fn($q) => $q->where('subsls_code', 'like', $desa . '%'))
+                    ->when($kec, fn($q) => $q->where('subsls_code', 'like', $kec . '%'))
+                    ->when($kabkot, fn($q) => $q->where('subsls_code', 'like', $kabkot . '%'))
+            ])->orderBy('persentase_realisasi', $order);
+        }
+
+        $dataPml = $query->with(['fasih' => $fasihFilter])
+            ->paginate($paginated, ['*'], 'page', $currentPage);
+
+        return response()->json($dataPml);
+    }
+
+    public function updatePetugas($petugas)
+    {
+        if ($petugas === 'ppl') {
+            $sourceModel = DataFasih::class;
+            $targetModel = Ppl::class;
+        } else if ($petugas === 'pml') {
+            $sourceModel = DataFasihPml::class;
+            $targetModel = Pml::class;
+        } else {
+            return response()->json(['message' => 'Tipe petugas tidak valid'], 400);
+        }
+
+        $current_petugas = $sourceModel::select(['email'])
+            ->distinct()
+            ->pluck('email')
+            ->toArray();
+
+        foreach ($current_petugas as $email) {
+            $targetModel::firstOrCreate(
+                ['email' => $email],
+                ['email' => $email]
+            );
+        }
+        return response()->json('Berhasil');
+    }
+
+    public function uploadPetugasBatch(Request $request)
+    {
+        $validated = $request->validate([
+            'file' => 'required|array',
+            'file_name' => 'nullable|string',
+        ]);
+        $datas = $validated['file'];
+        $fileName = $validated['file_name'] ?? 'unknown';
+        $array_kako = [
+            '7101',
+            '7102',
+            '7103',
+            '7104',
+            '7105',
+            '7106',
+            '7107',
+            '7108',
+            '7109',
+            '7110',
+            '7111',
+            '7171',
+            '7172',
+            '7173',
+            '7174'
+        ];
+        $kode = null;
+        $exploded_fileName = explode('_', $fileName);
+        $pregged_check = '/^ppl_(.+?)\.xlsx$/';
+        $expected_format = 'ppl_{kode}.xlsx';
+
+        if (isset($exploded_fileName[0]) && $exploded_fileName[0] === 'pml') {
+            $pregged_check = '/^pml_(.+?)\.xlsx$/';
+            $expected_format = 'pml_{kode}.xlsx';
+        }
+
+        if (preg_match($pregged_check, $fileName, $matches)) {
+            $kode = $matches[1];
+            if (!in_array($kode, $array_kako)) {
+                return response()->json([
+                    'success'   => false,
+                    'message'   => "Gagal upload {$fileName}: Kode tidak valid. Kode harus salah satu dari: " . implode(', ', $array_kako),
+                    'file_name' => $fileName,
+                ], 422);
+            }
+        } else {
+            return response()->json([
+                'success'   => false,
+                'message'   => "Gagal upload {$fileName}: Format file tidak sesuai. Harus berupa {$expected_format}",
+                'file_name' => $fileName,
+            ], 422);
+        }
+        $data = array_slice($datas, 1);
+
+        $isPml = (isset($exploded_fileName[0]) && $exploded_fileName[0] === 'pml');
+        $sourceModel = $isPml ? Pml::class : Ppl::class;
+        $fields = (new $sourceModel())->getFillable();
+
+        $upsertData = [];
+        $processedCount = 0;
+
+        try {
+            foreach ($data as $row) {
+                $mapped = [];
+                foreach ($fields as $index => $field) {
+                    if (array_key_exists($index, $row)) {
+                        $mapped[$field] = $row[$index];
+                    }
+                }
+                if (isset($mapped['nama'])) $mapped['nama'] = ucwords(strtolower($mapped['nama']));
+                if (!isset($mapped['email']) || empty($mapped['email'])) {
+                    continue;
+                }
+
+                $upsertData[] = $mapped;
+                $processedCount++;
+            }
+            if (!empty($upsertData)) {
+                $columnsToUpdate = array_keys($upsertData[0]);
+                $sourceModel::upsert(
+                    $upsertData,
+                    ['email'],         
+                    $columnsToUpdate  
+                );
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil upload: {$fileName}",
+                'file_name' => $fileName,
+                'rows_processed' => $processedCount,
+                'rows_total' => count($data),
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => "Gagal upload {$fileName}: " . $th->getMessage(),
+                'file_name' => $fileName,
+                'rows_processed' => $processedCount,
+                'rows_total' => count($data),
+            ], 422);
+        }
     }
 
     public function fetchKec($kabkot)
