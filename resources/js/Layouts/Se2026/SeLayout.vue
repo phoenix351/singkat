@@ -307,6 +307,7 @@
       :first="(logPaginatedItem.current_page - 1) * logPaginatedItem.per_page"
       :total-records="logPaginatedItem.total"
       :rows-per-page-options="[10, 20, 50, 100]"
+      @page="onLogPage"
       paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
       current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data"
     >
@@ -535,8 +536,23 @@ const logsDialog = ref(false);
 const logPaginatedItem = ref({});
 const openLogsDialog = async () => {
   logsDialog.value = true;
+  fetchLog();
+};
+const logCurrentPage = ref(1);
+const logPageSize = ref(10);
+const onLogPage = (event) => {
+  logCurrentPage.value = Math.floor(event.first / event.rows) + 1;
+  logPageSize.value = event.rows;
+  fetchLog();
+};
+const fetchLog = async () => {
   try {
-    const { data } = await axios.get(route("se2026.fetch-log"));
+    const { data } = await axios.get(route("se2026.fetch-log"), {
+      params: {
+        currentPage: logCurrentPage.value,
+        paginated: logPageSize.value,
+      },
+    });
     logPaginatedItem.value = data;
   } catch (error) {
     console.error(error);

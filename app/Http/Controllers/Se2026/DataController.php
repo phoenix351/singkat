@@ -309,33 +309,46 @@ class DataController extends Controller
         $sls = $request->sls ?? null;
         $nama = $request->nama ?? null;
 
-        $query = DataFasih::query();
-        if ($sls)
-            $query->where('subsls_code', $sls);
-        else if ($desa)
-            $query->where('subsls_code', 'like', $desa . '%');
-        else if ($kec)
-            $query->where('subsls_code', 'like', $kec . '%');
-        else if ($kabkot)
-            $query->where('subsls_code', 'like', $kabkot . '%');
+        $query = Ppl::query();
+
+        $pplTable = (new Ppl)->getTable();
+        $fasihTable = (new DataFasih)->getTable();
 
         if ($nama) {
-            $email_selected = Ppl::where(function ($q) use ($nama) {
+            $query->where(function ($q) use ($nama) {
                 $q->where('nama', 'like', '%' . $nama . '%')
                     ->orWhere('email', 'like', '%' . $nama . '%');
-            })->pluck('email')->toArray();
-            $query->whereIn('email', $email_selected);
+            });
         }
 
-        $idDataFasih = $query->pluck('id')->toArray();
-        $dataPpl = Ppl::with([
-            'fasih' => function ($q) use ($idDataFasih) {
-                $q->whereIn('id', $idDataFasih);
-            }
-        ])
-            ->whereHas('fasih', function ($q) use ($idDataFasih) {
-                $q->whereIn('id', $idDataFasih);
-            })
+        $fasihFilter = function ($q) use ($sls, $desa, $kec, $kabkot) {
+            if ($sls) $q->where('subsls_code', $sls);
+            else if ($desa) $q->where('subsls_code', 'like', $desa . '%');
+            else if ($kec) $q->where('subsls_code', 'like', $kec . '%');
+            else if ($kabkot) $q->where('subsls_code', 'like', $kabkot . '%');
+        };
+
+        $query->whereHas('fasih', $fasihFilter);
+
+        // Default select
+        $query->select("$pplTable.*");
+
+        if ($request->has('sortOrder') && $request->sortOrder) {
+            $order = $request->sortOrder == 1 ? 'asc' : 'desc';
+
+            $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
+            $sqlTotal = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
+            $query->addSelect([
+                'persentase_realisasi' => DataFasih::selectRaw("COALESCE(($sqlRealisasi / NULLIF($sqlTotal, 0)) * 100, 0)")
+                    ->whereColumn("$fasihTable.email", "$pplTable.email")
+                    ->when($sls, fn($q) => $q->where('subsls_code', $sls))
+                    ->when($desa, fn($q) => $q->where('subsls_code', 'like', $desa . '%'))
+                    ->when($kec, fn($q) => $q->where('subsls_code', 'like', $kec . '%'))
+                    ->when($kabkot, fn($q) => $q->where('subsls_code', 'like', $kabkot . '%'))
+            ])->orderBy('persentase_realisasi', $order);
+        }
+
+        $dataPpl = $query->with(['fasih' => $fasihFilter])
             ->paginate($paginated, ['*'], 'page', $currentPage);
 
         return response()->json($dataPpl);

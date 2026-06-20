@@ -1,5 +1,6 @@
 <template>
   <Head title="Dashboard" />
+  <SpinnerBorder v-if="thisTriggerSpinner" />
   <SeLayout>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
       <!-- TOTAL TARGET PRELIST -->
@@ -358,17 +359,18 @@
       </div>
 
       <!-- Loading state -->
-      <div
+      <!-- <div
         v-if="pplLoading"
         class="flex items-center justify-center py-12 text-slate-400"
       >
         <i class="pi pi-spin pi-spinner text-2xl mr-3"></i>
         <span class="text-sm">Memuat data PPL...</span>
-      </div>
+      </div> -->
 
       <!-- DataTable -->
+      <!-- v-else-if="paginatedItem?.data" -->
       <DataTable
-        v-else-if="paginatedItem?.data"
+        v-if="paginatedItem?.data"
         :value="paginatedItem.data"
         class="w-full text-sm"
         lazy
@@ -416,7 +418,7 @@
             <Badge :value="data.fasih?.length || 0" severity="info" />
           </template>
         </Column>
-        <Column header="Realisasi" style="width: 8rem">
+        <Column header="Realisasi" sortable field="realisasi" style="width: 8rem">
           <template #body="{ data }">
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-xs">
@@ -553,10 +555,10 @@
       </DataTable>
 
       <!-- Empty initial state -->
-      <div v-else class="flex flex-col items-center justify-center py-12 text-slate-400">
+      <!-- <div v-else class="flex flex-col items-center justify-center py-12 text-slate-400">
         <i class="pi pi-users text-4xl mb-3"></i>
         <p class="text-sm">Data PPL akan dimuat otomatis</p>
-      </div>
+      </div> -->
     </div>
 
     <!-- TAB: PML (placeholder) -->
@@ -571,6 +573,7 @@
 </template>
 
 <script setup>
+import SpinnerBorder from "@/Components/ManManagement/SpinnerBorder.vue";
 import SeLayout from "@/Layouts/Se2026/SeLayout.vue";
 import { Head } from "@inertiajs/vue3";
 import axios from "axios";
@@ -814,8 +817,10 @@ const expandedRows = ref({});
 const pplLoading = ref(false);
 const pplSearchNama = ref("");
 
+const thisTriggerSpinner = ref(false);
 const fetchDataPpl = async (event) => {
   pplLoading.value = true;
+  thisTriggerSpinner.value = true;
   try {
     const { data } = await axios.get(route("se2026.fetch-data-ppl"), {
       params: {
@@ -835,6 +840,7 @@ const fetchDataPpl = async (event) => {
     console.error(error);
   } finally {
     pplLoading.value = false;
+    thisTriggerSpinner.value = false;
   }
 };
 
@@ -859,6 +865,7 @@ const onPplPage = (event) => {
 };
 
 const onPplSort = (event) => {
+  console.log(event);
   sortFieldPpl.value = event.sortField;
   sortOrderPpl.value = event.sortOrder;
   fetchDataPpl();
@@ -870,14 +877,14 @@ const pplTotal = (ppl) => {
   return ppl.fasih.reduce((sum, f) => {
     return (
       sum +
-      (f.open || 0) +
-      (f.draft || 0) +
-      (f.submitted_p || 0) +
-      (f.submitted_r || 0) +
-      (f.approved || 0) +
-      (f.rejected || 0) +
-      (f.revoked || 0) +
-      (f.completed || 0)
+      Number(f.open || 0) +
+      Number(f.draft || 0) +
+      Number(f.submitted_p || 0) +
+      Number(f.submitted_r || 0) +
+      Number(f.approved || 0) +
+      Number(f.rejected || 0) +
+      Number(f.revoked || 0) +
+      Number(f.completed || 0)
     );
   }, 0);
 };
@@ -887,13 +894,12 @@ const pplRealisasi = (ppl) => {
   return ppl.fasih.reduce((sum, f) => {
     return (
       sum +
-      (f.draft || 0) +
-      (f.submitted_p || 0) +
-      (f.submitted_r || 0) +
-      (f.approved || 0) +
-      (f.rejected || 0) +
-      (f.revoked || 0) +
-      (f.completed || 0)
+      Number(f.submitted_p || 0) +
+      Number(f.submitted_r || 0) +
+      Number(f.approved || 0) +
+      Number(f.rejected || 0) +
+      Number(f.revoked || 0) +
+      Number(f.completed || 0)
     );
   }, 0);
 };
