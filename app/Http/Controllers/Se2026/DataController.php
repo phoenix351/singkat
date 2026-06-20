@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Se2026;
 
 use App\Http\Controllers\Controller;
+use App\Models\DataFasihPml;
 use App\Models\Se2026\DataFasih;
 use App\Models\Se2026\Logs;
 use App\Models\Se2026\MasterDesa;
@@ -228,19 +229,28 @@ class DataController extends Controller
             '7174'
         ];
         $kode = null;
-        if (preg_match('/^scraped_data_(.+?)\.csv$/', $fileName, $matches)) {
+        $exploded_fileName = explode('_', $fileName);
+        $pregged_check = '/^scraped_data_(.+?)\.csv$/';
+        $expected_format = 'scraped_data_{kode}.csv';
+
+        if (isset($exploded_fileName[2]) && $exploded_fileName[2] === 'pml') {
+            $pregged_check = '/^scraped_data_pml_(.+?)\.csv$/';
+            $expected_format = 'scraped_data_pml_{kode}.csv';
+        }
+
+        if (preg_match($pregged_check, $fileName, $matches)) {
             $kode = $matches[1];
             if (!in_array($kode, $array_kako)) {
                 return response()->json([
-                    'success' => false,
-                    'message' => "Gagal upload {$fileName}: " . "Kode tidak valid. Kode harus salah satu dari: " . implode(', ', $array_kako),
+                    'success'   => false,
+                    'message'   => "Gagal upload {$fileName}: Kode tidak valid. Kode harus salah satu dari: " . implode(', ', $array_kako),
                     'file_name' => $fileName,
                 ], 422);
             }
         } else {
             return response()->json([
-                'success' => false,
-                'message' => "Gagal upload {$fileName}: " . "Format file tidak sesuai. Harus berupa scraped_data_{kode}.csv",
+                'success'   => false,
+                'message'   => "Gagal upload {$fileName}: Format file tidak sesuai. Harus berupa {$expected_format}",
                 'file_name' => $fileName,
             ], 422);
         }
@@ -248,8 +258,9 @@ class DataController extends Controller
         $data = array_slice($datas, 1);
 
         // Fillable keys in order matching the array indices
-        $fields = (new DataFasih())->getFillable();
-
+        $field_ppl = (new DataFasih())->getFillable();
+        $field_pml = (new DataFasihPml())->getFillable();
+        $fields = $exploded_fileName[2] != 'pml' ? $field_ppl : $field_pml;
         $processedCount = 0;
 
         try {
@@ -265,13 +276,23 @@ class DataController extends Controller
 
                 $cek_subsls = MasterSubSls::where('code', (string) $mapped['subsls_code'])->first();
                 if ($cek_subsls) {
-                    DataFasih::updateOrCreate(
-                        [
-                            'email' => $mapped['email'] ?? null,
-                            'subsls_code' => (string) $mapped['subsls_code'] ?? null,
-                        ],
-                        $mapped
-                    );
+                    if ($exploded_fileName[2] != 'pml') {
+                        DataFasih::updateOrCreate(
+                            [
+                                'email' => $mapped['email'] ?? null,
+                                'subsls_code' => (string) $mapped['subsls_code'] ?? null,
+                            ],
+                            $mapped
+                        );
+                    } else {
+                        DataFasihPml::updateOrCreate(
+                            [
+                                'email' => $mapped['email'] ?? null,
+                                'subsls_code' => (string) $mapped['subsls_code'] ?? null,
+                            ],
+                            $mapped
+                        );
+                    }
                     $processedCount++;
                 }
             }
