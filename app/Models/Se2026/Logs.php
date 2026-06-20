@@ -11,7 +11,8 @@ class Logs extends Model
     protected $connection = 'sulutweb_se2026';
     protected $table = 'upload_logs';
     protected $fillable = [
-        'pegawai_id'
+        'pegawai_id',
+        'kode'
     ];
     public $timestamps = true;
 

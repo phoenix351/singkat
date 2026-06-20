@@ -14,7 +14,7 @@ return new class extends Migration {
         Schema::create('data_fasih', function (Blueprint $table) {
             $table->id();
             $table->string('email');
-            $table->string('subsls_code');
+            $table->string('subsls_code', 16);
             $table->foreign('subsls_code')->references('code')->on('master_subsls');
             $table->integer('open');
             $table->integer('draft');
