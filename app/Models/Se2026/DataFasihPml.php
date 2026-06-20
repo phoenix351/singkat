@@ -2,13 +2,14 @@
 
 namespace App\Models\Se2026;
 
+use App\Models\Se2026\MasterSubSls;
 use Illuminate\Database\Eloquent\Model;
 
-class DataFasih extends Model
+class DataFasihPml extends Model
 {
     //
     protected $connection = 'sulutweb_se2026';
-    protected $table = 'data_fasih';
+    protected $table = 'data_fasih_pml';
     protected $fillable = [
         'email',
         'subsls_code',
@@ -29,6 +30,6 @@ class DataFasih extends Model
 
     public function petugas()
     {
-        return $this->belongsTo(Ppl::class, 'email', 'email');
+        return $this->belongsTo(Pml::class, 'email', 'email');
     }
 }

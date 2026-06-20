@@ -12,7 +12,8 @@ class Logs extends Model
     protected $table = 'upload_logs';
     protected $fillable = [
         'pegawai_id',
-        'kode'
+        'kode',
+        'updated_at'
     ];
     public $timestamps = true;
 

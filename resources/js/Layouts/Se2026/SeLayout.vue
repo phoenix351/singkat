@@ -74,7 +74,7 @@
         <p class="text-xs text-slate-500 mb-3">
           Bisa pilih banyak file sekaligus. Format nama:
           <code class="bg-slate-100 px-1 rounded text-orange-600"
-            >scraped_data_7171.csv</code
+            >scraped_data_7171_{tanggal}_{jam}.csv</code
           >
         </p>
         <input

@@ -14,7 +14,7 @@ return new class extends Migration {
         Schema::create('ppl', function (Blueprint $table) {
             $table->id();
             $table->string('nama')->nullable();
-            $table->string('email');
+            $table->string('email')->unique();
         });
     }
 
