@@ -20,7 +20,7 @@
                 Dashboard Sensus Ekonomi 2026
               </h1>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Provinsi Sulawesi Utara (versi beta-1.0)
+                Provinsi Sulawesi Utara (versi 1.0)
               </p>
             </div>
           </div>
@@ -54,6 +54,21 @@
         <!-- <SpinnerBorder v-if="triggerSpinner" /> -->
         <slot />
       </main>
+
+      <footer
+        class="border-t border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm py-3 px-4 text-center"
+      >
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          &copy; 2026 Projek SEtahuBulat Versi 1.0 &mdash;
+          <a href="https://sulut.bps.go.id" class="font-bold"
+            >BPS Provinsi Sulawesi Utara</a
+          >
+          dibuat oleh:
+          <a href="https://github.com/rifqind" class="font-bold">AuraSphere</a>, didukung
+          oleh:
+          <span class="font-bold">Tim IPDS</span>
+        </p>
+      </footer>
     </div>
   </div>
 
@@ -313,6 +328,7 @@
       current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data"
     >
       <Column field="formatted_time" header="Upload Tanggal" />
+      <Column field="data_type" header="Tipe Data" />
       <Column field="kabkot.label" header="Data Kabupaten/Kota" />
       <Column field="pegawai.name" header="Nama Pegawai" />
     </DataTable>
