@@ -27,4 +27,8 @@ class DataFasih extends Model
         return $this->belongsTo(MasterSubSls::class, 'subsls_code', 'code');
     }
 
+    public function petugas()
+    {
+        return $this->belongsTo(Ppl::class, 'email', 'email');
+    }
 }
