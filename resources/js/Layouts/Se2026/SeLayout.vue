@@ -27,6 +27,7 @@
 
           <div class="flex items-center gap-3">
             <Button
+              v-if="page.props.auth.role == 'operator'"
               @click="openUploadDialog"
               icon="pi pi-upload"
               size="small"

@@ -338,6 +338,7 @@
         </div>
         <div class="flex items-center gap-2">
           <Button
+            v-if="page.props.auth.role == 'operator'"
             title="Upload Nama Petugas"
             @click="openUploadDialog"
             rounded
@@ -346,6 +347,7 @@
             severity="success"
           />
           <Button
+            v-if="page.props.auth.role == 'operator'"
             title="Update PPL"
             @click="updatePetugas(activeTab)"
             rounded
@@ -594,6 +596,7 @@
         </div>
         <div class="flex items-center gap-2">
           <Button
+            v-if="page.props.auth.role == 'operator'"
             title="Upload Nama Petugas"
             @click="openUploadDialog"
             rounded
@@ -602,6 +605,7 @@
             success="secondary"
           />
           <Button
+            v-if="page.props.auth.role == 'operator'"
             title="Update PML"
             @click="updatePetugas(activeTab)"
             rounded
@@ -1056,11 +1060,12 @@
 <script setup>
 import SpinnerBorder from "@/Components/ManManagement/SpinnerBorder.vue";
 import SeLayout from "@/Layouts/Se2026/SeLayout.vue";
-import { Head } from "@inertiajs/vue3";
+import { Head, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { computed, ref } from "vue";
 import * as XLSX from "xlsx";
 
+const page = usePage();
 const uploadDialog = ref(false);
 const props = defineProps({
   open: Number,
