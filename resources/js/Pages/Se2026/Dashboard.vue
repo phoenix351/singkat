@@ -1146,7 +1146,6 @@ const getTotal = (item) => {
 
 const getRealisasi = (item) => {
   return (
-    (item.draft || 0) +
     (item.submitted_p || 0) +
     (item.submitted_r || 0) +
     (item.approved || 0) +
