@@ -13,6 +13,7 @@ class Logs extends Model
     protected $fillable = [
         'pegawai_id',
         'kode',
+        'data_type',
         'updated_at'
     ];
     public $timestamps = true;

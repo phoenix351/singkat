@@ -306,6 +306,7 @@ class DataController extends Controller
             $logs = Logs::create([
                 'kode' => $kode,
                 'pegawai_id' => Auth::id(),
+                'data_type' => $exploded_fileName[2] != 'pml' ? 'ppl' : 'pml',
                 'updated_at' => $updatedAtReal
             ]);
 
