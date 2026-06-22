@@ -84,7 +84,11 @@ class PplExport extends DefaultValueBinder implements FromCollection, WithHeadin
             'sdf.revoked',
             'sdf.completed',
         ])
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $item->nama = $item->nama ?: '-';
+                return $item;
+            });
         return $datafasih;
     }
 
