@@ -251,15 +251,15 @@ class DataController extends Controller
             $kode = $matches[1];
             if (!in_array($kode, $array_kako)) {
                 return response()->json([
-                    'success'   => false,
-                    'message'   => "Gagal upload {$fileName}: Kode tidak valid. Kode harus salah satu dari: " . implode(', ', $array_kako),
+                    'success' => false,
+                    'message' => "Gagal upload {$fileName}: Kode tidak valid. Kode harus salah satu dari: " . implode(', ', $array_kako),
                     'file_name' => $fileName,
                 ], 422);
             }
         } else {
             return response()->json([
-                'success'   => false,
-                'message'   => "Gagal upload {$fileName}: Format file tidak sesuai. Harus berupa {$expected_format}",
+                'success' => false,
+                'message' => "Gagal upload {$fileName}: Format file tidak sesuai. Harus berupa {$expected_format}",
                 'file_name' => $fileName,
             ], 422);
         }
@@ -338,73 +338,64 @@ class DataController extends Controller
         $sls = $request->sls ?? null;
         $nama = $request->nama ?? null;
 
-        $query = Ppl::query();
-
-        $pplTable = (new Ppl)->getTable();
         $fasihTable = (new DataFasih)->getTable();
+        $pplTable = (new Ppl)->getTable();
+
+        $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
+        $sqlTotal = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
+
+        $query = DataFasih::query()
+            ->select([
+                "$fasihTable.email",
+                DB::raw("MAX($pplTable.nama) as nama"),
+                DB::raw("$sqlRealisasi as realisasi"),
+                DB::raw("$sqlTotal as total_target"),
+                DB::raw("COALESCE(($sqlRealisasi / NULLIF($sqlTotal, 0)) * 100, 0) as persentase_realisasi"),
+            ])
+            ->leftJoin($pplTable, "$pplTable.email", '=', "$fasihTable.email")
+            ->groupBy("$fasihTable.email");
+
+        if ($sls)
+            $query->where("$fasihTable.subsls_code", $sls);
+        elseif ($desa)
+            $query->where("$fasihTable.subsls_code", 'like', $desa . '%');
+        elseif ($kec)
+            $query->where("$fasihTable.subsls_code", 'like', $kec . '%');
+        elseif ($kabkot)
+            $query->where("$fasihTable.subsls_code", 'like', $kabkot . '%');
 
         if ($nama) {
-            $query->where(function ($q) use ($nama) {
-                $q->where('nama', 'like', '%' . $nama . '%')
-                    ->orWhere('email', 'like', '%' . $nama . '%');
+            $query->where(function ($q) use ($nama, $fasihTable, $pplTable) {
+                $q->where("$pplTable.nama", 'like', '%' . $nama . '%')
+                    ->orWhere("$fasihTable.email", 'like', '%' . $nama . '%');
             });
         }
 
-        $fasihFilter = function ($q) use ($sls, $desa, $kec, $kabkot) {
-            if ($sls) $q->where('subsls_code', $sls);
-            else if ($desa) $q->where('subsls_code', 'like', $desa . '%');
-            else if ($kec) $q->where('subsls_code', 'like', $kec . '%');
-            else if ($kabkot) $q->where('subsls_code', 'like', $kabkot . '%');
-        };
-
-        $query->whereHas('fasih', $fasihFilter);
-
-        // Default select
-        $query->select("$pplTable.*");
-
-        // if ($request->has('sortOrder') && $request->sortOrder) {
-        //     $order = $request->sortOrder == 1 ? 'asc' : 'desc';
-
-        //     $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
-        //     $sqlTotal = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
-        //     $query->addSelect([
-        //         'persentase_realisasi' => DataFasih::selectRaw("COALESCE(($sqlRealisasi / NULLIF($sqlTotal, 0)) * 100, 0)")
-        //             ->whereColumn("$fasihTable.email", "$pplTable.email")
-        //             ->when($sls, fn($q) => $q->where('subsls_code', $sls))
-        //             ->when($desa, fn($q) => $q->where('subsls_code', 'like', $desa . '%'))
-        //             ->when($kec, fn($q) => $q->where('subsls_code', 'like', $kec . '%'))
-        //             ->when($kabkot, fn($q) => $q->where('subsls_code', 'like', $kabkot . '%'))
-        //     ])->orderBy('persentase_realisasi', $order);
-        // }
         if ($request->has('sortOrder') && $request->sortOrder) {
             $order = $request->sortOrder == 1 ? 'asc' : 'desc';
-
-            // Perbaikan: Hapus prefix agg_fasih. di dalam rumus fungsi agregat ini
-            $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
-            $sqlTotal     = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
-
-            // Subquery untuk menghitung persentase per email
-            $subQueryFasih = DataFasih::query()
-                ->select('email')
-                ->selectRaw("COALESCE(($sqlRealisasi / NULLIF($sqlTotal, 0)) * 100, 0) as persentase_realisasi")
-                ->when($sls, fn($q) => $q->where('subsls_code', $sls))
-                ->when($desa, fn($q) => $q->where('subsls_code', 'like', $desa . '%'))
-                ->when($kec, fn($q) => $q->where('subsls_code', 'like', $kec . '%'))
-                ->when($kabkot, fn($q) => $q->where('subsls_code', 'like', $kabkot . '%'))
-                ->groupBy('email');
-
-            // Gabungkan ke query utama menggunakan leftJoinSub
-            $query->leftJoinSub($subQueryFasih, 'agg_fasih', function ($join) use ($pplTable) {
-                $join->on("agg_fasih.email", "=", "$pplTable.email");
-            })
-                ->addSelect(DB::raw("COALESCE(agg_fasih.persentase_realisasi, 0) as persentase_realisasi"))
-                ->orderBy('persentase_realisasi', $order);
+            $query->orderBy('persentase_realisasi', $order);
+        } else {
+            $query->orderBy("$fasihTable.email");
         }
 
-        $dataPpl = $query->with(['fasih' => $fasihFilter])
-            ->paginate($paginated, ['*'], 'page', $currentPage);
+        $paginator = $query->paginate($paginated, ['*'], 'page', $currentPage);
+        $emails = $paginator->pluck('email')->toArray();
+        $fasihDetails = DataFasih::query()
+            ->whereIn('email', $emails)
+            ->when($sls, fn($q) => $q->where('subsls_code', $sls))
+            ->when(!$sls && $desa, fn($q) => $q->where('subsls_code', 'like', $desa . '%'))
+            ->when(!$sls && !$desa && $kec, fn($q) => $q->where('subsls_code', 'like', $kec . '%'))
+            ->when(!$sls && !$desa && !$kec && $kabkot, fn($q) => $q->where('subsls_code', 'like', $kabkot . '%'))
+            ->get()
+            ->groupBy('email');
 
-        return response()->json($dataPpl);
+        $items = $paginator->getCollection()->map(function ($item) use ($fasihDetails) {
+            $item->fasih = $fasihDetails->get($item->email, collect())->values();
+            return $item;
+        });
+        $paginator->setCollection($items);
+
+        return response()->json($paginator);
     }
 
     public function fetchDataPml(Request $request)
@@ -417,73 +408,65 @@ class DataController extends Controller
         $sls = $request->sls ?? null;
         $nama = $request->nama ?? null;
 
-        $query = Pml::query();
-
-        $pmlTable = (new Pml)->getTable();
         $fasihTable = (new DataFasihPml)->getTable();
+        $pmlTable = (new Pml)->getTable();
+
+        $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
+        $sqlTotal = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
+
+        $query = DataFasihPml::query()
+            ->select([
+                "$fasihTable.email",
+                DB::raw("MAX($pmlTable.nama) as nama"),
+                DB::raw("$sqlRealisasi as realisasi"),
+                DB::raw("$sqlTotal as total_target"),
+                DB::raw("COALESCE(($sqlRealisasi / NULLIF($sqlTotal, 0)) * 100, 0) as persentase_realisasi"),
+            ])
+            ->leftJoin($pmlTable, "$pmlTable.email", '=', "$fasihTable.email")
+            ->groupBy("$fasihTable.email");
+
+        if ($sls)
+            $query->where("$fasihTable.subsls_code", $sls);
+        elseif ($desa)
+            $query->where("$fasihTable.subsls_code", 'like', $desa . '%');
+        elseif ($kec)
+            $query->where("$fasihTable.subsls_code", 'like', $kec . '%');
+        elseif ($kabkot)
+            $query->where("$fasihTable.subsls_code", 'like', $kabkot . '%');
 
         if ($nama) {
-            $query->where(function ($q) use ($nama) {
-                $q->where('nama', 'like', '%' . $nama . '%')
-                    ->orWhere('email', 'like', '%' . $nama . '%');
+            $query->where(function ($q) use ($nama, $fasihTable, $pmlTable) {
+                $q->where("$pmlTable.nama", 'like', '%' . $nama . '%')
+                    ->orWhere("$fasihTable.email", 'like', '%' . $nama . '%');
             });
         }
 
-        $fasihFilter = function ($q) use ($sls, $desa, $kec, $kabkot) {
-            if ($sls) $q->where('subsls_code', $sls);
-            else if ($desa) $q->where('subsls_code', 'like', $desa . '%');
-            else if ($kec) $q->where('subsls_code', 'like', $kec . '%');
-            else if ($kabkot) $q->where('subsls_code', 'like', $kabkot . '%');
-        };
-
-        $query->whereHas('fasih', $fasihFilter);
-
-        // Default select
-        $query->select("$pmlTable.*");
-
-        // if ($request->has('sortOrder') && $request->sortOrder) {
-        //     $order = $request->sortOrder == 1 ? 'asc' : 'desc';
-
-        //     $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
-        //     $sqlTotal = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
-        //     $query->addSelect([
-        //         'persentase_realisasi' => DataFasih::selectRaw("COALESCE(($sqlRealisasi / NULLIF($sqlTotal, 0)) * 100, 0)")
-        //             ->whereColumn("$fasihTable.email", "$pmlTable.email")
-        //             ->when($sls, fn($q) => $q->where('subsls_code', $sls))
-        //             ->when($desa, fn($q) => $q->where('subsls_code', 'like', $desa . '%'))
-        //             ->when($kec, fn($q) => $q->where('subsls_code', 'like', $kec . '%'))
-        //             ->when($kabkot, fn($q) => $q->where('subsls_code', 'like', $kabkot . '%'))
-        //     ])->orderBy('persentase_realisasi', $order);
-        // }
         if ($request->has('sortOrder') && $request->sortOrder) {
             $order = $request->sortOrder == 1 ? 'asc' : 'desc';
-
-            // Perbaikan: Hapus prefix agg_fasih. di dalam rumus fungsi agregat ini
-            $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
-            $sqlTotal     = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
-
-            // Subquery untuk menghitung persentase per email
-            $subQueryFasih = DataFasihPml::query()
-                ->select('email')
-                ->selectRaw("COALESCE(($sqlRealisasi / NULLIF($sqlTotal, 0)) * 100, 0) as persentase_realisasi")
-                ->when($sls, fn($q) => $q->where('subsls_code', $sls))
-                ->when($desa, fn($q) => $q->where('subsls_code', 'like', $desa . '%'))
-                ->when($kec, fn($q) => $q->where('subsls_code', 'like', $kec . '%'))
-                ->when($kabkot, fn($q) => $q->where('subsls_code', 'like', $kabkot . '%'))
-                ->groupBy('email');
-
-            // Gabungkan ke query utama menggunakan leftJoinSub
-            $query->leftJoinSub($subQueryFasih, 'agg_fasih', function ($join) use ($pmlTable) {
-                $join->on("agg_fasih.email", "=", "$pmlTable.email");
-            })
-                ->addSelect(DB::raw("COALESCE(agg_fasih.persentase_realisasi, 0) as persentase_realisasi"))
-                ->orderBy('persentase_realisasi', $order);
+            $query->orderBy('persentase_realisasi', $order);
+        } else {
+            $query->orderBy("$fasihTable.email");
         }
 
-        $dataPml = $query->with(['fasih' => $fasihFilter])
-            ->paginate($paginated, ['*'], 'page', $currentPage);
+        $paginator = $query->paginate($paginated, ['*'], 'page', $currentPage);
 
-        return response()->json($dataPml);
+        $emails = $paginator->pluck('email')->toArray();
+        $fasihDetails = DataFasihPml::query()
+            ->whereIn('email', $emails)
+            ->when($sls, fn($q) => $q->where('subsls_code', $sls))
+            ->when(!$sls && $desa, fn($q) => $q->where('subsls_code', 'like', $desa . '%'))
+            ->when(!$sls && !$desa && $kec, fn($q) => $q->where('subsls_code', 'like', $kec . '%'))
+            ->when(!$sls && !$desa && !$kec && $kabkot, fn($q) => $q->where('subsls_code', 'like', $kabkot . '%'))
+            ->get()
+            ->groupBy('email');
+
+        $items = $paginator->getCollection()->map(function ($item) use ($fasihDetails) {
+            $item->fasih = $fasihDetails->get($item->email, collect())->values();
+            return $item;
+        });
+        $paginator->setCollection($items);
+
+        return response()->json($paginator);
     }
 
     public function updatePetugas($petugas)
@@ -551,15 +534,15 @@ class DataController extends Controller
             $kode = $matches[1];
             if (!in_array($kode, $array_kako)) {
                 return response()->json([
-                    'success'   => false,
-                    'message'   => "Gagal upload {$fileName}: Kode tidak valid. Kode harus salah satu dari: " . implode(', ', $array_kako),
+                    'success' => false,
+                    'message' => "Gagal upload {$fileName}: Kode tidak valid. Kode harus salah satu dari: " . implode(', ', $array_kako),
                     'file_name' => $fileName,
                 ], 422);
             }
         } else {
             return response()->json([
-                'success'   => false,
-                'message'   => "Gagal upload {$fileName}: Format file tidak sesuai. Harus berupa {$expected_format}",
+                'success' => false,
+                'message' => "Gagal upload {$fileName}: Format file tidak sesuai. Harus berupa {$expected_format}",
                 'file_name' => $fileName,
             ], 422);
         }
@@ -569,8 +552,9 @@ class DataController extends Controller
         $sourceModel = $isPml ? Pml::class : Ppl::class;
         $fields = (new $sourceModel())->getFillable();
 
-        $upsertData = [];
+        $updateData = [];
         $processedCount = 0;
+        $skippedCount = 0;
 
         try {
             foreach ($data as $row) {
@@ -580,28 +564,34 @@ class DataController extends Controller
                         $mapped[$field] = $row[$index];
                     }
                 }
-                if (isset($mapped['nama'])) $mapped['nama'] = ucwords(strtolower($mapped['nama']));
+                if (isset($mapped['nama']))
+                    $mapped['nama'] = ucwords(strtolower($mapped['nama']));
+                if (isset($mapped['email']))
+                    $mapped['email'] = strtolower(trim($mapped['email']));
                 if (!isset($mapped['email']) || empty($mapped['email'])) {
                     continue;
                 }
 
-                $upsertData[] = $mapped;
-                $processedCount++;
+                $updateData[] = $mapped;
             }
-            if (!empty($upsertData)) {
-                $columnsToUpdate = array_keys($upsertData[0]);
-                $sourceModel::upsert(
-                    $upsertData,
-                    ['email'],
-                    $columnsToUpdate
-                );
+
+            foreach ($updateData as $record) {
+                $updated = $sourceModel::where('email', $record['email'])
+                    ->update(['nama' => $record['nama'] ?? null]);
+
+                if ($updated > 0) {
+                    $processedCount++;
+                } else {
+                    $skippedCount++;
+                }
             }
 
             return response()->json([
                 'success' => true,
-                'message' => "Berhasil upload: {$fileName}",
+                'message' => "Berhasil upload: {$fileName}. {$skippedCount} baris dilewati (email tidak ditemukan).",
                 'file_name' => $fileName,
                 'rows_processed' => $processedCount,
+                'rows_skipped' => $skippedCount,
                 'rows_total' => count($data),
             ]);
         } catch (\Throwable $th) {
