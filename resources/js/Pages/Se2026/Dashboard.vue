@@ -1,7 +1,7 @@
 <template>
   <Head title="Dashboard" />
   <SpinnerBorder v-if="thisTriggerSpinner" />
-  <SeLayout>
+  <SeLayout @refresh="refreshData">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
       <!-- TOTAL TARGET PRELIST -->
       <div class="stat-card">
@@ -15,7 +15,9 @@
       <!-- TOTAL REALISASI -->
       <div class="stat-card">
         <span class="stat-label">Realisasi Pendataan</span>
-        <span class="stat-value text-emerald-600">{{ formatNumber(realisasi) }}</span>
+        <span class="stat-value text-emerald-600">{{
+          formatNumber(realisasi)
+        }}</span>
         <div class="stat-bar-wrapper">
           <div
             class="stat-bar bg-emerald-500"
@@ -53,7 +55,10 @@
         <span class="stat-label">Status OPEN</span>
         <span class="stat-value text-amber-500">{{ formatNumber(open) }}</span>
         <div class="stat-bar-wrapper">
-          <div class="stat-bar bg-yellow-500" :style="{ width: pctOpen + '%' }"></div>
+          <div
+            class="stat-bar bg-yellow-500"
+            :style="{ width: pctOpen + '%' }"
+          ></div>
         </div>
         <div class="stat-footer">
           <span class="stat-pct text-amber-500">{{ pctOpen }}%</span>
@@ -63,7 +68,9 @@
       <!-- SUBMITTED BY PENCACAH -->
       <div class="stat-card">
         <span class="stat-label">Submitted by Pencacah</span>
-        <span class="stat-value text-green-600">{{ formatNumber(submitted_p) }}</span>
+        <span class="stat-value text-green-600">{{
+          formatNumber(submitted_p)
+        }}</span>
         <div class="stat-bar-wrapper">
           <div
             class="stat-bar bg-green-500"
@@ -78,9 +85,14 @@
       <!-- APPROVED BY PENGAWAS -->
       <div class="stat-card">
         <span class="stat-label">Approved by Pengawas</span>
-        <span class="stat-value text-green-600">{{ formatNumber(approved) }}</span>
+        <span class="stat-value text-green-600">{{
+          formatNumber(approved)
+        }}</span>
         <div class="stat-bar-wrapper">
-          <div class="stat-bar bg-green-500" :style="{ width: pctApproved + '%' }"></div>
+          <div
+            class="stat-bar bg-green-500"
+            :style="{ width: pctApproved + '%' }"
+          ></div>
         </div>
         <div class="stat-footer">
           <span class="stat-pct text-green-600">{{ pctApproved }}%</span>
@@ -92,7 +104,10 @@
         <span class="stat-label">Status Draft</span>
         <span class="stat-value text-blue-600">{{ formatNumber(draft) }}</span>
         <div class="stat-bar-wrapper">
-          <div class="stat-bar bg-blue-500" :style="{ width: pctDraft + '%' }"></div>
+          <div
+            class="stat-bar bg-blue-500"
+            :style="{ width: pctDraft + '%' }"
+          ></div>
         </div>
         <div class="stat-footer">
           <span class="stat-pct text-blue-600">{{ pctDraft }}%</span>
@@ -102,9 +117,14 @@
       <!-- REJECTED BY PENGAWAS -->
       <div class="stat-card">
         <span class="stat-label">Rejected by Pengawas</span>
-        <span class="stat-value text-red-600">{{ formatNumber(rejected) }}</span>
+        <span class="stat-value text-red-600">{{
+          formatNumber(rejected)
+        }}</span>
         <div class="stat-bar-wrapper">
-          <div class="stat-bar bg-red-500" :style="{ width: pctRejected + '%' }"></div>
+          <div
+            class="stat-bar bg-red-500"
+            :style="{ width: pctRejected + '%' }"
+          ></div>
         </div>
         <div class="stat-footer">
           <span class="stat-pct text-red-600">{{ pctRejected }}%</span>
@@ -117,7 +137,9 @@
           <i class="pi pi-history text-lg text-orange-500"></i>
           <div>
             <h2 class="text-base font-bold text-slate-800">Update Terakhir</h2>
-            <p class="text-xs text-slate-500">User yang melakukan 3 update terakhir:</p>
+            <p class="text-xs text-slate-500">
+              User yang melakukan 3 update terakhir:
+            </p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -224,7 +246,11 @@
           />
         </div>
         <div class="space-x-2">
-          <Button @click="fetchDataPetugas(activeTab)" icon="pi pi-search" class="mb-0" />
+          <Button
+            @click="fetchDataPetugas(activeTab)"
+            icon="pi pi-search"
+            class="mb-0"
+          />
         </div>
       </div>
     </div>
@@ -234,7 +260,9 @@
         <div class="flex items-center gap-2">
           <i class="pi pi-chart-line text-lg text-orange-500"></i>
           <div>
-            <h2 class="text-base font-bold text-slate-800">Progres Realisasi</h2>
+            <h2 class="text-base font-bold text-slate-800">
+              Progres Realisasi
+            </h2>
             <p class="text-xs text-slate-500">
               Distribusi persentase realisasi (Selain status Open dan Draft)
             </p>
@@ -307,7 +335,9 @@
                       >{{ formatNumber(kabkotRealisasi(item)) }} /
                       {{ formatNumber(kabkotTotal(item)) }}</span
                     >
-                    <span class="rank-pct" :class="rankPctColor(colIdx * 15 + idx)"
+                    <span
+                      class="rank-pct"
+                      :class="rankPctColor(colIdx * 15 + idx)"
                       >{{ kabkotPct(item) }}%</span
                     >
                   </div>
@@ -333,7 +363,9 @@
           <i class="pi pi-users text-lg text-orange-500"></i>
           <div>
             <h2 class="text-base font-bold text-slate-800">Progres Per PPL</h2>
-            <p class="text-xs text-slate-500">Klik baris untuk melihat detail per SLS</p>
+            <p class="text-xs text-slate-500">
+              Klik baris untuk melihat detail per SLS
+            </p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -399,7 +431,7 @@
         showGridlines
         stripedRows
         v-model:expandedRows="expandedRows"
-        dataKey="id"
+        dataKey="email"
         :rows="paginatedItem.per_page"
         :first="(paginatedItem.current_page - 1) * paginatedItem.per_page"
         :total-records="paginatedItem.total"
@@ -422,14 +454,20 @@
         <Column header="No" style="width: 3.5rem">
           <template #body="{ index }">
             <span class="text-xs text-slate-500">
-              {{ (paginatedItem.current_page - 1) * paginatedItem.per_page + index + 1 }}
+              {{
+                (paginatedItem.current_page - 1) * paginatedItem.per_page +
+                index +
+                1
+              }}
             </span>
           </template>
         </Column>
         <Column field="nama" header="Nama">
           <template #body="{ data }">
             <div>
-              <span class="font-semibold text-slate-800">{{ data.nama || "-" }}</span>
+              <span class="font-semibold text-slate-800">{{
+                data.nama || "-"
+              }}</span>
               <p class="text-xs text-slate-400">{{ data.email }}</p>
             </div>
           </template>
@@ -439,7 +477,12 @@
             <Badge :value="data.fasih?.length || 0" severity="info" />
           </template>
         </Column>
-        <Column header="Realisasi" sortable field="realisasi" style="width: 8rem">
+        <Column
+          header="Realisasi"
+          sortable
+          field="realisasi"
+          style="width: 8rem"
+        >
           <template #body="{ data }">
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-xs">
@@ -448,13 +491,16 @@
                 }}</span>
                 <span class="text-slate-400">/ {{ petugasTotal(data) }}</span>
               </div>
-              <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden"
+              >
                 <div
                   class="h-full bg-emerald-500 rounded-full transition-all"
                   :style="{ width: petugasPct(data) + '%' }"
                 ></div>
               </div>
-              <span class="text-[10px] text-emerald-600 font-semibold text-right"
+              <span
+                class="text-[10px] text-emerald-600 font-semibold text-right"
                 >{{ petugasPct(data) }}%</span
               >
             </div>
@@ -464,7 +510,9 @@
         <!-- EXPANDED ROW: per-SLS detail -->
         <template #expansion="{ data }">
           <div class="p-3 bg-slate-50/80">
-            <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
+            <h4
+              class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2"
+            >
               <i class="pi pi-list mr-1"></i>
               Detail SLS — {{ data.nama || data.email }}
             </h4>
@@ -475,12 +523,20 @@
               stripedRows
               size="small"
             >
-              <Column field="subsls_code" header="Kode SLS" style="width: 10rem">
+              <Column
+                field="subsls_code"
+                header="Kode SLS"
+                style="width: 10rem"
+              >
                 <template #body="{ data: row }">
                   <span class="font-mono text-xs">{{ row.subsls_code }}</span>
                 </template>
               </Column>
-              <Column field="open" header="Open" style="width: 4rem; text-align: center">
+              <Column
+                field="open"
+                header="Open"
+                style="width: 4rem; text-align: center"
+              >
                 <template #body="{ data: row }">
                   <Badge
                     :value="row.open || 0"
@@ -591,7 +647,9 @@
           <i class="pi pi-users text-lg text-orange-500"></i>
           <div>
             <h2 class="text-base font-bold text-slate-800">Progres Per PML</h2>
-            <p class="text-xs text-slate-500">Klik baris untuk melihat detail per SLS</p>
+            <p class="text-xs text-slate-500">
+              Klik baris untuk melihat detail per SLS
+            </p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -645,7 +703,7 @@
         showGridlines
         stripedRows
         v-model:expandedRows="expandedRows"
-        dataKey="id"
+        dataKey="email"
         :rows="paginatedItem.per_page"
         :first="(paginatedItem.current_page - 1) * paginatedItem.per_page"
         :total-records="paginatedItem.total"
@@ -668,14 +726,20 @@
         <Column header="No" style="width: 3.5rem">
           <template #body="{ index }">
             <span class="text-xs text-slate-500">
-              {{ (paginatedItem.current_page - 1) * paginatedItem.per_page + index + 1 }}
+              {{
+                (paginatedItem.current_page - 1) * paginatedItem.per_page +
+                index +
+                1
+              }}
             </span>
           </template>
         </Column>
         <Column field="nama" header="Nama">
           <template #body="{ data }">
             <div>
-              <span class="font-semibold text-slate-800">{{ data.nama || "-" }}</span>
+              <span class="font-semibold text-slate-800">{{
+                data.nama || "-"
+              }}</span>
               <p class="text-xs text-slate-400">{{ data.email }}</p>
             </div>
           </template>
@@ -685,7 +749,12 @@
             <Badge :value="data.fasih?.length || 0" severity="info" />
           </template>
         </Column>
-        <Column header="Realisasi" sortable field="realisasi" style="width: 8rem">
+        <Column
+          header="Realisasi"
+          sortable
+          field="realisasi"
+          style="width: 8rem"
+        >
           <template #body="{ data }">
             <div class="flex flex-col gap-1">
               <div class="flex justify-between text-xs">
@@ -694,13 +763,16 @@
                 }}</span>
                 <span class="text-slate-400">/ {{ petugasTotal(data) }}</span>
               </div>
-              <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden"
+              >
                 <div
                   class="h-full bg-emerald-500 rounded-full transition-all"
                   :style="{ width: petugasPct(data) + '%' }"
                 ></div>
               </div>
-              <span class="text-[10px] text-emerald-600 font-semibold text-right"
+              <span
+                class="text-[10px] text-emerald-600 font-semibold text-right"
                 >{{ petugasPct(data) }}%</span
               >
             </div>
@@ -710,7 +782,9 @@
         <!-- EXPANDED ROW: per-SLS detail -->
         <template #expansion="{ data }">
           <div class="p-3 bg-slate-50/80">
-            <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
+            <h4
+              class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2"
+            >
               <i class="pi pi-list mr-1"></i>
               Detail SLS — {{ data.nama || data.email }}
             </h4>
@@ -721,12 +795,20 @@
               stripedRows
               size="small"
             >
-              <Column field="subsls_code" header="Kode SLS" style="width: 10rem">
+              <Column
+                field="subsls_code"
+                header="Kode SLS"
+                style="width: 10rem"
+              >
                 <template #body="{ data: row }">
                   <span class="font-mono text-xs">{{ row.subsls_code }}</span>
                 </template>
               </Column>
-              <Column field="open" header="Open" style="width: 4rem; text-align: center">
+              <Column
+                field="open"
+                header="Open"
+                style="width: 4rem; text-align: center"
+              >
                 <template #body="{ data: row }">
                   <Badge
                     :value="row.open || 0"
@@ -859,7 +941,8 @@
           <div
             class="bg-slate-50 px-4 py-2 flex items-center justify-between border-b border-slate-200"
           >
-            <span class="text-xs font-bold text-slate-600 uppercase tracking-wide"
+            <span
+              class="text-xs font-bold text-slate-600 uppercase tracking-wide"
               >{{ selectedFiles.length }} file dipilih</span
             >
             <span
@@ -883,7 +966,9 @@
                 :style="{ width: overallProgress + '%' }"
               ></div>
             </div>
-            <p class="text-xs text-slate-500 mt-1 text-right">{{ overallProgress }}%</p>
+            <p class="text-xs text-slate-500 mt-1 text-right">
+              {{ overallProgress }}%
+            </p>
           </div>
 
           <div class="max-h-[40vh] overflow-y-auto">
@@ -898,7 +983,9 @@
               }"
             >
               <!-- Status icon -->
-              <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+              <div
+                class="flex-shrink-0 w-6 h-6 flex items-center justify-center"
+              >
                 <!-- Pending -->
                 <i
                   v-if="file.status === 'pending'"
@@ -940,17 +1027,26 @@
                 >
                   {{ file.name }}
                 </p>
-                <p v-if="file.status === 'success'" class="text-xs text-emerald-600">
+                <p
+                  v-if="file.status === 'success'"
+                  class="text-xs text-emerald-600"
+                >
                   {{ file.rowsProcessed }} baris diproses dari
                   {{ file.rowsTotal }}
                 </p>
                 <p v-if="file.status === 'error'" class="text-xs text-red-500">
                   {{ file.errorMessage }}
                 </p>
-                <p v-if="file.status === 'uploading'" class="text-xs text-blue-500">
+                <p
+                  v-if="file.status === 'uploading'"
+                  class="text-xs text-blue-500"
+                >
                   Sedang memproses...
                 </p>
-                <p v-if="file.status === 'cancelled'" class="text-xs text-slate-400">
+                <p
+                  v-if="file.status === 'cancelled'"
+                  class="text-xs text-slate-400"
+                >
                   Dibatalkan
                 </p>
               </div>
@@ -995,7 +1091,9 @@
           </div>
           <div class="grid grid-cols-3 gap-2 text-center">
             <div class="bg-white/70 rounded-lg p-2">
-              <p class="text-lg font-bold text-emerald-600">{{ successCount }}</p>
+              <p class="text-lg font-bold text-emerald-600">
+                {{ successCount }}
+              </p>
               <p class="text-xs text-slate-500">Berhasil</p>
             </div>
             <div class="bg-white/70 rounded-lg p-2">
@@ -1003,7 +1101,9 @@
               <p class="text-xs text-slate-500">Gagal</p>
             </div>
             <div class="bg-white/70 rounded-lg p-2">
-              <p class="text-lg font-bold text-slate-400">{{ cancelledCount }}</p>
+              <p class="text-lg font-bold text-slate-400">
+                {{ cancelledCount }}
+              </p>
               <p class="text-xs text-slate-500">Dibatalkan</p>
             </div>
           </div>
@@ -1060,13 +1160,14 @@
 <script setup>
 import SpinnerBorder from "@/Components/ManManagement/SpinnerBorder.vue";
 import SeLayout from "@/Layouts/Se2026/SeLayout.vue";
-import { Head, usePage } from "@inertiajs/vue3";
+import { Head, router, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { computed, ref } from "vue";
 import * as XLSX from "xlsx";
 
 const page = usePage();
 const uploadDialog = ref(false);
+
 const props = defineProps({
   open: Number,
   draft: Number,
@@ -1082,6 +1183,35 @@ const props = defineProps({
   lastThreeUpdate: Object,
   kabkot: Array,
 });
+
+const thisTriggerSpinner = ref(false);
+const refreshData = () => {
+  router.reload({
+    only: [
+      "open",
+      "draft",
+      "submitted_p",
+      "submitted_r",
+      "approved",
+      "rejected",
+      "revoked",
+      "completed",
+      "total",
+      "data_progress",
+      "current_level",
+      "lastThreeUpdate",
+      "kabkot",
+    ],
+    preserveScroll: true,
+    onStart: () => {
+      thisTriggerSpinner.value = true;
+    },
+    onFinish: () => {
+      thisTriggerSpinner.value = false;
+      progressData.value = props.data_progress;
+    },
+  });
+};
 
 const selectedKabkot = ref(null);
 const selectedKec = ref(null);
@@ -1240,7 +1370,10 @@ const getVisibility = (level) => {
       currentLevel.value == "sls")
   )
     return true;
-  if (level == "desa" && (currentLevel.value == "desa" || currentLevel.value == "sls"))
+  if (
+    level == "desa" &&
+    (currentLevel.value == "desa" || currentLevel.value == "sls")
+  )
     return true;
   if (level == "sls" && currentLevel.value == "sls") return true;
   return false;
@@ -1303,7 +1436,6 @@ const expandedRows = ref({});
 const petugasLoading = ref(false);
 const petugasSearchNama = ref("");
 
-const thisTriggerSpinner = ref(false);
 const fetchDataPetugas = async (tab) => {
   petugasLoading.value = true;
   thisTriggerSpinner.value = true;
@@ -1419,8 +1551,9 @@ const dialogTitle = computed(() => {
 });
 const completedCount = computed(
   () =>
-    selectedFiles.value.filter((f) => f.status === "success" || f.status === "error")
-      .length
+    selectedFiles.value.filter(
+      (f) => f.status === "success" || f.status === "error"
+    ).length
 );
 const successCount = computed(
   () => selectedFiles.value.filter((f) => f.status === "success").length
@@ -1431,7 +1564,9 @@ const errorCount = computed(
 const cancelledCount = computed(
   () => selectedFiles.value.filter((f) => f.status === "cancelled").length
 );
-const hasErrors = computed(() => errorCount.value > 0 || cancelledCount.value > 0);
+const hasErrors = computed(
+  () => errorCount.value > 0 || cancelledCount.value > 0
+);
 const overallProgress = computed(() => {
   if (selectedFiles.value.length === 0) return 0;
   const done = selectedFiles.value.filter(
@@ -1547,7 +1682,9 @@ const startBatchUpload = async () => {
     } catch (err) {
       fileEntry.status = "error";
       fileEntry.errorMessage =
-        err.response?.data?.message || err.message || "Terjadi kesalahan tidak diketahui";
+        err.response?.data?.message ||
+        err.message ||
+        "Terjadi kesalahan tidak diketahui";
     }
 
     // Free memory
@@ -1595,7 +1732,12 @@ const cancelUpload = () => {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.15), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(148, 163, 184, 0.15),
+    transparent
+  );
 }
 
 .stat-card:hover {

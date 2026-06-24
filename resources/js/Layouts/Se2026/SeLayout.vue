@@ -20,7 +20,7 @@
                 Dashboard Sensus Ekonomi 2026
               </h1>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Provinsi Sulawesi Utara (versi beta-1.0)
+                Provinsi Sulawesi Utara (versi 1.1)
               </p>
             </div>
           </div>
@@ -54,8 +54,45 @@
         <!-- <SpinnerBorder v-if="triggerSpinner" /> -->
         <slot />
       </main>
+
+      <footer
+        class="border-t border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm py-3 px-4 text-center"
+      >
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          &copy; 2026 Projek SEtahuBulat Versi 1.1 &mdash;
+          <a href="https://sulut.bps.go.id" class="font-bold"
+            >BPS Provinsi Sulawesi Utara</a
+          >
+          dibuat oleh:
+          <a href="https://github.com/rifqind" class="font-bold">AuraSphere</a>,
+          didukung oleh:
+          <span class="font-bold">Tim IPDS</span>
+        </p>
+      </footer>
     </div>
   </div>
+
+  <!-- FLOATING REFRESH BUTTON -->
+  <Transition name="refresh-btn" mode="out-in">
+    <Button
+      v-if="isAtTop"
+      key="refresh-full"
+      @click="onRefresh"
+      icon="pi pi-refresh"
+      size="small"
+      severity="success"
+      label="Refresh Data"
+      class="!fixed top-4 right-4 z-50 rounded-[12px] shadow-lg"
+    />
+    <Button
+      v-else
+      key="refresh-icon"
+      @click="onRefresh"
+      icon="pi pi-refresh"
+      severity="success"
+      class="!fixed top-4 right-4 z-50 !rounded-full shadow-lg"
+    />
+  </Transition>
 
   <!-- BATCH UPLOAD DIALOG -->
   <Dialog
@@ -120,7 +157,9 @@
               :style="{ width: overallProgress + '%' }"
             ></div>
           </div>
-          <p class="text-xs text-slate-500 mt-1 text-right">{{ overallProgress }}%</p>
+          <p class="text-xs text-slate-500 mt-1 text-right">
+            {{ overallProgress }}%
+          </p>
         </div>
 
         <div class="max-h-[40vh] overflow-y-auto">
@@ -177,17 +216,26 @@
               >
                 {{ file.name }}
               </p>
-              <p v-if="file.status === 'success'" class="text-xs text-emerald-600">
+              <p
+                v-if="file.status === 'success'"
+                class="text-xs text-emerald-600"
+              >
                 {{ file.rowsProcessed }} baris diproses dari
                 {{ file.rowsTotal }}
               </p>
               <p v-if="file.status === 'error'" class="text-xs text-red-500">
                 {{ file.errorMessage }}
               </p>
-              <p v-if="file.status === 'uploading'" class="text-xs text-blue-500">
+              <p
+                v-if="file.status === 'uploading'"
+                class="text-xs text-blue-500"
+              >
                 Sedang memproses...
               </p>
-              <p v-if="file.status === 'cancelled'" class="text-xs text-slate-400">
+              <p
+                v-if="file.status === 'cancelled'"
+                class="text-xs text-slate-400"
+              >
                 Dibatalkan
               </p>
             </div>
@@ -209,7 +257,9 @@
         v-if="isCompleted"
         class="rounded-xl p-4 border"
         :class="
-          hasErrors ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'
+          hasErrors
+            ? 'bg-amber-50 border-amber-200'
+            : 'bg-emerald-50 border-emerald-200'
         "
       >
         <div class="flex items-center gap-2 mb-2">
@@ -313,6 +363,7 @@
       current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data"
     >
       <Column field="formatted_time" header="Upload Tanggal" />
+      <Column field="data_type" header="Tipe Data" />
       <Column field="kabkot.label" header="Data Kabupaten/Kota" />
       <Column field="pegawai.name" header="Nama Pegawai" />
     </DataTable>
@@ -322,13 +373,36 @@
 <script setup>
 import { usePage } from "@inertiajs/vue3";
 import { ConfirmDialog, Toast, useToast } from "primevue";
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import * as XLSX from "xlsx";
 import { triggerSpinner } from "../ManManagement/Composables/axiosSetup";
 import SpinnerBorder from "@/Components/ManManagement/SpinnerBorder.vue";
 
+const emit = defineEmits(["refresh"]);
+
 const page = usePage();
 const toast = useToast();
+
+// ─── Scroll-aware Refresh Button ───
+const isAtTop = ref(true);
+const SCROLL_THRESHOLD = 60;
+
+const handleScroll = () => {
+  isAtTop.value = window.scrollY < SCROLL_THRESHOLD;
+};
+
+onMounted(() => {
+  window.addEventListener("scroll", handleScroll, { passive: true });
+});
+
+onUnmounted(() => {
+  window.removeEventListener("scroll", handleScroll);
+});
+
+// Emit event ke parent page (misal Dashboard.vue) saat tombol refresh diklik
+const onRefresh = () => {
+  emit("refresh");
+};
 watch(
   () => page.props.flash,
   async (flash) => {
@@ -371,8 +445,9 @@ const dialogTitle = computed(() => {
 // ─── Computed Stats ───
 const completedCount = computed(
   () =>
-    selectedFiles.value.filter((f) => f.status === "success" || f.status === "error")
-      .length
+    selectedFiles.value.filter(
+      (f) => f.status === "success" || f.status === "error"
+    ).length
 );
 const successCount = computed(
   () => selectedFiles.value.filter((f) => f.status === "success").length
@@ -383,7 +458,9 @@ const errorCount = computed(
 const cancelledCount = computed(
   () => selectedFiles.value.filter((f) => f.status === "cancelled").length
 );
-const hasErrors = computed(() => errorCount.value > 0 || cancelledCount.value > 0);
+const hasErrors = computed(
+  () => errorCount.value > 0 || cancelledCount.value > 0
+);
 const overallProgress = computed(() => {
   if (selectedFiles.value.length === 0) return 0;
   const done = selectedFiles.value.filter(
@@ -392,7 +469,6 @@ const overallProgress = computed(() => {
   return Math.round((done / selectedFiles.value.length) * 100);
 });
 
-// ─── Dialog Lifecycle ───
 const openUploadDialog = () => {
   selectedFiles.value = [];
   isUploading.value = false;
@@ -409,11 +485,9 @@ const closeDialog = () => {
 const closeAndRefresh = () => {
   uploadDialog.value = false;
   selectedFiles.value = [];
-  // Full page reload to refresh dashboard data
-  window.location.reload();
+  emit("refresh");
 };
 
-// ─── File Selection ───
 const onFilesSelected = (e) => {
   const files = Array.from(e.target.files || []);
   selectedFiles.value = files.map((file) => ({
@@ -431,7 +505,6 @@ const removeFile = (idx) => {
   selectedFiles.value.splice(idx, 1);
 };
 
-// ─── Parse a single file using XLSX ───
 const parseFile = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -508,7 +581,9 @@ const startBatchUpload = async () => {
     } catch (err) {
       fileEntry.status = "error";
       fileEntry.errorMessage =
-        err.response?.data?.message || err.message || "Terjadi kesalahan tidak diketahui";
+        err.response?.data?.message ||
+        err.message ||
+        "Terjadi kesalahan tidak diketahui";
     }
 
     // Free memory
@@ -560,3 +635,19 @@ const fetchLog = async () => {
   }
 };
 </script>
+
+<style scoped>
+/* Animasi transisi tombol refresh */
+.refresh-btn-enter-active,
+.refresh-btn-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.refresh-btn-enter-from {
+  opacity: 0;
+  transform: scale(0.8);
+}
+.refresh-btn-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
+}
+</style>
