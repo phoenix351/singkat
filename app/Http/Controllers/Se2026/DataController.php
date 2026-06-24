@@ -481,18 +481,27 @@ class DataController extends Controller
             return response()->json(['message' => 'Tipe petugas tidak valid'], 400);
         }
 
-        $current_petugas = $sourceModel::select(['email'])
+        $emailsInFasih = $sourceModel::select('email')
             ->distinct()
             ->pluck('email')
             ->toArray();
 
-        foreach ($current_petugas as $email) {
-            $targetModel::firstOrCreate(
-                ['email' => $email],
-                ['email' => $email]
-            );
+        $deleted = $targetModel::whereNotIn('email', $emailsInFasih)->delete();
+
+        $inserted = 0;
+        foreach ($emailsInFasih as $email) {
+            $created = $targetModel::firstOrCreate(['email' => $email]);
+            if ($created->wasRecentlyCreated) {
+                $inserted++;
+            }
         }
-        return response()->json('Berhasil');
+
+        return response()->json([
+            'message' => 'Berhasil sync petugas',
+            'inserted' => $inserted,
+            'deleted' => $deleted,
+            'total' => count($emailsInFasih),
+        ]);
     }
 
     public function uploadPetugasBatch(Request $request)
