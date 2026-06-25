@@ -20,7 +20,7 @@
                 Dashboard Sensus Ekonomi 2026
               </h1>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Provinsi Sulawesi Utara (versi 1.1)
+                Provinsi Sulawesi Utara (versi 1.2)
               </p>
             </div>
           </div>
@@ -59,7 +59,7 @@
         class="border-t border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm py-3 px-4 text-center"
       >
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Projek SEtahuBulat Versi 1.1 &mdash;
+          &copy; 2026 Projek SEtahuBulat Versi 1.2 &mdash;
           <a href="https://sulut.bps.go.id" class="font-bold"
             >BPS Provinsi Sulawesi Utara</a
           >
@@ -513,31 +513,68 @@ const parseFile = (file) => {
         try {
           const json = JSON.parse(e.target.result);
           const rawData = json.data || [];
-          
-          const rows = [["email", "subsls_code", "open", "draft", "submitted_p", "approved", "rejected", "submitted_r", "revoked", "completed"]];
-          
-          rawData.forEach(user => {
+
+          const rows = [
+            [
+              "email",
+              "subsls_code",
+              "open",
+              "draft",
+              "submitted_p",
+              "approved",
+              "rejected",
+              "submitted_r",
+              "revoked",
+              "completed",
+            ],
+          ];
+
+          rawData.forEach((user) => {
             const email = user.email;
             if (user.regionSummary) {
-              user.regionSummary.forEach(region => {
+              user.regionSummary.forEach((region) => {
                 const subsls_code = region.regionCode;
-                let open = 0, draft = 0, submitted_p = 0, approved = 0, rejected = 0, submitted_r = 0, revoked = 0, completed = 0;
-                
+                let open = 0,
+                  draft = 0,
+                  submitted_p = 0,
+                  approved = 0,
+                  rejected = 0,
+                  submitted_r = 0,
+                  revoked = 0,
+                  completed = 0;
+
                 if (region.statusBreakdown) {
-                  region.statusBreakdown.forEach(statusItem => {
+                  region.statusBreakdown.forEach((statusItem) => {
                     const statusName = statusItem.status.toUpperCase();
                     if (statusName === "OPEN") open = statusItem.count;
                     else if (statusName === "DRAFT") draft = statusItem.count;
-                    else if (statusName === "SUBMITTED BY PENCACAH") submitted_p = statusItem.count;
-                    else if (statusName === "SUBMITTED RESPONDENT") submitted_r = statusItem.count;
-                    else if (statusName === "APPROVED BY PENGAWAS") approved = statusItem.count;
-                    else if (statusName === "REJECTED BY PENGAWAS") rejected = statusItem.count;
-                    else if (statusName === "COMPLETED") completed = statusItem.count;
-                    else if (statusName === "REVOKED") revoked = statusItem.count;
+                    else if (statusName === "SUBMITTED BY PENCACAH")
+                      submitted_p = statusItem.count;
+                    else if (statusName === "SUBMITTED RESPONDENT")
+                      submitted_r = statusItem.count;
+                    else if (statusName === "APPROVED BY PENGAWAS")
+                      approved = statusItem.count;
+                    else if (statusName === "REJECTED BY PENGAWAS")
+                      rejected = statusItem.count;
+                    else if (statusName === "COMPLETED")
+                      completed = statusItem.count;
+                    else if (statusName === "REVOKED")
+                      revoked = statusItem.count;
                   });
                 }
-                
-                rows.push([email, subsls_code, open, draft, submitted_p, approved, rejected, submitted_r, revoked, completed]);
+
+                rows.push([
+                  email,
+                  subsls_code,
+                  open,
+                  draft,
+                  submitted_p,
+                  approved,
+                  rejected,
+                  submitted_r,
+                  revoked,
+                  completed,
+                ]);
               });
             }
           });
