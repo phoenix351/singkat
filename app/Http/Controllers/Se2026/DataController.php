@@ -232,19 +232,19 @@ class DataController extends Controller
             '7174'
         ];
         $kode = null;
-        $cleanName = str_replace('.csv', '', $fileName);
+        $cleanName = str_replace(['.csv', '.json'], '', $fileName);
         $exploded_fileName = explode('_', $cleanName);
         $totalElement = count($exploded_fileName);
         $tgl = $exploded_fileName[$totalElement - 2];
         $jam = $exploded_fileName[$totalElement - 1];
         $updatedAtReal = Carbon::createFromFormat('YmdHis', $tgl . $jam)->toDateTimeString();
 
-        $pregged_check = '/^scraped_data_(.+?)_\d{8}_\d{6}\.csv$/';
-        $expected_format = 'scraped_data_{kode}_{Ymd}_{His}.csv';
+        $pregged_check = '/^scraped_data_(.+?)_\d{8}_\d{6}\.(csv|json)$/';
+        $expected_format = 'scraped_data_{kode}_{Ymd}_{His}.(csv|json)';
 
         if (isset($exploded_fileName[2]) && $exploded_fileName[2] === 'pml') {
-            $pregged_check = '/^scraped_data_pml_(.+?)_\d{8}_\d{6}\.csv$/';
-            $expected_format = 'scraped_data_pml_{kode}_{Ymd}_{His}.csv';
+            $pregged_check = '/^scraped_data_pml_(.+?)_\d{8}_\d{6}\.(csv|json)$/';
+            $expected_format = 'scraped_data_pml_{kode}_{Ymd}_{His}.(csv|json)';
         }
 
         if (preg_match($pregged_check, $fileName, $matches)) {
@@ -271,6 +271,12 @@ class DataController extends Controller
         $processedCount = 0;
 
         try {
+            if ($exploded_fileName[2] != 'pml') {
+                DataFasih::where('subsls_code', 'like', $kode . '%')->delete();
+            } else {
+                DataFasihPml::where('subsls_code', 'like', $kode . '%')->delete();
+            }
+
             foreach ($data as $row) {
                 $mapped = [];
                 foreach ($fields as $index => $field) {
@@ -283,21 +289,9 @@ class DataController extends Controller
                 $cek_subsls = MasterSubSls::where('code', (string) $mapped['subsls_code'])->first();
                 if ($cek_subsls) {
                     if ($exploded_fileName[2] != 'pml') {
-                        DataFasih::updateOrCreate(
-                            [
-                                'email' => $mapped['email'] ?? null,
-                                'subsls_code' => (string) $mapped['subsls_code'] ?? null,
-                            ],
-                            $mapped
-                        );
+                        DataFasih::create($mapped);
                     } else {
-                        DataFasihPml::updateOrCreate(
-                            [
-                                'email' => $mapped['email'] ?? null,
-                                'subsls_code' => (string) $mapped['subsls_code'] ?? null,
-                            ],
-                            $mapped
-                        );
+                        DataFasihPml::create($mapped);
                     }
                     $processedCount++;
                 }
@@ -481,18 +475,27 @@ class DataController extends Controller
             return response()->json(['message' => 'Tipe petugas tidak valid'], 400);
         }
 
-        $current_petugas = $sourceModel::select(['email'])
+        $emailsInFasih = $sourceModel::select('email')
             ->distinct()
             ->pluck('email')
             ->toArray();
 
-        foreach ($current_petugas as $email) {
-            $targetModel::firstOrCreate(
-                ['email' => $email],
-                ['email' => $email]
-            );
+        $deleted = $targetModel::whereNotIn('email', $emailsInFasih)->delete();
+
+        $inserted = 0;
+        foreach ($emailsInFasih as $email) {
+            $created = $targetModel::firstOrCreate(['email' => $email]);
+            if ($created->wasRecentlyCreated) {
+                $inserted++;
+            }
         }
-        return response()->json('Berhasil');
+
+        return response()->json([
+            'message' => 'Berhasil sync petugas',
+            'inserted' => $inserted,
+            'deleted' => $deleted,
+            'total' => count($emailsInFasih),
+        ]);
     }
 
     public function uploadPetugasBatch(Request $request)
