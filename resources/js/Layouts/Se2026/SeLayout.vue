@@ -107,18 +107,18 @@
       <!-- FILE SELECTION (hidden during upload) -->
       <div v-if="!isUploading && !isCompleted">
         <label class="block font-bold text-sm mb-2"
-          >Pilih File Hasil Scrapping (.csv)</label
+          >Pilih File Hasil Scrapping (.csv, .json)</label
         >
         <p class="text-xs text-slate-500 mb-3">
           Bisa pilih banyak file sekaligus. Format nama:
           <code class="bg-slate-100 px-1 rounded text-orange-600"
-            >scraped_data_7171_{tanggal}_{jam}.csv</code
+            >scraped_data_7171_{tanggal}_{jam}.csv/.json</code
           >
         </p>
         <input
           ref="fileInput"
           type="file"
-          accept=".csv,.xlsx,.xls"
+          accept=".csv,.xlsx,.xls,.json"
           multiple
           @change="onFilesSelected"
           class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 file:cursor-pointer file:transition-colors"
@@ -507,21 +507,64 @@ const removeFile = (idx) => {
 
 const parseFile = (file) => {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const dataBuffer = e.target.result;
-        const wb = XLSX.read(dataBuffer, { type: "array" });
-        const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-        resolve(data);
-      } catch (err) {
-        reject(err);
-      }
-    };
-    reader.onerror = () => reject(new Error("Gagal membaca file"));
-    reader.readAsArrayBuffer(file);
+    if (file.name.endsWith(".json")) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const json = JSON.parse(e.target.result);
+          const rawData = json.data || [];
+          
+          const rows = [["email", "subsls_code", "open", "draft", "submitted_p", "approved", "rejected", "submitted_r", "revoked", "completed"]];
+          
+          rawData.forEach(user => {
+            const email = user.email;
+            if (user.regionSummary) {
+              user.regionSummary.forEach(region => {
+                const subsls_code = region.regionCode;
+                let open = 0, draft = 0, submitted_p = 0, approved = 0, rejected = 0, submitted_r = 0, revoked = 0, completed = 0;
+                
+                if (region.statusBreakdown) {
+                  region.statusBreakdown.forEach(statusItem => {
+                    const statusName = statusItem.status.toUpperCase();
+                    if (statusName === "OPEN") open = statusItem.count;
+                    else if (statusName === "DRAFT") draft = statusItem.count;
+                    else if (statusName === "SUBMITTED BY PENCACAH") submitted_p = statusItem.count;
+                    else if (statusName === "SUBMITTED RESPONDENT") submitted_r = statusItem.count;
+                    else if (statusName === "APPROVED BY PENGAWAS") approved = statusItem.count;
+                    else if (statusName === "REJECTED BY PENGAWAS") rejected = statusItem.count;
+                    else if (statusName === "COMPLETED") completed = statusItem.count;
+                    else if (statusName === "REVOKED") revoked = statusItem.count;
+                  });
+                }
+                
+                rows.push([email, subsls_code, open, draft, submitted_p, approved, rejected, submitted_r, revoked, completed]);
+              });
+            }
+          });
+          resolve(rows);
+        } catch (err) {
+          reject(new Error("Gagal parsing JSON"));
+        }
+      };
+      reader.onerror = () => reject(new Error("Gagal membaca file json"));
+      reader.readAsText(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const dataBuffer = e.target.result;
+          const wb = XLSX.read(dataBuffer, { type: "array" });
+          const wsname = wb.SheetNames[0];
+          const ws = wb.Sheets[wsname];
+          const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+          resolve(data);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = () => reject(new Error("Gagal membaca file"));
+      reader.readAsArrayBuffer(file);
+    }
   });
 };
 
