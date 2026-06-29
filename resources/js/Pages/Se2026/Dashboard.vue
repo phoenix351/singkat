@@ -268,7 +268,15 @@
             </p>
           </div>
         </div>
-        <div class="space-x-2">
+        <div class="space-x-2 flex items-center">
+          <Button
+            title="Download"
+            @click="wilayahDialog = true"
+            rounded
+            icon="pi pi-download"
+            size="small"
+            severity="success"
+          />
           <Select
             :pt="{
               label: { class: 'text-sm px-2 py-1' },
@@ -1154,6 +1162,33 @@
         </div>
       </template>
     </Dialog>
+
+    <Dialog
+      v-model:visible="wilayahDialog"
+      modal
+      :closable="!isUploading"
+      header="Download Wilayah"
+      class="w-[95vw] max-w-[600px]"
+      position="top"
+    >
+      <div class="flex flex-col gap-4">
+        <div class="space-y-2">
+          <label class="font-bold block">Level Wilayah:</label>
+          <Select
+            :options="[
+              { value: 'provinsi', label: 'Level Provinsi' },
+              { value: 'kabkot', label: 'Level Kabupaten/Kota' },
+              { value: 'kec', label: 'Level Kecamatan' },
+              { value: 'desa', label: 'Level Desa/Kelurahan' },
+            ]"
+            placeholder="Pilih Level Wilayah"
+            optionLabel="label"
+            optionValue="value"
+            class="w-full"
+          />
+        </div>
+      </div>
+    </Dialog>
   </SeLayout>
 </template>
 
@@ -1708,6 +1743,7 @@ const startBatchUpload = async () => {
 const cancelUpload = () => {
   cancelRequested.value = true;
 };
+const wilayahDialog = ref(false);
 </script>
 
 <style scoped>
