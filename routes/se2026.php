@@ -1,6 +1,7 @@
 <?php
 
 use App\Exports\Se2026\PplExport;
+use App\Exports\Se2026\WilayahExport;
 use App\Http\Controllers\Se2026\DataController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -32,4 +33,10 @@ Route::prefix('se2026')->middleware(['auth', 'use.vue.inertia', 'permission'])->
 
         return Excel::download(new PplExport($kabkot, $kec, $desa, $sls, $nama, $tab), 'Data petugas.xlsx');
     })->name('download-report-petugas');
+
+    Route::get('/download-wilayah', function (Request $request) {
+        $kabkot = $request->kabkot;
+        $fileName = 'Rekapitulasi_Wilayah_' . ($kabkot ?? 'all') . '.xlsx';
+        return Excel::download(new WilayahExport($kabkot), $fileName);
+    })->name('download-wilayah');
 });

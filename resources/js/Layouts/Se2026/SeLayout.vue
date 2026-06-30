@@ -20,7 +20,7 @@
                 Dashboard Sensus Ekonomi 2026
               </h1>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Provinsi Sulawesi Utara (versi 1.1)
+                Provinsi Sulawesi Utara (versi 1.3)
               </p>
             </div>
           </div>
@@ -59,7 +59,7 @@
         class="border-t border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm py-3 px-4 text-center"
       >
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Projek SEtahuBulat Versi 1.1 &mdash;
+          &copy; 2026 Projek SEtahuBulat Versi 1.3 &mdash;
           <a href="https://sulut.bps.go.id" class="font-bold"
             >BPS Provinsi Sulawesi Utara</a
           >
@@ -93,6 +93,57 @@
       class="!fixed top-4 right-4 z-50 !rounded-full shadow-lg"
     />
   </Transition>
+
+  <!-- CONFIRMATION DIALOG -->
+  <Dialog
+    v-model:visible="confirmDialog.visible"
+    modal
+    :closable="false"
+    header="⚠️ Konfirmasi Upload"
+    class="w-[95vw] max-w-[480px]"
+    position="center"
+  >
+    <div class="flex flex-col gap-4">
+      <p class="text-sm text-slate-700">
+        Data yang akan diupload untuk kode
+        <strong>{{ confirmDialog.kode }}</strong> memiliki
+        <strong class="text-red-600">total status lebih sedikit</strong>
+        dari data yang ada di database.
+      </p>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+          <p class="text-xs text-slate-500 mb-1">Total di Database</p>
+          <p class="text-2xl font-bold text-slate-700">{{ confirmDialog.existingTotal.toLocaleString('id-ID') }}</p>
+        </div>
+        <div class="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+          <p class="text-xs text-slate-500 mb-1">Total di File Baru</p>
+          <p class="text-2xl font-bold text-red-600">{{ confirmDialog.newTotal.toLocaleString('id-ID') }}</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500">
+        Selisih: <strong class="text-red-600">-{{ (confirmDialog.existingTotal - confirmDialog.newTotal).toLocaleString('id-ID') }}</strong> data.
+        Kemungkinan ada data yang belum ter-scraping. Apakah tetap ingin melanjutkan upload?
+      </p>
+    </div>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <Button
+          label="Batalkan File Ini"
+          size="small"
+          severity="secondary"
+          outlined
+          @click="confirmDialog.resolve(false)"
+        />
+        <Button
+          label="Tetap Lanjutkan"
+          size="small"
+          severity="danger"
+          icon="pi pi-exclamation-triangle"
+          @click="confirmDialog.resolve(true)"
+        />
+      </div>
+    </template>
+  </Dialog>
 
   <!-- BATCH UPLOAD DIALOG -->
   <Dialog
@@ -435,6 +486,31 @@ const isUploading = ref(false);
 const isCompleted = ref(false);
 const cancelRequested = ref(false);
 
+// ─── Confirmation Dialog State ───
+const confirmDialog = ref({
+  visible: false,
+  kode: '',
+  existingTotal: 0,
+  newTotal: 0,
+  resolve: null,
+});
+
+// Menunggu keputusan user via Promise
+const waitForConfirmation = (data) => {
+  return new Promise((resolve) => {
+    confirmDialog.value = {
+      visible: true,
+      kode: data.kode,
+      existingTotal: data.existing_total,
+      newTotal: data.new_total,
+      resolve: (confirmed) => {
+        confirmDialog.value.visible = false;
+        resolve(confirmed);
+      },
+    };
+  });
+};
+
 const dialogTitle = computed(() => {
   if (isCompleted.value) return "Hasil Upload";
   if (isUploading.value)
@@ -513,31 +589,68 @@ const parseFile = (file) => {
         try {
           const json = JSON.parse(e.target.result);
           const rawData = json.data || [];
-          
-          const rows = [["email", "subsls_code", "open", "draft", "submitted_p", "approved", "rejected", "submitted_r", "revoked", "completed"]];
-          
-          rawData.forEach(user => {
+
+          const rows = [
+            [
+              "email",
+              "subsls_code",
+              "open",
+              "draft",
+              "submitted_p",
+              "approved",
+              "rejected",
+              "submitted_r",
+              "revoked",
+              "completed",
+            ],
+          ];
+
+          rawData.forEach((user) => {
             const email = user.email;
             if (user.regionSummary) {
-              user.regionSummary.forEach(region => {
+              user.regionSummary.forEach((region) => {
                 const subsls_code = region.regionCode;
-                let open = 0, draft = 0, submitted_p = 0, approved = 0, rejected = 0, submitted_r = 0, revoked = 0, completed = 0;
-                
+                let open = 0,
+                  draft = 0,
+                  submitted_p = 0,
+                  approved = 0,
+                  rejected = 0,
+                  submitted_r = 0,
+                  revoked = 0,
+                  completed = 0;
+
                 if (region.statusBreakdown) {
-                  region.statusBreakdown.forEach(statusItem => {
+                  region.statusBreakdown.forEach((statusItem) => {
                     const statusName = statusItem.status.toUpperCase();
                     if (statusName === "OPEN") open = statusItem.count;
                     else if (statusName === "DRAFT") draft = statusItem.count;
-                    else if (statusName === "SUBMITTED BY PENCACAH") submitted_p = statusItem.count;
-                    else if (statusName === "SUBMITTED RESPONDENT") submitted_r = statusItem.count;
-                    else if (statusName === "APPROVED BY PENGAWAS") approved = statusItem.count;
-                    else if (statusName === "REJECTED BY PENGAWAS") rejected = statusItem.count;
-                    else if (statusName === "COMPLETED") completed = statusItem.count;
-                    else if (statusName === "REVOKED") revoked = statusItem.count;
+                    else if (statusName === "SUBMITTED BY PENCACAH")
+                      submitted_p = statusItem.count;
+                    else if (statusName === "SUBMITTED RESPONDENT")
+                      submitted_r = statusItem.count;
+                    else if (statusName === "APPROVED BY PENGAWAS")
+                      approved = statusItem.count;
+                    else if (statusName === "REJECTED BY PENGAWAS")
+                      rejected = statusItem.count;
+                    else if (statusName === "COMPLETED")
+                      completed = statusItem.count;
+                    else if (statusName === "REVOKED")
+                      revoked = statusItem.count;
                   });
                 }
-                
-                rows.push([email, subsls_code, open, draft, submitted_p, approved, rejected, submitted_r, revoked, completed]);
+
+                rows.push([
+                  email,
+                  subsls_code,
+                  open,
+                  draft,
+                  submitted_p,
+                  approved,
+                  rejected,
+                  submitted_r,
+                  revoked,
+                  completed,
+                ]);
               });
             }
           });
@@ -612,11 +725,30 @@ const startBatchUpload = async () => {
       fileEntry.parsedData = parsedData;
 
       // Send to backend
-      const response = await axios.post(route("se2026.upload-data-batch"), {
+      let response = await axios.post(route("se2026.upload-data-batch"), {
         _token: csrfToken,
         file: parsedData,
         file_name: fileEntry.name,
+        confirmed: false,
       });
+
+      // Handle needs_confirmation: data baru lebih sedikit dari DB
+      if (response.data?.needs_confirmation) {
+        const userConfirmed = await waitForConfirmation(response.data);
+        if (!userConfirmed) {
+          fileEntry.status = "cancelled";
+          fileEntry.errorMessage = "Dibatalkan karena data lebih sedikit dari database.";
+          fileEntry.parsedData = null;
+          continue;
+        }
+        // Re-send dengan confirmed = true
+        response = await axios.post(route("se2026.upload-data-batch"), {
+          _token: csrfToken,
+          file: parsedData,
+          file_name: fileEntry.name,
+          confirmed: true,
+        });
+      }
 
       fileEntry.status = "success";
       fileEntry.rowsProcessed = response.data.rows_processed;

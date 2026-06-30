@@ -211,6 +211,7 @@ class DataController extends Controller
         $validated = $request->validate([
             'file' => 'required|array',
             'file_name' => 'nullable|string',
+            'confirmed' => 'nullable|boolean',
         ]);
         $datas = $validated['file'];
         $fileName = $validated['file_name'] ?? 'unknown';
@@ -268,10 +269,45 @@ class DataController extends Controller
         $field_ppl = (new DataFasih())->getFillable();
         $field_pml = (new DataFasihPml())->getFillable();
         $fields = $exploded_fileName[2] != 'pml' ? $field_ppl : $field_pml;
+        $isPml = $exploded_fileName[2] === 'pml';
+        $confirmed = filter_var($validated['confirmed'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $processedCount = 0;
 
+        // ─── Pengecekan sum status sebelum proses ───
+        if (!$confirmed) {
+            $statusCols = ['open', 'draft', 'submitted_p', 'submitted_r', 'approved', 'rejected', 'revoked', 'completed'];
+            $sqlSum = implode(' + ', array_map(fn($col) => "COALESCE({$col}, 0)", $statusCols));
+
+            $existingTotal = $isPml
+                ? DataFasihPml::where('subsls_code', 'like', $kode . '%')->selectRaw("SUM({$sqlSum}) as total")->value('total') ?? 0
+                : DataFasih::where('subsls_code', 'like', $kode . '%')->selectRaw("SUM({$sqlSum}) as total")->value('total') ?? 0;
+
+            // Hitung sum dari data yang diupload
+            $statusIndexes = array_flip($fields); // field => index
+            $newTotal = 0;
+            foreach ($data as $row) {
+                foreach ($statusCols as $col) {
+                    if (isset($statusIndexes[$col]) && array_key_exists($statusIndexes[$col], $row)) {
+                        $newTotal += (int) $row[$statusIndexes[$col]];
+                    }
+                }
+            }
+
+            if ($existingTotal > 0 && $newTotal < $existingTotal) {
+                return response()->json([
+                    'success' => false,
+                    'needs_confirmation' => true,
+                    'message' => "Data yang diupload memiliki total status lebih sedikit dari data yang ada di database.",
+                    'file_name' => $fileName,
+                    'existing_total' => (int) $existingTotal,
+                    'new_total' => $newTotal,
+                    'kode' => $kode,
+                ], 200);
+            }
+        }
+
         try {
-            if ($exploded_fileName[2] != 'pml') {
+            if (!$isPml) {
                 DataFasih::where('subsls_code', 'like', $kode . '%')->delete();
             } else {
                 DataFasihPml::where('subsls_code', 'like', $kode . '%')->delete();
