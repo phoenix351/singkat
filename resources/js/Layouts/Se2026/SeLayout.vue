@@ -94,6 +94,57 @@
     />
   </Transition>
 
+  <!-- CONFIRMATION DIALOG -->
+  <Dialog
+    v-model:visible="confirmDialog.visible"
+    modal
+    :closable="false"
+    header="⚠️ Konfirmasi Upload"
+    class="w-[95vw] max-w-[480px]"
+    position="center"
+  >
+    <div class="flex flex-col gap-4">
+      <p class="text-sm text-slate-700">
+        Data yang akan diupload untuk kode
+        <strong>{{ confirmDialog.kode }}</strong> memiliki
+        <strong class="text-red-600">total status lebih sedikit</strong>
+        dari data yang ada di database.
+      </p>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+          <p class="text-xs text-slate-500 mb-1">Total di Database</p>
+          <p class="text-2xl font-bold text-slate-700">{{ confirmDialog.existingTotal.toLocaleString('id-ID') }}</p>
+        </div>
+        <div class="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+          <p class="text-xs text-slate-500 mb-1">Total di File Baru</p>
+          <p class="text-2xl font-bold text-red-600">{{ confirmDialog.newTotal.toLocaleString('id-ID') }}</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500">
+        Selisih: <strong class="text-red-600">-{{ (confirmDialog.existingTotal - confirmDialog.newTotal).toLocaleString('id-ID') }}</strong> data.
+        Kemungkinan ada data yang belum ter-scraping. Apakah tetap ingin melanjutkan upload?
+      </p>
+    </div>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <Button
+          label="Batalkan File Ini"
+          size="small"
+          severity="secondary"
+          outlined
+          @click="confirmDialog.resolve(false)"
+        />
+        <Button
+          label="Tetap Lanjutkan"
+          size="small"
+          severity="danger"
+          icon="pi pi-exclamation-triangle"
+          @click="confirmDialog.resolve(true)"
+        />
+      </div>
+    </template>
+  </Dialog>
+
   <!-- BATCH UPLOAD DIALOG -->
   <Dialog
     v-model:visible="uploadDialog"
@@ -435,6 +486,31 @@ const isUploading = ref(false);
 const isCompleted = ref(false);
 const cancelRequested = ref(false);
 
+// ─── Confirmation Dialog State ───
+const confirmDialog = ref({
+  visible: false,
+  kode: '',
+  existingTotal: 0,
+  newTotal: 0,
+  resolve: null,
+});
+
+// Menunggu keputusan user via Promise
+const waitForConfirmation = (data) => {
+  return new Promise((resolve) => {
+    confirmDialog.value = {
+      visible: true,
+      kode: data.kode,
+      existingTotal: data.existing_total,
+      newTotal: data.new_total,
+      resolve: (confirmed) => {
+        confirmDialog.value.visible = false;
+        resolve(confirmed);
+      },
+    };
+  });
+};
+
 const dialogTitle = computed(() => {
   if (isCompleted.value) return "Hasil Upload";
   if (isUploading.value)
@@ -649,11 +725,30 @@ const startBatchUpload = async () => {
       fileEntry.parsedData = parsedData;
 
       // Send to backend
-      const response = await axios.post(route("se2026.upload-data-batch"), {
+      let response = await axios.post(route("se2026.upload-data-batch"), {
         _token: csrfToken,
         file: parsedData,
         file_name: fileEntry.name,
+        confirmed: false,
       });
+
+      // Handle needs_confirmation: data baru lebih sedikit dari DB
+      if (response.data?.needs_confirmation) {
+        const userConfirmed = await waitForConfirmation(response.data);
+        if (!userConfirmed) {
+          fileEntry.status = "cancelled";
+          fileEntry.errorMessage = "Dibatalkan karena data lebih sedikit dari database.";
+          fileEntry.parsedData = null;
+          continue;
+        }
+        // Re-send dengan confirmed = true
+        response = await axios.post(route("se2026.upload-data-batch"), {
+          _token: csrfToken,
+          file: parsedData,
+          file_name: fileEntry.name,
+          confirmed: true,
+        });
+      }
 
       fileEntry.status = "success";
       fileEntry.rowsProcessed = response.data.rows_processed;

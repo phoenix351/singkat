@@ -4,8 +4,6 @@ namespace App\Exports\Se2026;
 
 use App\Models\Se2026\DataFasih;
 use App\Models\Se2026\DataFasihPml;
-use App\Models\Se2026\Pml;
-use App\Models\Se2026\Ppl;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithCustomValueBinder;

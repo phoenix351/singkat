@@ -1166,28 +1166,41 @@
     <Dialog
       v-model:visible="wilayahDialog"
       modal
-      :closable="!isUploading"
       header="Download Wilayah"
-      class="w-[95vw] max-w-[600px]"
+      class="w-[30vw]"
       position="top"
     >
       <div class="flex flex-col gap-4">
         <div class="space-y-2">
-          <label class="font-bold block">Level Wilayah:</label>
+          <label class="font-bold block">Pilih Kabupaten/Kota:</label>
           <Select
-            :options="[
-              { value: 'provinsi', label: 'Level Provinsi' },
-              { value: 'kabkot', label: 'Level Kabupaten/Kota' },
-              { value: 'kec', label: 'Level Kecamatan' },
-              { value: 'desa', label: 'Level Desa/Kelurahan' },
-            ]"
-            placeholder="Pilih Level Wilayah"
+            :options="kabkot"
+            v-model="selectedWilayahForDownload"
+            placeholder="Pilih Kabupaten/Kota"
             optionLabel="label"
-            optionValue="value"
+            optionValue="code"
             class="w-full"
           />
         </div>
       </div>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <Button
+            label="Batal"
+            @click="wilayahDialog = false"
+            size="small"
+            severity="secondary"
+            outlined
+          />
+          <Button
+            @click="downloadWilayah"
+            label="Download"
+            size="small"
+            severity="success"
+            icon="pi pi-download"
+          />
+        </div>
+      </template>
     </Dialog>
   </SeLayout>
 </template>
@@ -1445,6 +1458,7 @@ const formatNumber = (n) => {
 
 const currentCode = ref("71");
 const goToRegion = async (code, type = null) => {
+  thisTriggerSpinner.value = true;
   currentCode.value = code;
   if (type == "kec") currentCode.value = code.substring(0, 4);
   if (type == "desa") currentCode.value = code.substring(0, 7);
@@ -1459,6 +1473,8 @@ const goToRegion = async (code, type = null) => {
     currentLevel.value = data.current_level;
   } catch (error) {
     console.error(error);
+  } finally {
+    thisTriggerSpinner.value = false;
   }
 };
 
@@ -1744,6 +1760,18 @@ const cancelUpload = () => {
   cancelRequested.value = true;
 };
 const wilayahDialog = ref(false);
+const selectedWilayahForDownload = ref(null);
+const downloadWilayah = () => {
+  const url =
+    route(`se2026.download-wilayah`) +
+    "?" +
+    new URLSearchParams({
+      kabkot: selectedWilayahForDownload.value || "",
+    });
+  window.location.href = url;
+  wilayahDialog.value = false;
+  selectedWilayahForDownload.value = null;
+};
 </script>
 
 <style scoped>
