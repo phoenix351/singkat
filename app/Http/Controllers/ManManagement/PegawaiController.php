@@ -230,7 +230,7 @@ class PegawaiController extends Controller
     {
         if ($request->input('fileUpload')) {
             $fileData = $request->input('fileUpload');
-            if ($fileData[0][0] != 'nama_tim' && $fileData[0][1] != 'nama_pegawai' && $fileData[0][2] != 'keanggotaan_tim') {
+            if ($fileData[0][0] != 'nama_tim' && $fileData[0][1] != 'nip_pegawai' && $fileData[0][2] != 'nama_pegawai' && $fileData[0][3] != 'keanggotaan_tim') {
                 return redirect()->route('man-management.anggota.index')->with('error', 'File yang diupload tidak sesuai template');
             }
             $notification = [];
@@ -241,21 +241,50 @@ class PegawaiController extends Controller
                     continue;
                 if (!empty($value) && count($value) > 0) {
                     $tim = TimKerja::where('label', $value[0])->value('id');
-                    if (!$tim)
-                        $notification[] = ['type' => 'error', 'message' => 'Tim Kerja ' . $value[0] . ' tidak ada'];
-                    $pegawai = ManManagementPegawai::where('name', $value[1])->value('id');
-                    if (!$pegawai)
-                        $notification[] = ['type' => 'error', 'message' => 'Pegawai ' . $value[1] . ' tidak ada'];
-                    $check_keanggotaan = false;
-                    if ($value[2] == 'anggota' || $value[2] == 'ketua')
-                        $check_keanggotaan = true;
-                    if (!$check_keanggotaan)
-                        $notification[] = ['type' => 'error', 'message' => 'Pegawai ' . $value[1] . ' keanggotaannya tidak ada di format'];
+                    $nip_pegawai = trim($value[1] ?? '');
+                    $nama_pegawai = trim($value[2] ?? '');
+                    $keanggotaan = trim($value[3] ?? '');
 
+                    if (!$tim)
+                        $notification[] = ['type' => 'error', 'message' => 'Baris ke-' . ($key + 1) . ': Tim Kerja "' . $value[0] . '" tidak ada'];
+                    $pegawai_id = null;
+                    $pegawai_by_nip = !empty($nip_pegawai)
+                        ? ManManagementPegawai::where('nip_lama', $nip_pegawai)->orWhere('nip', $nip_pegawai)->first()
+                        : null;
+
+                    $pegawai_by_nama = !empty($nama_pegawai)
+                        ? ManManagementPegawai::where('name', $nama_pegawai)->first()
+                        : null;
+
+                    if ($pegawai_by_nip && $pegawai_by_nama) {
+                        if ($pegawai_by_nip->id !== $pegawai_by_nama->id) {
+                            $notification[] = [
+                                'type' => 'error',
+                                'message' => 'Baris ke-' . ($key + 1) . ': NIP "' . $nip_pegawai . '" dan nama "' . $nama_pegawai . '" merujuk ke pegawai yang berbeda',
+                            ];
+                            continue;
+                        }
+                        $pegawai_id = $pegawai_by_nip->id;
+                    } elseif ($pegawai_by_nip) {
+                        $pegawai_id = $pegawai_by_nip->id;
+                    } elseif ($pegawai_by_nama) {
+                        $pegawai_id = $pegawai_by_nama->id;
+                    } else {
+                        $label = !empty($nip_pegawai) && !empty($nama_pegawai)
+                            ? '"' . $nip_pegawai . '" / "' . $nama_pegawai . '"'
+                            : ('"' . ($nip_pegawai ?: $nama_pegawai) . '"');
+                        $notification[] = ['type' => 'error', 'message' => 'Baris ke-' . ($key + 1) . ': Pegawai ' . $label . ' tidak ditemukan'];
+                    }
+                    $check_keanggotaan = in_array($keanggotaan, ['anggota', 'ketua']);
+                    if (!$check_keanggotaan)
+                        $notification[] = [
+                            'type' => 'error',
+                            'message' => 'Baris ke-' . ($key + 1) . ': Keanggotaan "' . $keanggotaan . '" tidak valid (harus "anggota" atau "ketua")'
+                        ];
                     $result = [
                         'tim_id' => $tim ?? null,
-                        'pegawai_id' => $pegawai ?? null,
-                        'keanggotaan' => $value[2]
+                        'pegawai_id' => $pegawai_id,
+                        'keanggotaan' => $keanggotaan,
                     ];
                     $validator = Validator::make($result, [
                         'tim_id' => ['required'],
@@ -275,7 +304,8 @@ class PegawaiController extends Controller
                         ->where('pegawai_id', $result['pegawai_id'])
                         ->first();
                     if ($check) {
-                        $notification[] = ['type' => 'error', 'message' => 'Pegawai ' . $value[1] . ' sudah ada di tim tersebut'];
+                        $identifier = !empty($nip_pegawai) ? $nip_pegawai : $nama_pegawai;
+                        $notification[] = ['type' => 'error', 'message' => 'Baris ke-' . ($key + 1) . ': Pegawai "' . $identifier . '" sudah ada di tim tersebut'];
                     } else
                         AnggotaTimKerja::create($result);
                 }

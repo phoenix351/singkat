@@ -75,6 +75,119 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->input('fileUpload')) {
+            $fileData = $request->input('fileUpload');
+            if (
+                ($fileData[0][0] ?? null) != 'tipe' ||
+                ($fileData[0][1] ?? null) != 'pengguna' ||
+                ($fileData[0][2] ?? null) != 'prefix' ||
+                ($fileData[0][3] ?? null) != 'role'
+            ) {
+                return redirect()->route('man-management.role-management.index')
+                    ->with('error', 'File yang diupload tidak sesuai template');
+            }
+
+            $validRoles = ['viewer', 'operator', 'validator', 'kaprov', 'admin'];
+            $validTipes = ['unit', 'tim', 'all'];
+            $notification = [];
+            $total = count($fileData) - 1;
+
+            foreach ($fileData as $key => $value) {
+                if ($key === 0)
+                    continue;
+                if (empty($value) || count($value) === 0)
+                    continue;
+
+                $row = $key + 1;
+                $tipe = isset($value[0]) ? trim($value[0]) : null;
+                $pengguna = isset($value[1]) ? trim($value[1]) : null;
+                $prefix = isset($value[2]) ? trim($value[2]) : null;
+                $roles = isset($value[3]) ? trim($value[3]) : null;
+                $hasError = false;
+
+                if (!$tipe) {
+                    $notification[] = ['type' => 'error', 'message' => "Baris ke-{$row}: kolom tipe tidak boleh kosong"];
+                    $hasError = true;
+                }
+                if (!$prefix) {
+                    $notification[] = ['type' => 'error', 'message' => "Baris ke-{$row}: kolom prefix tidak boleh kosong"];
+                    $hasError = true;
+                }
+                if (!$roles) {
+                    $notification[] = ['type' => 'error', 'message' => "Baris ke-{$row}: kolom roles tidak boleh kosong"];
+                    $hasError = true;
+                }
+
+                if ($hasError)
+                    continue;
+
+                if (!in_array($tipe, $validTipes)) {
+                    $notification[] = ['type' => 'error', 'message' => "Baris ke-{$row}: tipe \"{$tipe}\" tidak valid (harus: unit, tim, all)"];
+                    continue;
+                }
+                if (!in_array($roles, $validRoles)) {
+                    $notification[] = ['type' => 'error', 'message' => "Baris ke-{$row}: roles \"{$roles}\" tidak valid (harus: viewer, operator, validator, kaprov, admin)"];
+                    continue;
+                }
+
+                $app = AppManagement::where('prefix', $prefix)->first();
+                if (!$app) {
+                    $notification[] = ['type' => 'error', 'message' => "Baris ke-{$row}: Aplikasi dengan prefix \"{$prefix}\" tidak ditemukan"];
+                    continue;
+                }
+
+                $to_role_id = null;
+                if ($tipe !== 'all') {
+                    if (!$pengguna) {
+                        $notification[] = ['type' => 'error', 'message' => "Baris ke-{$row}: kolom pengguna tidak boleh kosong untuk tipe \"{$tipe}\""];
+                        continue;
+                    }
+                    if ($tipe === 'tim') {
+                        $selected_pengguna = TimKerja::where('label', $pengguna)->first();
+                        if (!$selected_pengguna) {
+                            $notification[] = ['type' => 'error', 'message' => "Baris ke-{$row}: Tim Kerja \"{$pengguna}\" tidak ditemukan"];
+                            continue;
+                        }
+                    } elseif ($tipe === 'unit') {
+                        $selected_pengguna = Pegawai::where('nip_lama', $pengguna)->orWhere('nip', $pengguna)->first();
+                        if (!$selected_pengguna) {
+                            $notification[] = ['type' => 'error', 'message' => "Baris ke-{$row}: Pegawai dengan NIP \"{$pengguna}\" tidak ditemukan"];
+                            continue;
+                        }
+                    }
+                    $to_role_id = $selected_pengguna->id;
+                }
+                $exists = Role::where('type', $tipe)
+                    ->where('app_id', $app->id)
+                    ->where('roles', $roles)
+                    ->when($tipe !== 'all', fn($q) => $q->where('to_role_id', $to_role_id))
+                    ->exists();
+
+                if ($exists) {
+                    $notification[] = ['type' => 'error', 'message' => "Baris ke-{$row}: Role \"{$roles}\" untuk pengguna \"{$pengguna}\" di aplikasi \"{$prefix}\" sudah ada"];
+                    continue;
+                }
+                try {
+                    DB::connection('sulutweb_man_management')->beginTransaction();
+                    Role::create([
+                        'type' => $tipe,
+                        'to_role_id' => $to_role_id,
+                        'app_id' => $app->id,
+                        'roles' => $roles,
+                    ]);
+                    DB::connection('sulutweb_man_management')->commit();
+                } catch (\Throwable $th) {
+                    DB::connection('sulutweb_man_management')->rollBack();
+                    $notification[] = ['type' => 'error', 'message' => "Baris ke-{$row}: Gagal menyimpan data, error: " . $th->getMessage()];
+                }
+            }
+
+            if (count($notification) < $total)
+                $notification[] = ['type' => 'success', 'message' => 'Role berhasil di-upload'];
+
+            return redirect()->route('man-management.role-management.index')
+                ->with('notification', $notification);
+        }
         $validated = $request->validate([
             'id' => ['sometimes', 'nullable'],
             'type' => ['required', 'string', 'max:4'],

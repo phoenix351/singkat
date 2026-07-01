@@ -59,6 +59,10 @@ Route::prefix('man-management')->name('man-management.')->middleware(['auth', 'u
         $file_path = public_path('document/Keanggotaan Tim Template.xlsx');
         return Response::download($file_path);
     });
+    Route::get('/download-template/role', function () {
+        $file_path = public_path('document/Role Template.xlsx');
+        return Response::download($file_path);
+    });
 
     Route::get('/export/pegawai', function (Request $request) {
         $kabupaten = $request->kabupaten;
