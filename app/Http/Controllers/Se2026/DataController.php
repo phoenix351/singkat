@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Se2026;
 use App\Http\Controllers\Controller;
 use App\Models\Se2026\DataFasih;
 use App\Models\Se2026\DataFasihPml;
+use App\Models\Se2026\HistoryPml;
+use App\Models\Se2026\HistoryPpl;
+use App\Models\Se2026\HistoryWilayah;
 use App\Models\Se2026\Logs;
 use App\Models\Se2026\MasterDesa;
 use App\Models\Se2026\MasterKabkot;
@@ -307,6 +310,7 @@ class DataController extends Controller
         }
 
         try {
+            DB::connection('sulutweb_se2026')->beginTransaction();
             if (!$isPml) {
                 DataFasih::where('subsls_code', 'like', $kode . '%')->delete();
             } else {
@@ -325,11 +329,93 @@ class DataController extends Controller
                 $cek_subsls = MasterSubSls::where('code', (string) $mapped['subsls_code'])->first();
                 if ($cek_subsls) {
                     if ($exploded_fileName[2] != 'pml') {
-                        DataFasih::create($mapped);
+                        $new_data = DataFasih::create($mapped);
                     } else {
-                        DataFasihPml::create($mapped);
+                        $new_data = DataFasihPml::create($mapped);
                     }
                     $processedCount++;
+                }
+            }
+
+            $dataModel = $isPml ? DataFasihPml::class : DataFasih::class;
+            $updatedAtDate = Carbon::parse($updatedAtReal)->toDateString();
+
+            $subsls_code_list = $dataModel::where('subsls_code', 'like', $kode . '%')
+                ->selectRaw('subsls_code,
+                    SUM(COALESCE(open, 0)) as open,
+                    SUM(COALESCE(draft, 0)) as draft,
+                    SUM(COALESCE(submitted_p, 0)) as submitted_p,
+                    SUM(COALESCE(submitted_r, 0)) as submitted_r,
+                    SUM(COALESCE(approved, 0)) as approved,
+                    SUM(COALESCE(rejected, 0)) as rejected,
+                    SUM(COALESCE(revoked, 0)) as revoked,
+                    SUM(COALESCE(completed, 0)) as completed')
+                ->groupBy('subsls_code')
+                ->get();
+
+            foreach ($subsls_code_list as $value) {
+                $existing = HistoryWilayah::where('subsls_code', $value->subsls_code)
+                    ->whereDate('updated_at', $updatedAtDate)
+                    ->first();
+
+                $historyData = [
+                    'open' => $value->open,
+                    'draft' => $value->draft,
+                    'submitted_p' => $value->submitted_p,
+                    'submitted_r' => $value->submitted_r,
+                    'approved' => $value->approved,
+                    'rejected' => $value->rejected,
+                    'revoked' => $value->revoked,
+                    'completed' => $value->completed,
+                    'updated_at' => $updatedAtReal,
+                    'created_at' => $existing ? $existing->created_at : $updatedAtReal,
+                ];
+
+                if ($existing) {
+                    $existing->update($historyData);
+                } else {
+                    HistoryWilayah::insert(array_merge(['subsls_code' => $value->subsls_code], $historyData));
+                }
+            }
+            $historyEmailModel = $isPml ? HistoryPml::class : HistoryPpl::class;
+
+            $email_list = $dataModel::where('subsls_code', 'like', $kode . '%')
+                ->selectRaw('email,
+                    SUBSTRING(subsls_code, 1, 4) as kabkot_code,
+                    SUM(COALESCE(open, 0)) as open,
+                    SUM(COALESCE(draft, 0)) as draft,
+                    SUM(COALESCE(submitted_p, 0)) as submitted_p,
+                    SUM(COALESCE(submitted_r, 0)) as submitted_r,
+                    SUM(COALESCE(approved, 0)) as approved,
+                    SUM(COALESCE(rejected, 0)) as rejected,
+                    SUM(COALESCE(revoked, 0)) as revoked,
+                    SUM(COALESCE(completed, 0)) as completed')
+                ->groupBy('email', 'kabkot_code')
+                ->get();
+
+            foreach ($email_list as $value) {
+                $existing = $historyEmailModel::where('email', $value->email)
+                    ->whereDate('updated_at', $updatedAtDate)
+                    ->first();
+
+                $historyData = [
+                    'kabkot_code' => $value->kabkot_code,
+                    'open' => $value->open,
+                    'draft' => $value->draft,
+                    'submitted_p' => $value->submitted_p,
+                    'submitted_r' => $value->submitted_r,
+                    'approved' => $value->approved,
+                    'rejected' => $value->rejected,
+                    'revoked' => $value->revoked,
+                    'completed' => $value->completed,
+                    'updated_at' => $updatedAtReal,
+                    'created_at' => $existing ? $existing->created_at : $updatedAtReal,
+                ];
+
+                if ($existing) {
+                    $existing->update($historyData);
+                } else {
+                    $historyEmailModel::insert(array_merge(['email' => $value->email], $historyData));
                 }
             }
 
@@ -339,7 +425,7 @@ class DataController extends Controller
                 'data_type' => $exploded_fileName[2] != 'pml' ? 'ppl' : 'pml',
                 'updated_at' => $updatedAtReal
             ]);
-
+            DB::connection('sulutweb_se2026')->commit();
             return response()->json([
                 'success' => true,
                 'message' => "Berhasil upload: {$fileName}",
@@ -348,6 +434,7 @@ class DataController extends Controller
                 'rows_total' => count($data),
             ]);
         } catch (\Throwable $th) {
+            DB::connection('sulutweb_se2026')->rollBack();
             return response()->json([
                 'success' => false,
                 'message' => "Gagal upload {$fileName}: " . $th->getMessage(),

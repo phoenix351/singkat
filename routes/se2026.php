@@ -3,6 +3,7 @@
 use App\Exports\Se2026\PplExport;
 use App\Exports\Se2026\WilayahExport;
 use App\Http\Controllers\Se2026\DataController;
+use App\Http\Controllers\Se2026\PetugasController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
@@ -13,6 +14,9 @@ Route::prefix('se2026')->middleware(['auth', 'use.vue.inertia', 'permission'])->
     Route::post('/upload-data', [DataController::class, 'uploadData'])->name('upload-data');
     Route::post('/upload-data-batch', [DataController::class, 'uploadDataBatch'])->name('upload-data-batch');
 
+    Route::get('/petugas', [PetugasController::class, 'index'])->name('petugas.index');
+    Route::get('/fetch-capaian-ppl', [PetugasController::class, 'capaianPpl'])->name('petugas.capaian-ppl');
+    Route::get('/fetch-capaian-pml', [PetugasController::class, 'capaianPml'])->name('petugas.capaian-pml');
     Route::get('/fetch-log', [DataController::class, 'fetchLog'])->name('fetch-log');
     Route::get('/fetch-data-ppl', [DataController::class, 'fetchDataPpl'])->name('fetch-data-ppl');
     Route::get('/fetch-data-pml', [DataController::class, 'fetchDataPml'])->name('fetch-data-pml');

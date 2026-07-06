@@ -20,7 +20,7 @@
                 Dashboard Sensus Ekonomi 2026
               </h1>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Provinsi Sulawesi Utara (versi 1.3)
+                Provinsi Sulawesi Utara (versi 2.0-beta)
               </p>
             </div>
           </div>
@@ -44,6 +44,25 @@
               variant="outlined"
               label="Logs Upload"
             />
+            <div class="tab-nav">
+              <Link
+                class="tab-btn"
+                :class="{ 'tab-active': activeTab === 'dashboard' }"
+                :href="route('se2026.data.index')"
+                @click="activeTab = 'dashboard'"
+              >
+                Dashboard
+              </Link>
+              <Link
+                class="tab-btn"
+                :class="{ 'tab-active': activeTab === 'petugas' }"
+                :href="route('se2026.petugas.index')"
+                @click="activeTab = 'petugas'"
+              >
+                <!-- @click="switchTab('ppl')" -->
+                Petugas
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -59,7 +78,7 @@
         class="border-t border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm py-3 px-4 text-center"
       >
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Projek SEtahuBulat Versi 1.3 &mdash;
+          &copy; 2026 Projek SEtahuBulat Versi 2.0-beta &mdash;
           <a href="https://sulut.bps.go.id" class="font-bold"
             >BPS Provinsi Sulawesi Utara</a
           >
@@ -73,7 +92,11 @@
   </div>
 
   <!-- FLOATING REFRESH BUTTON -->
-  <Transition name="refresh-btn" mode="out-in">
+  <Transition
+    v-if="page.props.route == 'se2026.data.index'"
+    name="refresh-btn"
+    mode="out-in"
+  >
     <Button
       v-if="isAtTop"
       key="refresh-full"
@@ -111,18 +134,32 @@
         dari data yang ada di database.
       </p>
       <div class="grid grid-cols-2 gap-3">
-        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+        <div
+          class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center"
+        >
           <p class="text-xs text-slate-500 mb-1">Total di Database</p>
-          <p class="text-2xl font-bold text-slate-700">{{ confirmDialog.existingTotal.toLocaleString('id-ID') }}</p>
+          <p class="text-2xl font-bold text-slate-700">
+            {{ confirmDialog.existingTotal.toLocaleString("id-ID") }}
+          </p>
         </div>
         <div class="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
           <p class="text-xs text-slate-500 mb-1">Total di File Baru</p>
-          <p class="text-2xl font-bold text-red-600">{{ confirmDialog.newTotal.toLocaleString('id-ID') }}</p>
+          <p class="text-2xl font-bold text-red-600">
+            {{ confirmDialog.newTotal.toLocaleString("id-ID") }}
+          </p>
         </div>
       </div>
       <p class="text-xs text-slate-500">
-        Selisih: <strong class="text-red-600">-{{ (confirmDialog.existingTotal - confirmDialog.newTotal).toLocaleString('id-ID') }}</strong> data.
-        Kemungkinan ada data yang belum ter-scraping. Apakah tetap ingin melanjutkan upload?
+        Selisih:
+        <strong class="text-red-600"
+          >-{{
+            (
+              confirmDialog.existingTotal - confirmDialog.newTotal
+            ).toLocaleString("id-ID")
+          }}</strong
+        >
+        data. Kemungkinan ada data yang belum ter-scraping. Apakah tetap ingin
+        melanjutkan upload?
       </p>
     </div>
     <template #footer>
@@ -422,7 +459,7 @@
 </template>
 
 <script setup>
-import { usePage } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 import { ConfirmDialog, Toast, useToast } from "primevue";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import * as XLSX from "xlsx";
@@ -489,7 +526,7 @@ const cancelRequested = ref(false);
 // ─── Confirmation Dialog State ───
 const confirmDialog = ref({
   visible: false,
-  kode: '',
+  kode: "",
   existingTotal: 0,
   newTotal: 0,
   resolve: null,
@@ -737,7 +774,8 @@ const startBatchUpload = async () => {
         const userConfirmed = await waitForConfirmation(response.data);
         if (!userConfirmed) {
           fileEntry.status = "cancelled";
-          fileEntry.errorMessage = "Dibatalkan karena data lebih sedikit dari database.";
+          fileEntry.errorMessage =
+            "Dibatalkan karena data lebih sedikit dari database.";
           fileEntry.parsedData = null;
           continue;
         }
@@ -809,6 +847,24 @@ const fetchLog = async () => {
     console.error(error);
   }
 };
+const activeTab = ref("dashboard");
+onMounted(() => {
+  defineActiveTab();
+});
+watch(
+  () => page.props.route,
+  () => {
+    defineActiveTab();
+  }
+);
+const defineActiveTab = () => {
+  const route_splitted = (page.props.route ?? "").split(".");
+  if (route_splitted[1] === "petugas") {
+    activeTab.value = "petugas";
+  } else {
+    activeTab.value = "dashboard";
+  }
+};
 </script>
 
 <style scoped>
@@ -824,5 +880,40 @@ const fetchLog = async () => {
 .refresh-btn-leave-to {
   opacity: 0;
   transform: scale(0.8);
+}
+.tab-nav {
+  display: flex;
+  gap: 0.25rem;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 0.25rem;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: #334155;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.tab-active {
+  color: #ffffff !important;
+  background: #ea5c10 !important;
+  /* background:  !important; */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 </style>
