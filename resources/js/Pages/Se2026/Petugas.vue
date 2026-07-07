@@ -237,7 +237,7 @@
             </span>
           </template>
         </Column>
-        <Column field="nama" header="Nama">
+        <Column field="nama" header="Nama/Email">
           <template #body="{ data }">
             <div>
               <span class="font-semibold text-slate-800">{{
@@ -301,6 +301,48 @@
               stripedRows
               size="small"
             >
+              <Column
+                field="subsls.desa.kec.kabkot.label"
+                header="Kabupaten/Kota"
+                style="width: 10rem"
+              >
+                <template #body="{ data: row }">
+                  <span class="font-mono text-xs">{{
+                    row.subsls.desa.kec.kabkot.label
+                  }}</span>
+                </template>
+              </Column>
+              <Column
+                field="subsls.desa.kec.label"
+                header="Kecamatan"
+                style="width: 10rem"
+              >
+                <template #body="{ data: row }">
+                  <span class="font-mono text-xs">{{
+                    row.subsls.desa.kec.label
+                  }}</span>
+                </template>
+              </Column>
+              <Column
+                field="subsls.desa.label"
+                header="Desa"
+                style="width: 10rem"
+              >
+                <template #body="{ data: row }">
+                  <span class="font-mono text-xs">{{
+                    row.subsls.desa.label
+                  }}</span>
+                </template>
+              </Column>
+              <Column
+                field="subsls.label"
+                header="Nama SLS"
+                style="width: 10rem"
+              >
+                <template #body="{ data: row }">
+                  <span class="font-mono text-xs">{{ row.subsls.label }}</span>
+                </template>
+              </Column>
               <Column
                 field="subsls_code"
                 header="Kode SLS"
@@ -439,11 +481,21 @@
         v-show="activeSecondTab.ppl == 'capaian'"
         class="rank-header justify-between mb-4"
       >
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
           <i class="pi pi-bolt text-lg text-orange-500"></i>
-          <div>
-            <h2 class="text-base font-bold text-slate-800">Capaian PPL</h2>
-          </div>
+          <h2 class="text-base font-bold text-slate-800">Capaian PPL</h2>
+          <span
+            class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap"
+          >
+            <i class="pi pi-calendar text-[9px]"></i>
+            Total Hari = {{ getTotalHari() }}
+          </span>
+          <span
+            class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap"
+          >
+            <i class="pi pi-hourglass text-[9px]"></i>
+            Sisa Hari = {{ getNowHari() }}
+          </span>
         </div>
         <div class="flex items-center gap-2">
           <InputText
@@ -518,7 +570,12 @@
           </template>
         </Column>
 
-        <Column header="Nama" field="nama" sortable style="min-width: 10rem">
+        <Column
+          header="Nama/Email"
+          field="nama"
+          sortable
+          style="min-width: 10rem"
+        >
           <template #body="{ data }">
             <div>
               <span class="font-semibold text-slate-800">{{
@@ -528,35 +585,111 @@
             </div>
           </template>
         </Column>
-        <Column
-          header="Total"
-          field="total"
-          sortable
-          style="width: 5rem; text-align: center"
-        >
-          <template #body="{ data }">
-            <span class="font-bold text-slate-700">{{ data.total }}</span>
-          </template>
-        </Column>
 
         <Column
-          header="Realisasi"
+          header="Kecepatan Ideal Per Hari"
+          style="width: 9rem; text-align: center"
+        >
+          <template #body="{ data }">
+            <div
+              class="flex flex-col items-center gap-0.5"
+              v-tooltip.right="'Total assignment / Total hari'"
+            >
+              <span class="font-bold text-slate-700 text-sm">{{
+                countSpeedIdeal(data)
+              }}</span>
+              <span class="text-[10px] text-slate-400">asgmt/hari</span>
+            </div>
+          </template>
+        </Column>
+        <Column
+          header="Ekspektasi Progres"
+          style="width: 9rem; text-align: center"
+        >
+          <template #body="{ data }">
+            <div
+              class="flex flex-col items-center gap-0.5"
+              v-tooltip.right="'Speed ideal × hari berjalan'"
+            >
+              <span class="font-bold text-indigo-600 text-sm">{{
+                countExpected(data)
+              }}</span>
+              <span class="text-[10px] text-slate-400">target saat ini</span>
+            </div>
+          </template>
+        </Column>
+        <Column
+          header="Realisasi Progres"
           field="realisasi"
           sortable
-          style="width: 6rem; text-align: center"
+          style="width: 10rem; text-align: center"
         >
           <template #body="{ data }">
-            <span class="font-bold text-emerald-600">{{ data.realisasi }}</span>
+            <div class="flex flex-col gap-1">
+              <div class="flex justify-between text-xs">
+                <span
+                  class="font-bold"
+                  :class="
+                    rankPctColor(
+                      ((data.realisasi / data.total) * 100).toFixed(2)
+                    )
+                  "
+                  >{{ data.realisasi }}</span
+                >
+                <span class="text-slate-400">/ {{ data.total }}</span>
+              </div>
+              <div
+                class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden"
+              >
+                <div
+                  class="h-full rounded-full transition-all"
+                  :class="
+                    rankBarColor(
+                      ((data.realisasi / data.total) * 100).toFixed(2)
+                    )
+                  "
+                  :style="{
+                    width:
+                      ((data.realisasi / data.total) * 100).toFixed(2) + '%',
+                  }"
+                ></div>
+              </div>
+              <span
+                class="text-[10px] font-semibold text-right"
+                :class="
+                  rankPctColor(((data.realisasi / data.total) * 100).toFixed(2))
+                "
+                >{{ ((data.realisasi / data.total) * 100).toFixed(2) }}%</span
+              >
+            </div>
           </template>
         </Column>
-
+        <Column
+          header="Evaluasi Progres"
+          style="width: 9rem; text-align: center"
+        >
+          <template #body="{ data }">
+            <div class="flex flex-col items-center gap-1">
+              <span
+                class="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap border"
+                :class="getEvaluasiBadgeClass(data)"
+              >
+                <i :class="getEvaluasiIcon(data)"></i>
+                {{ getEvaluasiLabel(data) }}
+              </span>
+              <span class="text-[10px] text-slate-400">
+                {{ getEvaluasiSelisih(data) }}
+              </span>
+            </div>
+          </template>
+        </Column>
         <Column
           v-for="date in capaianPaginatedItem.dates"
           :key="date"
           :field="date"
           :header="formatCapaianDate(date)"
           sortable
-          style="width: 5rem; text-align: center"
+          style="width: 7rem; text-align: center"
         >
           <template #body="{ data }">
             <span
@@ -706,7 +839,7 @@
             </span>
           </template>
         </Column>
-        <Column field="nama" header="Nama">
+        <Column field="nama" header="Nama/Email">
           <template #body="{ data }">
             <div>
               <span class="font-semibold text-slate-800">{{
@@ -908,11 +1041,21 @@
         v-show="activeSecondTab.pml === 'capaian'"
         class="rank-header justify-between mb-4"
       >
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
           <i class="pi pi-bolt text-lg text-orange-500"></i>
-          <div>
-            <h2 class="text-base font-bold text-slate-800">Capaian PML</h2>
-          </div>
+          <h2 class="text-base font-bold text-slate-800">Capaian PML</h2>
+          <span
+            class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap"
+          >
+            <i class="pi pi-calendar text-[9px]"></i>
+            Total Hari = {{ getTotalHari() }}
+          </span>
+          <span
+            class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap"
+          >
+            <i class="pi pi-hourglass text-[9px]"></i>
+            Sisa Hari = {{ getNowHari() }}
+          </span>
         </div>
         <div class="flex items-center gap-2">
           <InputText
@@ -988,7 +1131,12 @@
           </template>
         </Column>
 
-        <Column header="Nama" field="nama" sortable style="min-width: 10rem">
+        <Column
+          header="Nama/Email"
+          field="nama"
+          sortable
+          style="min-width: 10rem"
+        >
           <template #body="{ data }">
             <div>
               <span class="font-semibold text-slate-800">{{
@@ -1000,24 +1148,100 @@
         </Column>
 
         <Column
-          header="Total"
-          field="total"
-          sortable
-          style="width: 5rem; text-align: center"
+          header="Kecepatan Ideal Per Hari"
+          style="width: 9rem; text-align: center"
         >
           <template #body="{ data }">
-            <span class="font-bold text-slate-700">{{ data.total }}</span>
+            <div
+              class="flex flex-col items-center gap-0.5"
+              v-tooltip.right="'Total assignment / Total hari'"
+            >
+              <span class="font-bold text-slate-700 text-sm">{{
+                countSpeedIdeal(data)
+              }}</span>
+              <span class="text-[10px] text-slate-400">asgmt/hari</span>
+            </div>
           </template>
         </Column>
-
         <Column
-          header="Realisasi"
-          field="realisasi"
-          sortable
-          style="width: 6rem; text-align: center"
+          header="Ekspektasi Progres"
+          style="width: 9rem; text-align: center"
         >
           <template #body="{ data }">
-            <span class="font-bold text-emerald-600">{{ data.realisasi }}</span>
+            <div
+              class="flex flex-col items-center gap-0.5"
+              v-tooltip.right="'Speed ideal × hari berjalan'"
+            >
+              <span class="font-bold text-indigo-600 text-sm">{{
+                countExpected(data)
+              }}</span>
+              <span class="text-[10px] text-slate-400">target saat ini</span>
+            </div>
+          </template>
+        </Column>
+        <Column
+          header="Realisasi Progres"
+          field="realisasi"
+          sortable
+          style="width: 10rem; text-align: center"
+        >
+          <template #body="{ data }">
+            <div class="flex flex-col gap-1">
+              <div class="flex justify-between text-xs">
+                <span
+                  class="font-bold"
+                  :class="
+                    rankPctColor(
+                      ((data.realisasi / data.total) * 100).toFixed(2)
+                    )
+                  "
+                  >{{ data.realisasi }}</span
+                >
+                <span class="text-slate-400">/ {{ data.total }}</span>
+              </div>
+              <div
+                class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden"
+              >
+                <div
+                  class="h-full rounded-full transition-all"
+                  :class="
+                    rankBarColor(
+                      ((data.realisasi / data.total) * 100).toFixed(2)
+                    )
+                  "
+                  :style="{
+                    width:
+                      ((data.realisasi / data.total) * 100).toFixed(2) + '%',
+                  }"
+                ></div>
+              </div>
+              <span
+                class="text-[10px] font-semibold text-right"
+                :class="
+                  rankPctColor(((data.realisasi / data.total) * 100).toFixed(2))
+                "
+                >{{ ((data.realisasi / data.total) * 100).toFixed(2) }}%</span
+              >
+            </div>
+          </template>
+        </Column>
+        <Column
+          header="Evaluasi Progres"
+          style="width: 9rem; text-align: center"
+        >
+          <template #body="{ data }">
+            <div class="flex flex-col items-center gap-1">
+              <span
+                class="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap border"
+                :class="getEvaluasiBadgeClass(data)"
+              >
+                <i :class="getEvaluasiIcon(data)"></i>
+                {{ getEvaluasiLabel(data) }}
+              </span>
+              <span class="text-[10px] text-slate-400">
+                {{ getEvaluasiSelisih(data) }}
+              </span>
+            </div>
           </template>
         </Column>
 
@@ -1728,7 +1952,7 @@ const onCapaianSort = (type, event) => {
 
 const formatCapaianDate = (dateStr) => {
   const d = new Date(dateStr);
-  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "long" });
 };
 const rankPctColor = (idx) => {
   if (idx < 20) return "text-red-400";
@@ -1741,6 +1965,79 @@ const rankBarColor = (idx) => {
   else if (idx < 50) return "bg-yellow-400";
   else if (idx < 75) return "bg-orange-400";
   else return "bg-emerald-600";
+};
+
+const countSpeedIdeal = (data) => {
+  const speed = (data.total / 77).toFixed(2);
+  const range = Number(speed) + 1;
+  const result = `${speed} - ${range} assignment per hari`;
+  return speed;
+};
+
+const getTotalHari = () => {
+  const tglAwal = new Date("2026-06-15");
+  const tglAkhir = new Date("2026-08-31");
+  const selisih = Math.abs(tglAkhir - tglAwal);
+  return Math.ceil(selisih / (1000 * 60 * 60 * 24));
+};
+
+const getNowHari = () => {
+  const tglAkhir = new Date("2026-08-31");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  tglAkhir.setHours(0, 0, 0, 0);
+  const selisih = tglAkhir - today;
+  return Math.max(0, Math.ceil(selisih / (1000 * 60 * 60 * 24)));
+};
+
+const countExpected = (data) => {
+  const tglAwal = new Date("2026-06-15");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  tglAwal.setHours(0, 0, 0, 0);
+  const selisih = tglAwal - today;
+  const hariBerjalan = Math.ceil(selisih / (1000 * 60 * 60 * 24));
+  return (countSpeedIdeal(data) * Math.abs(hariBerjalan)).toFixed(2);
+};
+
+// Hitung selisih persen antara realisasi vs ekspektasi
+// positif = di atas ekspektasi, negatif = di bawah
+const getEvaluasiDiff = (data) => {
+  const expected = parseFloat(countExpected(data));
+  const realisasi = Number(data.realisasi || 0);
+  if (expected <= 0) return 0;
+  return ((realisasi - expected) / expected) * 100;
+};
+
+const getEvaluasiBadgeClass = (data) => {
+  const diff = getEvaluasiDiff(data);
+  if (diff >= 8) return "bg-emerald-100 text-emerald-700 border-emerald-300"; // jauh di atas
+  if (diff >= 0) return "bg-green-50 text-green-600 border-green-200"; // sedikit di atas (0-8%)
+  if (diff >= -3) return "bg-blue-50 text-blue-600 border-blue-200"; // masih aman (-3%)
+  return "bg-red-50 text-red-600 border-red-200"; // jauh di bawah
+};
+
+const getEvaluasiIcon = (data) => {
+  const diff = getEvaluasiDiff(data);
+  if (diff >= 8) return "pi pi-arrow-up text-[9px]";
+  if (diff >= 0) return "pi pi-check text-[9px]";
+  if (diff >= -3) return "pi pi-minus text-[9px]";
+  return "pi pi-arrow-down text-[9px]";
+};
+
+const getEvaluasiLabel = (data) => {
+  const diff = getEvaluasiDiff(data);
+  if (diff >= 8) return "Melampaui";
+  if (diff >= 4) return "Di Atas Target";
+  if (diff >= 0) return "On Track";
+  if (diff >= -3) return "Masih Aman";
+  return "Di Bawah Target";
+};
+
+const getEvaluasiSelisih = (data) => {
+  const diff = getEvaluasiDiff(data);
+  const sign = diff >= 0 ? "+" : "";
+  return `${sign}${diff.toFixed(1)}% vs ekspektasi`;
 };
 </script>
 <style scoped>

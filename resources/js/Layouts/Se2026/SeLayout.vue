@@ -20,7 +20,7 @@
                 Dashboard Sensus Ekonomi 2026
               </h1>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Provinsi Sulawesi Utara (versi 2.0-beta)
+                Provinsi Sulawesi Utara (versi 2.0.1-r)
               </p>
             </div>
           </div>
@@ -78,7 +78,7 @@
         class="border-t border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm py-3 px-4 text-center"
       >
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Projek SEtahuBulat Versi 2.0-beta &mdash;
+          &copy; 2026 Projek SEtahuBulat versi 2.0.1-r &mdash;
           <a href="https://sulut.bps.go.id" class="font-bold"
             >BPS Provinsi Sulawesi Utara</a
           >
@@ -105,7 +105,7 @@
       size="small"
       severity="success"
       label="Refresh Data"
-      class="!fixed top-4 right-4 z-50 rounded-[12px] shadow-lg"
+      class="!fixed top-20 right-4 z-50 rounded-[12px] shadow-lg"
     />
     <Button
       v-else
@@ -113,7 +113,7 @@
       @click="onRefresh"
       icon="pi pi-refresh"
       severity="success"
-      class="!fixed top-4 right-4 z-50 !rounded-full shadow-lg"
+      class="!fixed top-20 right-4 z-50 !rounded-full shadow-lg"
     />
   </Transition>
 
