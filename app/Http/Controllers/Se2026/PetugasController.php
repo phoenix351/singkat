@@ -123,7 +123,6 @@ class PetugasController extends Controller
                 } else {
                     $prevRecord = $history->filter(fn($h) => $h->date < $date)->last();
                     if (!$prevRecord) {
-                        // Base record untuk user ini, bukan merupakan capaian harian
                         $capaian[$date] = null;
                     } else {
                         $prevReal = (int) $prevRecord->realisasi;
@@ -137,7 +136,6 @@ class PetugasController extends Controller
             $isFirst = true;
             foreach ($history as $h) {
                 if ($isFirst) {
-                    // Record pertama adalah base (akumulasi historis sebelum sistem ini), tidak dihitung sbg rata-rata
                     $prevReal = (int) $h->realisasi;
                     $isFirst = false;
                     continue;
