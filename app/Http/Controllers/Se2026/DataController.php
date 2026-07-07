@@ -492,10 +492,7 @@ class DataController extends Controller
             $order = $request->sortOrder == 1 ? 'asc' : 'desc';
             $query->orderBy('persentase_realisasi', $order);
         } else {
-            $query->orderBy(
-                'subsls_code',
-                'asc'
-            );
+            $query->orderByRaw("MIN($fasihTable.subsls_code) asc");
             $query->orderBy("$fasihTable.email");
         }
 
@@ -507,13 +504,9 @@ class DataController extends Controller
             ->when(!$sls && $desa, fn($q) => $q->where('subsls_code', 'like', $desa . '%'))
             ->when(!$sls && !$desa && $kec, fn($q) => $q->where('subsls_code', 'like', $kec . '%'))
             ->when(!$sls && !$desa && !$kec && $kabkot, fn($q) => $q->where('subsls_code', 'like', $kabkot . '%'))
-            // ->selectRaw('*, 
-            //     SUBSTRING(subsls_code, 1, 4) as kabkot_code, 
-            //     SUBSTRING(subsls_code, 1, 7) as kec_code, 
-            //     SUBSTRING(subsls_code, 1, 10) as desa_code'
-            // )
             ->with(['subsls', 'subsls.desa', 'subsls.desa.kec', 'subsls.desa.kec.kabkot'])
-            ->orderBy('subsls_code', 'asc')
+            // ->orderByRaw("MIN(subsls_code) asc")
+            ->orderBy("subsls_code", "asc")
             ->get()
             ->groupBy('email');
 
@@ -573,6 +566,7 @@ class DataController extends Controller
             $order = $request->sortOrder == 1 ? 'asc' : 'desc';
             $query->orderBy('persentase_realisasi', $order);
         } else {
+            $query->orderByRaw("MIN($fasihTable.subsls_code) asc");
             $query->orderBy("$fasihTable.email");
         }
 
@@ -585,6 +579,8 @@ class DataController extends Controller
             ->when(!$sls && $desa, fn($q) => $q->where('subsls_code', 'like', $desa . '%'))
             ->when(!$sls && !$desa && $kec, fn($q) => $q->where('subsls_code', 'like', $kec . '%'))
             ->when(!$sls && !$desa && !$kec && $kabkot, fn($q) => $q->where('subsls_code', 'like', $kabkot . '%'))
+            ->with(['subsls', 'subsls.desa', 'subsls.desa.kec', 'subsls.desa.kec.kabkot'])
+            ->orderByRaw("MIN(subsls_code) asc")
             ->get()
             ->groupBy('email');
 
