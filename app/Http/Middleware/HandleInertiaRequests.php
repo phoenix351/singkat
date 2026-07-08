@@ -38,6 +38,8 @@ class HandleInertiaRequests extends Middleware
         $lemburPending = 0;
         $lemburToVerify = 0;
         $pendingOutputs = [];
+        $lemburPendingDetail = [];
+        $lemburToVerifyDetail = [];
 
         if (Auth::check() && str_starts_with($route, 'simple.')) {
             $lemburData = LemburPegawai::with('lembur.tim')
@@ -46,11 +48,31 @@ class HandleInertiaRequests extends Middleware
                 ->get();
 
             if (Role::currentRole() == 'admin' || Role::statusKeanggotaan() == 'ketua') {
-                $lemburPending = LemburPegawai::where('status', 1)->get()->count();
+                $pendingRows = LemburPegawai::with('lembur.tim')->where('status', 1)->get();
+                $lemburPending = $pendingRows->count();
+
+                // Kelompokkan per tim, hitung jumlah per tim
+                $lemburPendingDetail = $pendingRows
+                    ->groupBy(fn($lp) => $lp->lembur->tim->label ?? '-')
+                    ->map(fn($group, $timLabel) => [
+                        'tim_kerja' => $timLabel,
+                        'jumlah'    => $group->count(),
+                    ])
+                    ->values();
             }
 
             if (Role::currentRole() == 'admin' || Role::currentRole() == 'validator') {
-                $lemburToVerify = LemburPegawai::where('status', 2)->get()->count();
+                $verifyRows = LemburPegawai::with('lembur.tim')->where('status', 2)->get();
+                $lemburToVerify = $verifyRows->count();
+
+                // Kelompokkan per tim, hitung jumlah per tim
+                $lemburToVerifyDetail = $verifyRows
+                    ->groupBy(fn($lp) => $lp->lembur->tim->label ?? '-')
+                    ->map(fn($group, $timLabel) => [
+                        'tim_kerja' => $timLabel,
+                        'jumlah'    => $group->count(),
+                    ])
+                    ->values();
             }
 
             $pendingOutputCount = $lemburData->count();
@@ -74,7 +96,9 @@ class HandleInertiaRequests extends Middleware
             'pendingOutputCount' => $pendingOutputCount,
             'pendingOutputs' => $pendingOutputs,
             'lemburPending' => $lemburPending,
+            'lemburPendingDetail' => $lemburPendingDetail,
             'lemburToVerify' => $lemburToVerify,
+            'lemburToVerifyDetail' => $lemburToVerifyDetail,
             "flash" => [
                 "success" => fn() => $request->session()->get("success"),
                 "error" => fn() => $request->session()->get("error"),

@@ -53,6 +53,9 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
             return Response::download($file_path);
         });
 
+        //faq
+        Route::get('/faq-and-guide', [HomeController::class, 'faqIndex'])->name('faq.index');
+
         //fetching
         Route::get('/fetch-lembur/{lembur_id}', [LemburController::class, 'fetchLembur'])->name('fetch-lembur');
     });

@@ -24,10 +24,14 @@
             <button
               @click="toggleNotificationMenu"
               class="relative p-2 text-gray-500 hover:text-gray-700 transition-colors flex items-center justify-center focus:outline-none"
-              title="Anda memiliki lembur yang belum diisi outputnya"
+              :title="
+                totalNotificationCount > 0
+                  ? `Ada ${totalNotificationCount} notifikasi yang perlu perhatian`
+                  : 'Tidak ada notifikasi'
+              "
             >
               <OverlayBadge
-                :value="page.props.pendingOutputCount"
+                :value="totalNotificationCount || null"
                 severity="danger"
                 size="small"
               >
@@ -78,7 +82,7 @@
         class="bg-white py-4 px-6 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-sm text-gray-500"
       >
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Simple versi 1.0-beta &mdash;
+          &copy; 2026 Simple versi 1.0.1-beta &mdash;
           <a href="https://sulut.bps.go.id" class="font-bold"
             >BPS Provinsi Sulawesi Utara</a
           >
@@ -148,18 +152,76 @@ const toggleNotificationMenu = (event) => {
 
 const page = usePage();
 
+const totalNotificationCount = computed(() => {
+  return (
+    (page.props.pendingOutputCount || 0) +
+    (page.props.lemburPending || 0) +
+    (page.props.lemburToVerify || 0)
+  );
+});
+
 const notificationItems = computed(() => {
-  const items = page.props.pendingOutputs || [];
+  const outputItems = page.props.pendingOutputs || [];
+  const pendingDetail = page.props.lemburPendingDetail || [];
+  const verifyDetail = page.props.lemburToVerifyDetail || [];
+
+  const items = [];
+
+  // --- Notifikasi Output (semua pegawai) ---
+  if (outputItems.length > 0) {
+    items.push({
+      label: "Output Lembur Saya",
+      disabled: true,
+      class: "text-xs text-gray-400 font-semibold uppercase tracking-wider",
+    });
+    outputItems.forEach((item) => {
+      items.push({
+        label: `Ada pengajuan lembur dari ${item.tim_kerja} terkait ${item.maksud_lembur}`,
+        icon: "pi pi-file-edit",
+        command: () => router.visit(route("simple.my-lembur")),
+      });
+    });
+  }
+
+  // --- Notifikasi Ketua Tim ---
+  if (pendingDetail.length > 0) {
+    if (items.length > 0) items.push({ separator: true });
+    items.push({
+      label: "Verifikasi Ketua Tim",
+      disabled: true,
+      class: "text-xs text-gray-400 font-semibold uppercase tracking-wider",
+    });
+    pendingDetail.forEach((item) => {
+      items.push({
+        label: `Ada ${item.jumlah} lembur dari ${item.tim_kerja} yang perlu diperiksa`,
+        icon: "pi pi-check-square",
+        command: () => router.visit(route("simple.lembur.verify")),
+      });
+    });
+  }
+
+  // --- Notifikasi Kabag ---
+  if (verifyDetail.length > 0) {
+    if (items.length > 0) items.push({ separator: true });
+    items.push({
+      label: "Verifikasi Kabag",
+      disabled: true,
+      class: "text-xs text-gray-400 font-semibold uppercase tracking-wider",
+    });
+    verifyDetail.forEach((item) => {
+      items.push({
+        label: `Ada ${item.jumlah} lembur dari ${item.tim_kerja} yang perlu diverifikasi`,
+        icon: "pi pi-shield",
+        command: () => router.visit(route("simple.lembur.verify-kabag")),
+      });
+    });
+  }
+
   if (items.length === 0) {
     return [{ label: "Tidak ada notifikasi", disabled: true }];
   }
-  return items.map((item) => ({
-    label: `Ada pengajuan lembur dari ${item.tim_kerja} terkait ${item.maksud_lembur}`,
-    icon: "pi pi-file-edit",
-    command: () => {
-      router.visit(route("simple.my-lembur"));
-    },
-  }));
+
+  return items;
 });
 
 const profileItems = ref([
