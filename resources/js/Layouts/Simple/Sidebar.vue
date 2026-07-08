@@ -194,6 +194,11 @@ const menuItems = ref([
     icon: "pi pi-file-pdf",
     route: "simple.spkl",
   },
+  {
+    label: "FAQ dan Panduan",
+    icon: "pi pi-question-circle",
+    route: "simple.faq.index",
+  },
 ]);
 const checkAvailability = (role) => {
   const currentRole = page.props.auth.role;

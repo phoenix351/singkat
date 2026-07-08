@@ -109,7 +109,7 @@ class HomeController extends Controller
                 );
             } else {
                 $query->whereBetween(
-                    'tanggal', 
+                    'tanggal',
                     [
                         Carbon::now()->startOfYear()->format('Y-m-d'),
                         Carbon::now()->format('Y-m-d')
@@ -138,12 +138,12 @@ class HomeController extends Controller
             }
         } else {
             $query->whereBetween(
-                    'tanggal', 
-                    [
-                        Carbon::now()->startOfYear()->format('Y-m-d'),
-                        Carbon::now()->format('Y-m-d')
-                    ]
-                );
+                'tanggal',
+                [
+                    Carbon::now()->startOfYear()->format('Y-m-d'),
+                    Carbon::now()->format('Y-m-d')
+                ]
+            );
             $query->join('sulutweb_man_management.pegawai as p', 'lp.pegawai_id', '=', 'p.id')
                 ->select('p.name as label', DB::raw('count(lp.id) as total_lembur'))
                 ->groupBy('p.id', 'p.name')
@@ -218,6 +218,34 @@ class HomeController extends Controller
         }
         return Inertia::render('Simple/Summary', [
             'data' => $data
+        ]);
+    }
+
+    public function faqIndex()
+    {
+        $csvPath = public_path('document/simple-assets/faq-and-question.csv');
+        $faqItems = [];
+
+        if (file_exists($csvPath)) {
+            $file = fopen($csvPath, 'r');
+            $isHeader = true;
+            while (($row = fgetcsv($file, 0, ';')) !== false) {
+                if ($isHeader) {
+                    $isHeader = false;
+                    continue;
+                }
+                if (count($row) >= 2) {
+                    $faqItems[] = [
+                        'question' => trim($row[0]),
+                        'answer'   => trim($row[1]),
+                    ];
+                }
+            }
+            fclose($file);
+        }
+
+        return Inertia::render('Simple/Faq', [
+            'faqItems' => $faqItems,
         ]);
     }
 }
