@@ -20,7 +20,7 @@
                 Dashboard Sensus Ekonomi 2026
               </h1>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Provinsi Sulawesi Utara (versi 2.0.1-r)
+                Provinsi Sulawesi Utara (versi 2.1)
               </p>
             </div>
           </div>
@@ -78,7 +78,7 @@
         class="border-t border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm py-3 px-4 text-center"
       >
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Projek SEtahuBulat versi 2.0.1-r &mdash;
+          &copy; 2026 Projek SEtahuBulat versi 2.1 &mdash;
           <a href="https://sulut.bps.go.id" class="font-bold"
             >BPS Provinsi Sulawesi Utara</a
           >

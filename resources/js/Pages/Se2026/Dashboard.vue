@@ -160,6 +160,82 @@
       </div>
     </div>
 
+    <!-- Card Provinsi (selalu tampil) -->
+    <div class="rank-container mb-4">
+      <div class="rank-header justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-map text-lg text-orange-500"></i>
+          <div>
+            <h2 class="text-base font-bold text-slate-800">Capaian Provinsi</h2>
+            <p class="text-xs text-slate-500">Sulawesi Utara — agregat seluruh wilayah</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
+            <i class="pi pi-calendar text-[9px]"></i>
+            Total Hari = {{ getTotalHari() }}
+          </span>
+          <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap">
+            <i class="pi pi-hourglass text-[9px]"></i>
+            Sisa Hari = {{ getNowHari() }}
+          </span>
+        </div>
+      </div>
+
+      <div class="provinsi-card">
+        <div class="flex items-center gap-3 flex-wrap">
+          <!-- Nilai realisasi & total -->
+          <div class="flex items-baseline gap-1">
+            <span class="text-xl font-extrabold" :class="rankPctColor(provPct)">{{ formatNumber(provRealisasi) }}</span>
+            <span class="text-xs text-slate-400">/ {{ formatNumber(provTotal) }}</span>
+            <span class="text-sm font-bold ml-1" :class="rankPctColor(provPct)">{{ provPct }}%</span>
+          </div>
+          <!-- Progress bar -->
+          <div class="flex-1 min-w-[120px]">
+            <div class="rank-bar-wrapper" style="height: 6px">
+              <div
+                class="rank-bar"
+                :class="rankBarColor(provPct)"
+                :style="{ width: provPct + '%' }"
+              ></div>
+            </div>
+          </div>
+          <!-- Pills capaian -->
+          <div class="flex items-center gap-1 flex-wrap">
+            <span
+              class="capaian-pill bg-slate-50 text-slate-600 border-slate-200"
+              v-tooltip.top="'Total target / Total hari'"
+            >
+              <i class="pi pi-bolt text-[8px]"></i>
+              {{ provSpeedIdeal }}/hari
+            </span>
+            <span
+              class="capaian-pill bg-indigo-50 text-indigo-600 border-indigo-200"
+              v-tooltip.top="'Kec. ideal × hari berjalan'"
+            >
+              <i class="pi pi-flag text-[8px]"></i>
+              Eks: {{ provExpected }}
+            </span>
+            <span
+              class="capaian-pill border"
+              :class="provEvaluasiBadgeClass"
+              v-tooltip.top="provEvaluasiSelisih"
+            >
+              <i :class="provEvaluasiIcon + ' text-[8px]'"></i>
+              {{ provEvaluasiLabel }}
+            </span>
+            <span
+              class="capaian-pill bg-orange-50 text-orange-600 border-orange-200"
+              v-tooltip.top="'Realisasi / hari berjalan'"
+            >
+              <i class="pi pi-chart-bar text-[8px]"></i>
+              {{ provRataRata }}/hari
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- TAB: WILAYAH -->
     <div v-if="activeTab === 'wilayah'" class="rank-container">
       <div class="rank-header justify-between">
@@ -175,6 +251,26 @@
           </div>
         </div>
         <div class="space-x-2 flex items-center">
+          <!-- Hari info badges -->
+          <span
+            class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap"
+          >
+            <i class="pi pi-calendar text-[9px]"></i>
+            Total Hari = {{ getTotalHari() }}
+          </span>
+          <span
+            class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap"
+          >
+            <i class="pi pi-hourglass text-[9px]"></i>
+            Sisa Hari = {{ getNowHari() }}
+          </span>
+          <span
+            class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-300 whitespace-nowrap cursor-pointer hover:bg-slate-200 transition-colors"
+            @click="penjelasanDialog = true"
+          >
+            <i class="pi pi-question-circle text-[9px]"></i>
+            Penjelasan
+          </span>
           <Button
             title="Download"
             @click="wilayahDialog = true"
@@ -224,12 +320,13 @@
           />
         </div>
       </div>
+
       <div class="flex gap-x-6 mt-4 overflow-x-auto pb-2">
         <div
           v-for="(col, colIdx) in columns"
           :key="colIdx"
           class="flex-shrink-0"
-          style="min-width: 320px; flex: 1"
+          style="min-width: 420px; flex: 1"
         >
           <div
             v-for="(item, idx) in col"
@@ -263,12 +360,149 @@
                     :style="{ width: kabkotPct(item) + '%' }"
                   ></div>
                 </div>
+                <!-- Capaian info pills -->
+                <div class="flex flex-wrap items-center gap-1 mt-1.5">
+                  <!-- Kecepatan Ideal -->
+                  <span
+                    class="capaian-pill bg-slate-50 text-slate-600 border-slate-200"
+                    v-tooltip.top="'Total target / Total hari'"
+                  >
+                    <i class="pi pi-bolt text-[8px]"></i>
+                    {{ wilayahSpeedIdeal(item) }}/hari
+                  </span>
+                  <!-- Ekspektasi Progres -->
+                  <span
+                    class="capaian-pill bg-indigo-50 text-indigo-600 border-indigo-200"
+                    v-tooltip.top="'Kec. ideal × hari berjalan'"
+                  >
+                    <i class="pi pi-flag text-[8px]"></i>
+                    Eks: {{ wilayahExpected(item) }}
+                  </span>
+                  <!-- Realisasi Progres -->
+                  <span
+                    class="capaian-pill border"
+                    :class="wilayahEvaluasiBadgeClass(item)"
+                    v-tooltip.top="wilayahEvaluasiSelisih(item)"
+                  >
+                    <i :class="wilayahEvaluasiIcon(item) + ' text-[8px]'"></i>
+                    {{ wilayahEvaluasiLabel(item) }}
+                  </span>
+                  <!-- Rata-rata per hari -->
+                  <span
+                    class="capaian-pill bg-orange-50 text-orange-600 border-orange-200"
+                    v-tooltip.top="'Realisasi / hari berjalan'"
+                  >
+                    <i class="pi pi-chart-bar text-[8px]"></i>
+                    {{ wilayahRataRata(item) }}/hari
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Dialog Penjelasan -->
+    <Dialog
+      v-model:visible="penjelasanDialog"
+      modal
+      header="Penjelasan Informasi Capaian"
+      class="w-[40vw]"
+      position="top"
+    >
+      <div class="flex flex-col gap-4 text-sm">
+        <!-- Hari info -->
+        <div>
+          <p class="font-bold text-slate-700 mb-2 flex items-center gap-2">
+            <i class="pi pi-calendar text-blue-500"></i>
+            Badge Header
+          </p>
+          <div class="flex flex-col gap-2 pl-2">
+            <div class="flex items-start gap-3">
+              <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap flex-shrink-0">
+                <i class="pi pi-calendar text-[9px]"></i> Total Hari
+              </span>
+              <p class="text-slate-600 text-xs">Total hari pendataan dari tanggal mulai (15 Jun 2026) hingga tanggal akhir (31 Agu 2026).</p>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap flex-shrink-0">
+                <i class="pi pi-hourglass text-[9px]"></i> Sisa Hari
+              </span>
+              <p class="text-slate-600 text-xs">Sisa hari yang tersedia hingga tanggal akhir pendataan.</p>
+            </div>
+          </div>
+        </div>
+
+        <Divider class="my-0" />
+
+        <!-- Pills per baris -->
+        <div>
+          <p class="font-bold text-slate-700 mb-2 flex items-center gap-2">
+            <i class="pi pi-list text-orange-500"></i>
+            Informasi per Wilayah (muncul di setiap baris)
+          </p>
+          <div class="flex flex-col gap-3 pl-2">
+            <div class="flex items-start gap-3">
+              <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200 whitespace-nowrap flex-shrink-0">
+                <i class="pi pi-bolt text-[8px]"></i> X.XX/hari
+              </span>
+              <div>
+                <p class="text-slate-700 text-xs font-semibold">Kecepatan Ideal</p>
+                <p class="text-slate-500 text-xs">Jumlah assignment yang harus diselesaikan per hari agar semua target tercapai tepat waktu. Dihitung dari: <span class="font-mono bg-slate-100 px-1 rounded">Total Target ÷ Total Hari</span></p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200 whitespace-nowrap flex-shrink-0">
+                <i class="pi pi-flag text-[8px]"></i> Eks: NNN
+              </span>
+              <div>
+                <p class="text-slate-700 text-xs font-semibold">Ekspektasi Progres</p>
+                <p class="text-slate-500 text-xs">Target realisasi yang seharusnya sudah dicapai sampai hari ini. Dihitung dari: <span class="font-mono bg-slate-100 px-1 rounded">Kec. Ideal × Hari Berjalan</span></p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="flex gap-1 flex-shrink-0">
+                <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300 whitespace-nowrap"><i class="pi pi-arrow-up text-[8px]"></i> Melampaui</span>
+                <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-600 border border-green-200 whitespace-nowrap"><i class="pi pi-check text-[8px]"></i> On Track</span>
+                <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 whitespace-nowrap"><i class="pi pi-minus text-[8px]"></i> Masih Aman</span>
+                <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200 whitespace-nowrap"><i class="pi pi-arrow-down text-[8px]"></i> Di Bawah</span>
+              </div>
+            </div>
+            <div class="pl-0 -mt-1">
+              <p class="text-slate-700 text-xs font-semibold">Evaluasi Progres</p>
+              <p class="text-slate-500 text-xs">Perbandingan realisasi aktual vs ekspektasi. Tooltip menampilkan selisih persentasenya.</p>
+              <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-1.5 text-xs">
+                <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span><span class="text-slate-600"><b>Melampaui</b> — ≥ +8% dari ekspektasi</span></div>
+                <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span><span class="text-slate-600"><b>On Track</b> — 0% s.d. +8%</span></div>
+                <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span><span class="text-slate-600"><b>Masih Aman</b> — -3% s.d. 0%</span></div>
+                <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></span><span class="text-slate-600"><b>Di Bawah Target</b> — &lt; -3%</span></div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200 whitespace-nowrap flex-shrink-0">
+                <i class="pi pi-chart-bar text-[8px]"></i> X.XX/hari
+              </span>
+              <div>
+                <p class="text-slate-700 text-xs font-semibold">Rata-rata/hari</p>
+                <p class="text-slate-500 text-xs">Rata-rata realisasi aktual per hari. Dihitung dari: <span class="font-mono bg-slate-100 px-1 rounded">Total Realisasi ÷ Hari Berjalan</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end">
+          <Button
+            label="Mengerti"
+            icon="pi pi-check"
+            size="small"
+            @click="penjelasanDialog = false"
+          />
+        </div>
+      </template>
+    </Dialog>
+
     <Dialog
       v-model:visible="wilayahDialog"
       modal
@@ -406,6 +640,61 @@ const switchTab = async (tab) => {
 
 const progressData = ref(props.data_progress);
 const currentLevel = ref(props.current_level);
+
+// ─── Agregat Provinsi (computed dari seluruh progressData) ───────────────
+const provTotal = computed(() =>
+  (progressData.value || []).reduce((sum, item) => sum + kabkotTotal(item), 0)
+);
+const provRealisasi = computed(() =>
+  (progressData.value || []).reduce((sum, item) => sum + kabkotRealisasi(item), 0)
+);
+const provPct = computed(() => {
+  if (!provTotal.value) return "0.00";
+  return ((provRealisasi.value / provTotal.value) * 100).toFixed(2);
+});
+const provSpeedIdeal = computed(() => {
+  if (!provTotal.value) return "0.00";
+  return (provTotal.value / getTotalHari()).toFixed(2);
+});
+const provExpected = computed(() => {
+  return (parseFloat(provSpeedIdeal.value) * getHariBerjalan()).toFixed(0);
+});
+const provRataRata = computed(() => {
+  return (provRealisasi.value / getHariBerjalan()).toFixed(2);
+});
+const provEvaluasiDiff = computed(() => {
+  const expected = parseFloat(provExpected.value);
+  if (expected <= 0) return 0;
+  return ((provRealisasi.value - expected) / expected) * 100;
+});
+const provEvaluasiBadgeClass = computed(() => {
+  const d = provEvaluasiDiff.value;
+  if (d >= 8) return "bg-emerald-100 text-emerald-700 border-emerald-300";
+  if (d >= 0) return "bg-green-50 text-green-600 border-green-200";
+  if (d >= -3) return "bg-blue-50 text-blue-600 border-blue-200";
+  return "bg-red-50 text-red-600 border-red-200";
+});
+const provEvaluasiIcon = computed(() => {
+  const d = provEvaluasiDiff.value;
+  if (d >= 8) return "pi pi-arrow-up";
+  if (d >= 0) return "pi pi-check";
+  if (d >= -3) return "pi pi-minus";
+  return "pi pi-arrow-down";
+});
+const provEvaluasiLabel = computed(() => {
+  const d = provEvaluasiDiff.value;
+  if (d >= 8) return "Melampaui";
+  if (d >= 4) return "Di Atas Target";
+  if (d >= 0) return "On Track";
+  if (d >= -3) return "Masih Aman";
+  return "Di Bawah Target";
+});
+const provEvaluasiSelisih = computed(() => {
+  const d = provEvaluasiDiff.value;
+  const sign = d >= 0 ? "+" : "";
+  return `${sign}${d.toFixed(1)}% vs ekspektasi`;
+});
+// ─────────────────────────────────────────────────────────────────────────
 
 const sortMode = ref("code");
 const sortOptions = [
@@ -588,6 +877,88 @@ const goToRegion = async (code, type = null) => {
     thisTriggerSpinner.value = false;
   }
 };
+// ─── Capaian helpers untuk wilayah ───────────────────────────────────────
+const TANGGAL_AWAL = new Date("2026-06-15");
+const TANGGAL_AKHIR = new Date("2026-08-31");
+
+const getTotalHari = () => {
+  const selisih = Math.abs(TANGGAL_AKHIR - TANGGAL_AWAL);
+  return Math.ceil(selisih / (1000 * 60 * 60 * 24));
+};
+
+const getNowHari = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const akhir = new Date(TANGGAL_AKHIR);
+  akhir.setHours(0, 0, 0, 0);
+  const selisih = akhir - today;
+  return Math.max(0, Math.ceil(selisih / (1000 * 60 * 60 * 24)));
+};
+
+const getHariBerjalan = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const awal = new Date(TANGGAL_AWAL);
+  awal.setHours(0, 0, 0, 0);
+  const selisih = today - awal;
+  return Math.max(1, Math.ceil(selisih / (1000 * 60 * 60 * 24)));
+};
+
+const wilayahSpeedIdeal = (item) => {
+  const total = kabkotTotal(item);
+  if (!total) return "0.00";
+  return (total / getTotalHari()).toFixed(2);
+};
+
+const wilayahExpected = (item) => {
+  return (parseFloat(wilayahSpeedIdeal(item)) * getHariBerjalan()).toFixed(0);
+};
+
+const wilayahRataRata = (item) => {
+  const realisasi = kabkotRealisasi(item);
+  return (realisasi / getHariBerjalan()).toFixed(2);
+};
+
+const wilayahEvaluasiDiff = (item) => {
+  const expected = parseFloat(wilayahExpected(item));
+  const realisasi = kabkotRealisasi(item);
+  if (expected <= 0) return 0;
+  return ((realisasi - expected) / expected) * 100;
+};
+
+const wilayahEvaluasiBadgeClass = (item) => {
+  const diff = wilayahEvaluasiDiff(item);
+  if (diff >= 8) return "bg-emerald-100 text-emerald-700 border-emerald-300";
+  if (diff >= 0) return "bg-green-50 text-green-600 border-green-200";
+  if (diff >= -3) return "bg-blue-50 text-blue-600 border-blue-200";
+  return "bg-red-50 text-red-600 border-red-200";
+};
+
+const wilayahEvaluasiIcon = (item) => {
+  const diff = wilayahEvaluasiDiff(item);
+  if (diff >= 8) return "pi pi-arrow-up";
+  if (diff >= 0) return "pi pi-check";
+  if (diff >= -3) return "pi pi-minus";
+  return "pi pi-arrow-down";
+};
+
+const wilayahEvaluasiLabel = (item) => {
+  const diff = wilayahEvaluasiDiff(item);
+  if (diff >= 8) return "Melampaui";
+  if (diff >= 4) return "Di Atas Target";
+  if (diff >= 0) return "On Track";
+  if (diff >= -3) return "Masih Aman";
+  return "Di Bawah Target";
+};
+
+const wilayahEvaluasiSelisih = (item) => {
+  const diff = wilayahEvaluasiDiff(item);
+  const sign = diff >= 0 ? "+" : "";
+  return `${sign}${diff.toFixed(1)}% vs ekspektasi`;
+};
+// ─────────────────────────────────────────────────────────────────────────
+
+const penjelasanDialog = ref(false);
 const wilayahDialog = ref(false);
 const selectedWilayahForDownload = ref(null);
 const downloadWilayah = () => {
@@ -604,6 +975,26 @@ const downloadWilayah = () => {
 </script>
 
 <style scoped>
+.provinsi-card {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffffff 60%);
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.provinsi-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #f97316, #fb923c);
+  border-radius: 3px 0 0 3px;
+}
+
 .stat-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -781,6 +1172,20 @@ const downloadWilayah = () => {
   border-radius: 999px;
   transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
   min-width: 2px;
+}
+
+/* Capaian pills untuk wilayah */
+.capaian-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  border-width: 1px;
+  white-space: nowrap;
+  line-height: 1.4;
 }
 
 /* Tab Navigation */
