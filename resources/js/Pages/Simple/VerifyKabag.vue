@@ -57,7 +57,13 @@
         </Column>
         <Column header="Tim Kerja" sortable :show-filter-menu="false">
           <template #body="{ data }">
-            {{ data.pegawai && data.pegawai.length > 0 ? data.tim_kerja : "-" }}
+            <span
+              v-if="data.pegawai && data.pegawai.length > 0"
+              :class="{ 'font-bold': !data.tim_id }"
+            >
+              {{ data.tim_id ? data.tim_kerja : (data.tim_penanggung_jawab_id ? 'Lintas Tim Kerja (PJ: ' + data.pj_kerja + ')' : 'Lintas Tim Kerja') }}
+            </span>
+            <span v-else>-</span>
           </template>
           <template #filter>
             <InputText

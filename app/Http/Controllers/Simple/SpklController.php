@@ -294,18 +294,24 @@ class SpklController extends Controller
         $isOpen = ['admin', 'operator'];
         if (!in_array($role, $isOpen)) {
             $query->whereHas('lembur', function ($q) use ($myTeam) {
-                $q->whereIn('tim_id', $myTeam);
+                $q->whereIn('tim_id', $myTeam)
+                  ->orWhereIn('tim_penanggung_jawab_id', $myTeam);
             });
         }
 
-        $query->with(['lembur.tim', 'lembur.spkl']);
-        $lp = $query->get()->groupBy('lembur.tim.label')
+        $query->with(['lembur.tim', 'lembur.timPenanggungJawab', 'lembur.spkl']);
+        $lp = $query->get()->groupBy(function ($item) {
+                return $item->lembur->tim->label
+                    ?? $item->lembur->timPenanggungJawab->label
+                    ?? 'Tidak Ada Tim';
+            })
             ->map(function ($group, $key) {
                 $first_item = $group->first();
                 $upload_status = LaporanUpload::where('lembur_id', $first_item->lembur_id)->first();
+                $tim_id = $first_item->lembur->tim_id ?? $first_item->lembur->tim_penanggung_jawab_id;
                 $result = [
                     'tim' => $key,
-                    'tim_id' => $first_item->lembur->tim_id,
+                    'tim_id' => $tim_id,
                     'jumlah' => $group->count(),
                     'lembur_id' => $first_item->lembur_id,
                     'maksud_lembur' => $first_item->lembur->maksud_lembur ?? null,
@@ -365,21 +371,31 @@ class SpklController extends Controller
     {
         $lembur_id = $request->input('lembur_id') ?? null;
         if ($lembur_id) {
-            $lembur = Lembur::where('id', $lembur_id)->with(['tim'])->first();
-            $nama_tim = $lembur->tim->label;
+            $lembur = Lembur::where('id', $lembur_id)->with(['tim', 'timPenanggungJawab'])->first();
+            $tim_ref = $lembur->tim ?? $lembur->timPenanggungJawab;
+            $nama_tim = $tim_ref ? $tim_ref->label : 'Lintas Tim Kerja';
             $tahun = $request->input('tahun');
             $bulan = $request->input('bulan');
 
-            $ketua_tim_id = AnggotaTimKerja::where('tim_id', $lembur->tim->id)->where('keanggotaan', 'ketua')->first();
-            $anggota_tim = AnggotaTimKerja::where('tim_id', $lembur->tim->id)->pluck('pegawai_id')->toArray();
+            $ketua_tim_id = AnggotaTimKerja::where('tim_id', $tim_ref->id)->where('keanggotaan', 'ketua')->first();
+            $anggota_tim = AnggotaTimKerja::where('tim_id', $tim_ref->id)->pluck('pegawai_id')->toArray();
             $ketua_tim = Pegawai::findOrFail($ketua_tim_id->pegawai_id);
 
             $query = LemburPegawai::from('sulutweb_simple.lembur_pegawai')
                 ->join('sulutweb_man_management.pegawai as sp', 'sp.id', 'lembur_pegawai.pegawai_id')
                 ->where('status', 4)
-                ->whereIn('pegawai_id', $anggota_tim)
-                ->whereHas('lembur', function ($q) use ($lembur) {
-                    $q->where('tim_id', $lembur->tim->id);
+                ->where(function ($q) use ($tim_ref, $anggota_tim) {
+                    // Kondisi 1: Lembur biasa (tim_id cocok) DAN pegawai adalah anggota tim
+                    $q->where(function ($q1) use ($tim_ref, $anggota_tim) {
+                        $q1->whereIn('pegawai_id', $anggota_tim)
+                           ->whereHas('lembur', function ($q_lembur) use ($tim_ref) {
+                               $q_lembur->where('tim_id', $tim_ref->id);
+                           });
+                    })
+                    // Kondisi 2: Lembur lintas tim (tim_penanggung_jawab_id cocok) -> SEMUA pegawai di pengajuan masuk
+                    ->orWhereHas('lembur', function ($q_lembur) use ($tim_ref) {
+                        $q_lembur->where('tim_penanggung_jawab_id', $tim_ref->id);
+                    });
                 })
                 ->whereYear('tanggal', $tahun)
                 ->whereMonth('tanggal', $bulan)->with(['pegawai', 'lembur'])

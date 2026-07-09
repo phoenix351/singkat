@@ -82,7 +82,7 @@
         class="bg-white py-4 px-6 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-sm text-gray-500"
       >
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Simple versi 1.0.1-beta &mdash;
+          &copy; 2026 Simple versi 1.0.1-rc &mdash;
           <a href="https://sulut.bps.go.id" class="font-bold"
             >BPS Provinsi Sulawesi Utara</a
           >

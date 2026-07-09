@@ -71,7 +71,13 @@
           :showFilterMenu="false"
         >
           <template #body="{ data }">
-            {{ data.pegawai && data.pegawai.length > 0 ? data.tim_kerja : "-" }}
+            <span
+              v-if="data.pegawai && data.pegawai.length > 0"
+              :class="{ 'font-bold': !data.tim_id }"
+            >
+              {{ data.tim_id ? data.tim_kerja : (data.tim_penanggung_jawab_id ? 'Lintas Tim Kerja (PJ: ' + (tim.find(t => t.tim_id === data.tim_penanggung_jawab_id)?.tim_kerja || 'Tim') + ')' : 'Lintas Tim Kerja') }}
+            </span>
+            <span v-else>-</span>
           </template>
           <template #filter>
             <InputText
@@ -351,12 +357,33 @@
     <Dialog
       v-model:visible="createDialog"
       modal
-      header="Tambah Data Baru"
+      header="Pengajuan Lembur Baru"
       class="min-w-[40vw]"
       position="top"
     >
       <div class="flex flex-col gap-4">
         <div>
+          <label class="block font-bold mb-2">Apakah lintas tim kerja?</label>
+          <Select
+            placeholder="Apakah lintas tim kerja atau tidak?"
+            :options="[
+              { label: 'Tidak', value: false },
+              { label: 'Ya', value: true },
+            ]"
+            class="w-full"
+            showClear
+            option-label="label"
+            option-value="value"
+            v-model="form.lintas_tim_kerja"
+          />
+          <div
+            v-if="page.props.errors.lintas_tim_kerja"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.lintas_tim_kerja }}
+          </div>
+        </div>
+        <div v-if="!form.lintas_tim_kerja">
           <label class="block font-bold mb-2">Tim Kerja</label>
           <Select
             placeholder="Pilih tim kerja"
@@ -418,6 +445,52 @@
             {{ page.props.errors?.anggotalembur }}
           </div>
         </div>
+        <div v-if="form.lintas_tim_kerja">
+          <label class="block font-bold mb-2">Tim Penanggung Jawab</label>
+          <Select
+            placeholder="Pilih tim penanggung jawab"
+            :options="tim"
+            class="w-full"
+            showClear
+            filter
+            option-label="tim_kerja"
+            option-value="tim_id"
+            v-model="form.tim_penanggung_jawab_id"
+          />
+          <div
+            v-if="page.props.errors.tim_penanggung_jawab_id"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.tim_penanggung_jawab_id }}
+          </div>
+        </div>
+        
+        <div v-if="form.lintas_tim_kerja">
+          <label class="block font-bold mb-2">Anggota yang Lembur</label>
+          <MultiSelect
+            filter
+            showClear
+            v-model="form.anggotalembur"
+            :options="anggotaTim"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Pilih anggota yang lembur"
+            :max-selected-labels="0"
+            :selected-items-label="
+              form.anggotalembur.length === anggotaTim.length
+                ? 'Seluruh anggota terpilih'
+                : '{0} anggota terpilih'
+            "
+            class="w-full"
+          />
+          <div
+            v-if="page.props.errors.anggotalembur"
+            class="text-red-500 text-sm mt-2"
+          >
+            {{ page.props.errors?.anggotalembur }}
+          </div>
+        </div>
+
         <template v-if="form.anggotalembur && form.anggotalembur.length > 0">
           <div>
             <label class="block font-bold mb-2">Tanggal</label>
@@ -762,7 +835,9 @@ watch(filterModel, () => delayedFetchData(), { deep: true });
 const createDialog = ref(false);
 const form = useForm({
   _token: null,
+  lintas_tim_kerja: null,
   tim_id: null,
+  tim_penanggung_jawab_id: null,
   anggotalembur: [],
   tanggal: null,
   jumlah_jam: null,
@@ -773,6 +848,23 @@ const form = useForm({
 const anggotaTim = ref([]);
 const maksudLembur = ref([]);
 let skipWatch = false;
+watch(
+  () => form.lintas_tim_kerja,
+  async (lintas_tim) => {
+    if (lintas_tim) {
+      form.tim_id = null;
+      if (!skipWatch) form.anggotalembur = [];
+      const { data: anggota } = await axios.get(
+        route("man-management.fetch-anggota-tim", { id: "all" })
+      );
+      anggotaTim.value = anggota;
+      // if (!skipWatch) form.anggotalembur = [...anggota.map((a) => a.value)];
+      skipWatch = false;
+    } else {
+      form.tim_penanggung_jawab_id = null;
+    }
+  }
+);
 watch(
   () => form.tim_id,
   async (tim) => {
@@ -853,8 +945,9 @@ const addPegawaiTo = async (data) => {
     ...data,
     anggotalembur: data.pegawai ? data.pegawai.map((p) => p.pegawai_id) : [],
   };
+  const timId = editedData.value.tim_id ?? "all";
   const { data: anggota } = await axios.get(
-    route("man-management.fetch-anggota-tim", { id: editedData.value.tim_id })
+    route("man-management.fetch-anggota-tim", { id: timId })
   );
   anggotaTim.value = anggota;
 };
@@ -936,16 +1029,18 @@ const toDocumentation = (link) => {
   window.open(url, "_blank", "noopener,noreferrer");
 };
 const copyData = async (data) => {
+  const isLintasTim = !data.tim_id;
   if (form.tim_id !== data.tim_id) {
     skipWatch = true;
   } else {
     if (anggotaTim.value.length === 0) {
+      const timId = data.tim_id ?? "all";
       const { data: anggota } = await axios.get(
-        route("man-management.fetch-anggota-tim", { id: data.tim_id })
+        route("man-management.fetch-anggota-tim", { id: timId })
       );
       anggotaTim.value = anggota;
     }
-    if (maksudLembur.value.length === 0) {
+    if (!isLintasTim && maksudLembur.value.length === 0) {
       const { data: maksud } = await axios.get(
         route("simple.fetch-maksud", { tim_id: data.tim_id })
       );
@@ -953,7 +1048,9 @@ const copyData = async (data) => {
     }
   }
 
+  form.lintas_tim_kerja = isLintasTim ? true : null;
   form.tim_id = data.tim_id;
+  form.tim_penanggung_jawab_id = data.tim_penanggung_jawab_id;
   form.anggotalembur = data.pegawai
     ? data.pegawai.map((p) => p.pegawai_id)
     : [];
