@@ -38,6 +38,11 @@
           sortable
           :show-filter-menu="false"
         >
+          <template #body="{ data }">
+            <span :class="{ 'font-bold': !data.lembur?.tim_id }">
+              {{ data.lembur?.tim_id ? data.lembur?.tim?.label : (data.lembur?.tim_penanggung_jawab_id ? 'Lintas Tim Kerja (PJ: ' + data.pj_kerja + ')' : 'Lintas Tim Kerja') }}
+            </span>
+          </template>
           <template #filter>
             <InputText
               v-model="filterModel.tim_kerja"
@@ -177,7 +182,12 @@
       <div class="flex flex-col gap-4">
         <div>
           <label class="block font-bold mb-2">Tim Kerja</label>
-          <InputText v-model="editedData.lembur.tim.label" fluid disabled />
+          <InputText
+            :model-value="editedData.lembur?.tim_id ? editedData.lembur?.tim?.label : (editedData.lembur?.tim_penanggung_jawab_id ? 'Lintas Tim Kerja (PJ: ' + editedData.pj_kerja + ')' : 'Lintas Tim Kerja')"
+            :class="{ 'font-bold': !editedData.lembur?.tim_id }"
+            fluid
+            disabled
+          />
         </div>
         <div>
           <label class="block font-bold mb-2">Alasan Lembur</label>

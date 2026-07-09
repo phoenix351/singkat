@@ -29,7 +29,8 @@ class LemburController extends Controller
             $currentPage = 1;
 
         $query = Lembur::query();
-        $query->join('sulutweb_man_management.timkerja as st', 'st.id', 'lembur.tim_id');
+        $query->leftJoin('sulutweb_man_management.timkerja as st', 'st.id', 'lembur.tim_id')
+              ->leftJoin('sulutweb_man_management.timkerja as tpj', 'tpj.id', 'lembur.tim_penanggung_jawab_id');
         $query->whereHas('pegawai', function ($q) {
             $q->where('created_by', Auth::id());
         });
@@ -92,7 +93,14 @@ class LemburController extends Controller
         if ($request->has('filters')) {
             $filters = $request->filters;
             if (!empty($filters['tim_kerja'])) {
-                $query->where('st.label', 'like', '%' . $filters['tim_kerja'] . '%');
+                $searchTim = $filters['tim_kerja'];
+                $query->where(function ($q) use ($searchTim) {
+                    $q->where('st.label', 'like', '%' . $searchTim . '%')
+                      ->orWhere(function ($q2) use ($searchTim) {
+                          $q2->whereNull('lembur.tim_id')
+                             ->where('Lintas Tim Kerja', 'like', '%' . $searchTim . '%');
+                      });
+                });
             }
             if (!empty($filters['tanggal'])) {
                 $monthMap = [
@@ -122,7 +130,7 @@ class LemburController extends Controller
             }
         }
         $query->with(['pegawai.pegawai', 'pegawai.edited']);
-        $query->select(['lembur.*', 'st.label as tim_kerja']);
+        $query->select(['lembur.*', 'st.label as tim_kerja', 'tpj.label as pj_kerja']);
         $lembur = $query->paginate($paginated, ['*'], 'page', $currentPage);
 
         $myTeam = AnggotaTimKerja::from('sulutweb_man_management.keanggotaan_timkerja as mkt')
@@ -224,20 +232,21 @@ class LemburController extends Controller
             }
         }
         $validated = $request->validate([
-            'tim_id' => ['required', 'integer'],
+            'tim_id' => ['nullable', 'integer'],
+            'tim_penanggung_jawab_id' => ['nullable', 'integer', 'required_without:tim_id'],
             'anggotalembur' => ['required', 'array'],
             'tanggal' => ['required', 'date'],
             'jumlah_jam' => ['required', 'numeric', 'max:24'],
             'maksud_lembur' => ['required', 'string'],
             'link_dokumentasi' => ['required', 'string']
         ], [
-            'tim_id.required' => 'Tim kerja harus diisi',
             'anggotalembur.required' => 'Anggota tim harus diisi',
             'tanggal.required' => 'Tanggal harus diisi',
             'jumlah_jam.required' => 'Jumlah jam harus diisi',
             'jumlah_jam.max' => 'Jumlah jam tidak boleh lebih dari 24',
             'maksud_lembur.required' => 'Maksud lembur harus diisi',
-            'link_dokumentasi.required' => 'Link dokumentasi harus diisi'
+            'link_dokumentasi.required' => 'Link dokumentasi harus diisi',
+            'tim_penanggung_jawab_id.required_without' => 'Tim penanggung jawab harus dipilih untuk lembur lintas tim',
         ]);
         try {
             //code...
@@ -326,9 +335,31 @@ class LemburController extends Controller
         $keanggotaan = $myTeam->pluck('keanggotaan')->toArray();
 
         $query = Lembur::query();
-        $query->join('sulutweb_man_management.timkerja as st', 'st.id', 'lembur.tim_id');
+        $query->leftJoin('sulutweb_man_management.timkerja as st', 'st.id', 'lembur.tim_id')
+              ->leftJoin('sulutweb_man_management.timkerja as tpj', 'tpj.id', 'lembur.tim_penanggung_jawab_id');
         if ($my_role != 'admin') {
-            $query->whereIn('lembur.tim_id', $myTeam->pluck('tim_id')->toArray());
+            $myTeamIds = $myTeam->pluck('tim_id')->toArray();
+            // Ambil semua pegawai_id dari tim yang diketuai oleh user ini
+            $myMemberIds = AnggotaTimKerja::from('sulutweb_man_management.keanggotaan_timkerja')
+                ->whereIn('tim_id', $myTeamIds)
+                ->pluck('pegawai_id')
+                ->toArray();
+
+            $query->where(function ($q) use ($myTeamIds, $myMemberIds) {
+                // Lembur tim biasa: tampilkan jika tim_id cocok
+                $q->whereIn('lembur.tim_id', $myTeamIds)
+                  // Lembur lintas tim: tampilkan jika ada anggota tim ini di dalam pengajuan
+                  // ATAU user adalah ketua dari tim penanggung jawab
+                  ->orWhere(function ($q2) use ($myMemberIds, $myTeamIds) {
+                      $q2->whereNull('lembur.tim_id')
+                         ->where(function ($q3) use ($myMemberIds, $myTeamIds) {
+                             $q3->whereHas('pegawai', function ($q4) use ($myMemberIds) {
+                                     $q4->whereIn('pegawai_id', $myMemberIds);
+                                 })
+                                 ->orWhereIn('lembur.tim_penanggung_jawab_id', $myTeamIds);
+                         });
+                  });
+            });
         }
 
         //search
@@ -385,7 +416,14 @@ class LemburController extends Controller
         if ($request->has('filters')) {
             $filters = $request->filters;
             if (!empty($filters['tim_kerja'])) {
-                $query->where('st.label', 'like', '%' . $filters['tim_kerja'] . '%');
+                $searchTim = $filters['tim_kerja'];
+                $query->where(function ($q) use ($searchTim) {
+                    $q->where('st.label', 'like', '%' . $searchTim . '%')
+                      ->orWhere(function ($q2) use ($searchTim) {
+                          $q2->whereNull('lembur.tim_id')
+                             ->whereRaw('? LIKE ?', ['Lintas Tim Kerja', '%' . $searchTim . '%']);
+                      });
+                });
             }
             if (!empty($filters['tanggal'])) {
                 $monthMap = [
@@ -415,7 +453,7 @@ class LemburController extends Controller
             }
         }
         $query->with(['pegawai.pegawai', 'pegawai.edited']);
-        $query->select(['lembur.*', 'st.label as tim_kerja']);
+        $query->select(['lembur.*', 'st.label as tim_kerja', 'tpj.label as pj_kerja']);
         $lembur = $query->paginate($paginated, ['*'], 'page', $currentPage);
 
         if ($request->paginated)
@@ -469,7 +507,8 @@ class LemburController extends Controller
             $currentPage = 1;
 
         $query = Lembur::query();
-        $query->join('sulutweb_man_management.timkerja as st', 'st.id', 'lembur.tim_id');
+        $query->leftJoin('sulutweb_man_management.timkerja as st', 'st.id', 'lembur.tim_id')
+              ->leftJoin('sulutweb_man_management.timkerja as tpj', 'tpj.id', 'lembur.tim_penanggung_jawab_id');
 
         $query->whereHas('pegawai', function ($q) {
             $q->whereIn('status', ['2', '4', '5']);
@@ -535,7 +574,14 @@ class LemburController extends Controller
         if ($request->has('filters')) {
             $filters = $request->filters;
             if (!empty($filters['tim_kerja'])) {
-                $query->where('st.label', 'like', '%' . $filters['tim_kerja'] . '%');
+                $searchTim = $filters['tim_kerja'];
+                $query->where(function ($q) use ($searchTim) {
+                    $q->where('st.label', 'like', '%' . $searchTim . '%')
+                      ->orWhere(function ($q2) use ($searchTim) {
+                          $q2->whereNull('lembur.tim_id')
+                             ->whereRaw('? LIKE ?', ['Lintas Tim Kerja', '%' . $searchTim . '%']);
+                      });
+                });
             }
             if (!empty($filters['tanggal'])) {
                 $monthMap = [
@@ -565,7 +611,7 @@ class LemburController extends Controller
             }
         }
 
-        $query->select(['lembur.*', 'st.label as tim_kerja']);
+        $query->select(['lembur.*', 'st.label as tim_kerja', 'tpj.label as pj_kerja']);
         $lembur = $query->paginate($paginated, ['*'], 'page', $currentPage);
 
         if ($request->paginated)
@@ -620,7 +666,8 @@ class LemburController extends Controller
 
         $query = LemburPegawai::query();
         $query->join('lembur', 'lembur.id', '=', 'lembur_pegawai.lembur_id')
-            ->join('sulutweb_man_management.timkerja as st', 'st.id', '=', 'lembur.tim_id');
+            ->leftJoin('sulutweb_man_management.timkerja as st', 'st.id', '=', 'lembur.tim_id')
+            ->leftJoin('sulutweb_man_management.timkerja as tpj', 'tpj.id', '=', 'lembur.tim_penanggung_jawab_id');
         $query->where('lembur_pegawai.pegawai_id', Auth::id());
 
         if ($request->sortOrder) {
@@ -632,7 +679,14 @@ class LemburController extends Controller
         if ($request->has('filters')) {
             $filters = $request->filters;
             if (!empty($filters['tim_kerja'])) {
-                $query->where('st.label', 'like', '%' . $filters['tim_kerja'] . '%');
+                $searchTim = $filters['tim_kerja'];
+                $query->where(function ($q) use ($searchTim) {
+                    $q->where('st.label', 'like', '%' . $searchTim . '%')
+                      ->orWhere(function ($q2) use ($searchTim) {
+                          $q2->whereNull('lembur.tim_id')
+                             ->whereRaw('? LIKE ?', ['Lintas Tim Kerja', '%' . $searchTim . '%']);
+                      });
+                });
             }
             if (!empty($filters['tanggal'])) {
                 $monthMap = [
@@ -675,7 +729,7 @@ class LemburController extends Controller
             }
         }
         $query->with(['lembur.tim', 'pegawai']);
-        $query->select(['lembur_pegawai.*']);
+        $query->select(['lembur_pegawai.*', 'tpj.label as pj_kerja']);
         $lembur = $query->paginate($paginated, ['*'], 'page', $currentPage);
         if ($request->paginated)
             return response()->json($lembur);

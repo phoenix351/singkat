@@ -384,10 +384,15 @@ class PegawaiController extends Controller
 
     public function fetchAnggotaTim($id)
     {
-        $tim = AnggotaTimKerja::where('tim_id', $id)->pluck('pegawai_id')->toArray();
-        $anggota = ManManagementPegawai::whereIn('id', $tim)
+        $anggota = ManManagementPegawai::query();
+        if ($id != 'all') {
+            $tim = AnggotaTimKerja::where('tim_id', $id)->pluck('pegawai_id')->toArray();
+            $anggota->whereIn('id', $tim);
+        }
+        $result = $anggota
+            ->orderBy('name', 'asc')
             ->select(['id as value', 'name as label'])->get();
-        return response()->json($anggota);
+        return response()->json($result);
     }
 
     public function fetchMyTim()

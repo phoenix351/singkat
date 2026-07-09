@@ -119,9 +119,9 @@ class HomeController extends Controller
             if ($data_type && $data_type == 'tim') {
                 $query
                     ->join('sulutweb_simple.lembur as l', 'lp.lembur_id', '=', 'l.id')
-                    ->join('sulutweb_man_management.timkerja as tk', 'l.tim_id', '=', 'tk.id')
-                    ->select('tk.label as label', DB::raw('count(lp.id) as total_lembur'))
-                    ->groupBy('tk.id', 'tk.label')
+                    ->leftJoin('sulutweb_man_management.timkerja as tk', 'l.tim_id', '=', 'tk.id')
+                    ->select(DB::raw("COALESCE(tk.label, 'Lintas Tim Kerja') as label"), DB::raw('count(lp.id) as total_lembur'))
+                    ->groupBy('tk.id', DB::raw("COALESCE(tk.label, 'Lintas Tim Kerja')"))
                     ->orderByDesc('total_lembur');
             } else {
                 $query->join('sulutweb_man_management.pegawai as p', 'lp.pegawai_id', '=', 'p.id')

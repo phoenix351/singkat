@@ -17,11 +17,16 @@ class Lembur extends Model
         'maksud_lembur',
         'spkl_id',
         'tim_id',
+        'tim_penanggung_jawab_id',
         'link_dokumentasi',
     ];
     public function tim()
     {
         return $this->belongsTo(TimKerja::class);
+    }
+    public function timPenanggungJawab()
+    {
+        return $this->belongsTo(TimKerja::class, 'tim_penanggung_jawab_id');
     }
     public function pegawai()
     {
