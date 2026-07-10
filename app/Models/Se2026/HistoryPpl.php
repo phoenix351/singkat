@@ -20,6 +20,9 @@ class HistoryPpl extends Model
         'submitted_r',
         'revoked',
         'completed',
+        //baru
+        'edited_a',
+        'rejected_a',
     ];
     public $timestamps = true;
 }

@@ -21,6 +21,9 @@ class DataFasihPml extends Model
         'submitted_r',
         'revoked',
         'completed',
+        //baru
+        'edited_a',
+        'rejected_a',
     ];
 
     public function subsls()

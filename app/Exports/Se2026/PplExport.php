@@ -80,6 +80,8 @@ class PplExport extends DefaultValueBinder implements FromCollection, WithHeadin
             'sdf.rejected',
             'sdf.submitted_r',
             'sdf.revoked',
+            'sdf.edited_a',
+            'sdf.rejected_a',
             'sdf.completed',
         ])
             ->get()
@@ -103,6 +105,8 @@ class PplExport extends DefaultValueBinder implements FromCollection, WithHeadin
             "REJECTED BY PENGAWAS",
             "SUBMITTED RESPONDENT",
             "REVOKED BY PENGAWAS",
+            "EDITED BY ADMIN KABUPATEN",
+            "REJECTED BY ADMIN KABUPATEN",
             "COMPLETED BY ADMIN KABUPATEN"
         ];
     }

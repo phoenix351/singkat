@@ -36,6 +36,8 @@ class DataController extends Controller
         $rejected = 0;
         $revoked = 0;
         $completed = 0;
+        $edited_a = 0;
+        $rejected_a = 0;
         foreach ($fasih as $f) {
             # code...
             $open = $open + $f->open;
@@ -46,8 +48,10 @@ class DataController extends Controller
             $rejected = $rejected + $f->rejected;
             $revoked = $revoked + $f->revoked;
             $completed = $completed + $f->completed;
+            $edited_a = $edited_a + ($f->edited_a ?? 0);
+            $rejected_a = $rejected_a + ($f->rejected_a ?? 0);
         }
-        $total = $open + $draft + $submitted_p + $submitted_r + $approved + $rejected + $revoked + $completed;
+        $total = $open + $draft + $submitted_p + $submitted_r + $approved + $rejected + $revoked + $completed + $edited_a + $rejected_a;
 
         $groupKabkot = $fasih->groupBy(function ($item) {
             return $item->subsls?->desa?->kec?->kabkot?->code;
@@ -64,6 +68,8 @@ class DataController extends Controller
                 'rejected' => $group->sum('rejected'),
                 'revoked' => $group->sum('revoked'),
                 'completed' => $group->sum('completed'),
+                'edited_a' => $group->sum('edited_a'),
+                'rejected_a' => $group->sum('rejected_a'),
             ];
         })->values();
         $current_level = 'kabkot';
@@ -90,6 +96,8 @@ class DataController extends Controller
                         'rejected' => $group->sum('rejected'),
                         'revoked' => $group->sum('revoked'),
                         'completed' => $group->sum('completed'),
+                        'edited_a' => $group->sum('edited_a'),
+                        'rejected_a' => $group->sum('rejected_a'),
                     ];
                 })->values();
             } else if ($length_code == 7) {
@@ -111,6 +119,8 @@ class DataController extends Controller
                         'rejected' => $group->sum('rejected'),
                         'revoked' => $group->sum('revoked'),
                         'completed' => $group->sum('completed'),
+                        'edited_a' => $group->sum('edited_a'),
+                        'rejected_a' => $group->sum('rejected_a'),
                     ];
                 })->values();
             } else if ($length_code == 10) {
@@ -132,6 +142,8 @@ class DataController extends Controller
                         'rejected' => $group->sum('rejected'),
                         'revoked' => $group->sum('revoked'),
                         'completed' => $group->sum('completed'),
+                        'edited_a' => $group->sum('edited_a'),
+                        'rejected_a' => $group->sum('rejected_a'),
                     ];
                 })->values();
             } else {
@@ -159,6 +171,8 @@ class DataController extends Controller
             'rejected' => $rejected,
             'revoked' => $revoked,
             'completed' => $completed,
+            'edited_a' => $edited_a,
+            'rejected_a' => $rejected_a,
             'total' => $total,
             'data_progress' => $groupKabkot,
             'current_level' => $current_level,
@@ -278,7 +292,7 @@ class DataController extends Controller
 
         // ─── Pengecekan sum status sebelum proses ───
         if (!$confirmed) {
-            $statusCols = ['open', 'draft', 'submitted_p', 'submitted_r', 'approved', 'rejected', 'revoked', 'completed'];
+            $statusCols = ['open', 'draft', 'submitted_p', 'submitted_r', 'approved', 'rejected', 'revoked', 'completed', 'edited_a', 'rejected_a'];
             $sqlSum = implode(' + ', array_map(fn($col) => "COALESCE({$col}, 0)", $statusCols));
 
             $existingTotal = $isPml
@@ -349,7 +363,9 @@ class DataController extends Controller
                     SUM(COALESCE(approved, 0)) as approved,
                     SUM(COALESCE(rejected, 0)) as rejected,
                     SUM(COALESCE(revoked, 0)) as revoked,
-                    SUM(COALESCE(completed, 0)) as completed')
+                    SUM(COALESCE(completed, 0)) as completed,
+                    SUM(COALESCE(edited_a, 0)) as edited_a,
+                    SUM(COALESCE(rejected_a, 0)) as rejected_a')
                 ->groupBy('subsls_code')
                 ->get();
 
@@ -367,6 +383,8 @@ class DataController extends Controller
                     'rejected' => $value->rejected,
                     'revoked' => $value->revoked,
                     'completed' => $value->completed,
+                    'edited_a' => $value->edited_a,
+                    'rejected_a' => $value->rejected_a,
                     'updated_at' => $updatedAtReal,
                     'created_at' => $existing ? $existing->created_at : $updatedAtReal,
                 ];
@@ -389,7 +407,9 @@ class DataController extends Controller
                     SUM(COALESCE(approved, 0)) as approved,
                     SUM(COALESCE(rejected, 0)) as rejected,
                     SUM(COALESCE(revoked, 0)) as revoked,
-                    SUM(COALESCE(completed, 0)) as completed')
+                    SUM(COALESCE(completed, 0)) as completed,
+                    SUM(COALESCE(edited_a, 0)) as edited_a,
+                    SUM(COALESCE(rejected_a, 0)) as rejected_a')
                 ->groupBy('email', 'kabkot_code')
                 ->get();
 
@@ -408,6 +428,8 @@ class DataController extends Controller
                     'rejected' => $value->rejected,
                     'revoked' => $value->revoked,
                     'completed' => $value->completed,
+                    'edited_a' => $value->edited_a,
+                    'rejected_a' => $value->rejected_a,
                     'updated_at' => $updatedAtReal,
                     'created_at' => $existing ? $existing->created_at : $updatedAtReal,
                 ];
@@ -458,8 +480,8 @@ class DataController extends Controller
         $fasihTable = (new DataFasih)->getTable();
         $pplTable = (new Ppl)->getTable();
 
-        $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
-        $sqlTotal = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
+        $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0) + COALESCE(edited_a, 0) + COALESCE(rejected_a, 0))";
+        $sqlTotal = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0) + COALESCE(edited_a, 0) + COALESCE(rejected_a, 0))";
 
         $query = DataFasih::query()
             ->select([
@@ -532,8 +554,8 @@ class DataController extends Controller
         $fasihTable = (new DataFasihPml)->getTable();
         $pmlTable = (new Pml)->getTable();
 
-        $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
-        $sqlTotal = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0))";
+        $sqlRealisasi = "SUM(COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0) + COALESCE(edited_a, 0) + COALESCE(rejected_a, 0))";
+        $sqlTotal = "SUM(COALESCE(open, 0) + COALESCE(draft, 0) + COALESCE(submitted_p, 0) + COALESCE(submitted_r, 0) + COALESCE(approved, 0) + COALESCE(rejected, 0) + COALESCE(revoked, 0) + COALESCE(completed, 0) + COALESCE(edited_a, 0) + COALESCE(rejected_a, 0))";
 
         $query = DataFasihPml::query()
             ->select([

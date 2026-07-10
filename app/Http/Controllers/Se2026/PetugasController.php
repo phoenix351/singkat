@@ -88,8 +88,8 @@ class PetugasController extends Controller
             ->selectRaw("
                 $histTable.email,
                 DATE($histTable.updated_at) as date,
-                SUM(COALESCE(submitted_p,0) + COALESCE(submitted_r,0) + COALESCE(approved,0) + COALESCE(rejected,0) + COALESCE(revoked,0) + COALESCE(completed,0)) as realisasi,
-                SUM(COALESCE(open,0) + COALESCE(draft,0) + COALESCE(submitted_p,0) + COALESCE(submitted_r,0) + COALESCE(approved,0) + COALESCE(rejected,0) + COALESCE(revoked,0) + COALESCE(completed,0)) as total
+                SUM(COALESCE(submitted_p,0) + COALESCE(submitted_r,0) + COALESCE(approved,0) + COALESCE(rejected,0) + COALESCE(revoked,0) + COALESCE(completed,0) + COALESCE(edited_a,0) + COALESCE(rejected_a,0)) as realisasi,
+                SUM(COALESCE(open,0) + COALESCE(draft,0) + COALESCE(submitted_p,0) + COALESCE(submitted_r,0) + COALESCE(approved,0) + COALESCE(rejected,0) + COALESCE(revoked,0) + COALESCE(completed,0) + COALESCE(edited_a,0) + COALESCE(rejected_a,0)) as total
             ")
             ->groupBy("$histTable.email", 'date')
             ->orderBy("$histTable.email")
