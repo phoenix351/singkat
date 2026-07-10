@@ -41,21 +41,20 @@
 
             <!-- Custom Notification Popover -->
             <Transition name="notif-fade">
-              <div
-                v-if="showNotificationPanel"
-                class="notif-panel"
-              >
+              <div v-if="showNotificationPanel" class="notif-panel">
                 <div class="notif-header">
                   <span class="notif-title">
                     <i class="pi pi-bell mr-2"></i>Notifikasi
                   </span>
-                  <button @click="showNotificationPanel = false" class="notif-close">
+                  <button
+                    @click="showNotificationPanel = false"
+                    class="notif-close"
+                  >
                     <i class="pi pi-times"></i>
                   </button>
                 </div>
 
                 <div class="notif-body" v-if="hasAnyNotification">
-
                   <!-- Output Lembur -->
                   <template v-if="outputItems.length > 0">
                     <div class="notif-section-label">Output Lembur Saya</div>
@@ -70,7 +69,9 @@
                       </span>
                       <div class="notif-item-text">
                         <p class="notif-item-title">Isi Output Lembur</p>
-                        <p class="notif-item-sub">{{ item.tim_kerja }} &mdash; {{ item.maksud_lembur }}</p>
+                        <p class="notif-item-sub">
+                          {{ item.tim_kerja }} &mdash; {{ item.maksud_lembur }}
+                        </p>
                       </div>
                     </div>
                   </template>
@@ -90,11 +91,16 @@
                       <div class="notif-item-text">
                         <p class="notif-item-title">
                           {{ item.jumlah }} lembur perlu diperiksa
-                          <span v-if="item.is_lintas_tim" class="notif-badge-lintas">Lintas Tim</span>
+                          <span
+                            v-if="item.is_lintas_tim"
+                            class="notif-badge-lintas"
+                            >Lintas Tim</span
+                          >
                         </p>
                         <p class="notif-item-sub">
                           <template v-if="item.is_lintas_tim">
-                            Dari tim lain &mdash; PJ: {{ item.tim_pj ?? item.tim_kerja }}
+                            Dari tim lain &mdash; PJ:
+                            {{ item.tim_pj ?? item.tim_kerja }}
                           </template>
                           <template v-else>
                             Tim: {{ item.tim_kerja }}
@@ -113,16 +119,19 @@
                       class="notif-item"
                       @click="navigateTo('simple.lembur.verify-kabag')"
                     >
-                      <span class="notif-item-icon bg-purple-100 text-purple-600">
+                      <span
+                        class="notif-item-icon bg-purple-100 text-purple-600"
+                      >
                         <i class="pi pi-shield"></i>
                       </span>
                       <div class="notif-item-text">
-                        <p class="notif-item-title">{{ item.jumlah }} lembur perlu diverifikasi</p>
+                        <p class="notif-item-title">
+                          {{ item.jumlah }} lembur perlu diverifikasi
+                        </p>
                         <p class="notif-item-sub">Tim: {{ item.tim_kerja }}</p>
                       </div>
                     </div>
                   </template>
-
                 </div>
 
                 <!-- Empty state -->
@@ -170,7 +179,7 @@
         class="bg-white py-4 px-6 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-sm text-gray-500"
       >
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Simple versi 1.0.1-rc &mdash;
+          &copy; 2026 Simple versi 1.1 &mdash;
           <a href="https://sulut.bps.go.id" class="font-bold"
             >BPS Provinsi Sulawesi Utara</a
           >
@@ -219,11 +228,11 @@ onMounted(() => {
   }
 
   // Tutup notifikasi jika klik di luar
-  document.addEventListener('click', handleOutsideClick);
+  document.addEventListener("click", handleOutsideClick);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleOutsideClick);
+  document.removeEventListener("click", handleOutsideClick);
 });
 
 const handleOutsideClick = (event) => {
@@ -257,10 +266,11 @@ const outputItems = computed(() => page.props.pendingOutputs || []);
 const pendingDetail = computed(() => page.props.lemburPendingDetail || []);
 const verifyDetail = computed(() => page.props.lemburToVerifyDetail || []);
 
-const hasAnyNotification = computed(() =>
-  outputItems.value.length > 0 ||
-  pendingDetail.value.length > 0 ||
-  verifyDetail.value.length > 0
+const hasAnyNotification = computed(
+  () =>
+    outputItems.value.length > 0 ||
+    pendingDetail.value.length > 0 ||
+    verifyDetail.value.length > 0
 );
 
 const navigateTo = (routeName) => {
