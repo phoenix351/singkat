@@ -480,7 +480,8 @@ class LemburController extends Controller
             $statust = $validated['status'] == 'setuju' ? '2' : '3';
             $updateData = [
                 'status' => $statust,
-                'catatan' => $validated['catatan'] ?? null
+                'catatan' => $validated['catatan'] ?? null,
+                'edited_by' => auth()->id()
             ];
             if ($validated['individual'] == true)
                 LemburPegawai::whereIn('id', $validated['lembur_pegawai'])->update($updateData);
@@ -636,7 +637,8 @@ class LemburController extends Controller
             $statust = $validated['status'] == 'setuju' ? '4' : '5';
             $updateData = [
                 'status' => $statust,
-                'catatan' => $validated['catatan'] ?? null
+                'catatan' => $validated['catatan'] ?? null,
+                'edited_by' => auth()->id()
             ];
             if ($validated['individual'] == true)
                 LemburPegawai::whereIn('id', $validated['lembur_pegawai'])->update($updateData);

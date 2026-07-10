@@ -156,8 +156,8 @@
               <p class="font-semibold text-gray-700 leading-none">
                 {{ page.props.auth.user.name }}
               </p>
-              <p class="text-gray-500 text-xs mt-1">
-                {{ page.props.auth.role }}
+              <p class="text-gray-500 text-xs mt-1 font-medium capitalize">
+                {{ displayRole }}
               </p>
             </div>
             <i class="pi pi-chevron-down text-xs text-gray-400"></i>
@@ -261,6 +261,17 @@ const toggleNotificationMenu = () => {
 };
 
 const page = usePage();
+
+const displayRole = computed(() => {
+  const role = page.props.auth.role;
+  const keanggotaan = page.props.auth.keanggotaan;
+
+  if (role === 'admin') return 'admin';
+  if (role === 'operator') return 'operator';
+  if (role === 'validator') return 'kabag';
+  if (keanggotaan === 'ketua') return 'ketua tim';
+  return 'anggota';
+});
 
 const outputItems = computed(() => page.props.pendingOutputs || []);
 const pendingDetail = computed(() => page.props.lemburPendingDetail || []);
