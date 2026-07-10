@@ -61,6 +61,8 @@ class WilayahSlsSheet extends DefaultValueBinder implements
             'APPROVED BY PENGAWAS',
             'REJECTED BY PENGAWAS',
             'REVOKED BY PENGAWAS',
+            'EDITED BY ADMIN KABUPATEN',
+            'REJECTED BY ADMIN KABUPATEN',
             'COMPLETED BY ADMIN KABUPATEN',
         ];
     }
@@ -92,6 +94,8 @@ class WilayahSlsSheet extends DefaultValueBinder implements
                 $group->sum('approved'),
                 $group->sum('rejected'),
                 $group->sum('revoked'),
+                $group->sum('edited_a'),
+                $group->sum('rejected_a'),
                 $group->sum('completed'),
             ];
         })->sortBy(fn($row) => $row[6])->values();

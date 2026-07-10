@@ -564,6 +564,8 @@ const props = defineProps({
   rejected: Number,
   revoked: Number,
   completed: Number,
+  edited_a: Number,
+  rejected_a: Number,
   total: Number,
   data_progress: Array,
   current_level: String,
@@ -712,7 +714,9 @@ const getTotal = (item) => {
     (item.approved || 0) +
     (item.rejected || 0) +
     (item.revoked || 0) +
-    (item.completed || 0)
+    (item.completed || 0) +
+    (item.edited_a || 0) +
+    (item.rejected_a || 0)
   );
 };
 
@@ -723,7 +727,9 @@ const getRealisasi = (item) => {
     (item.approved || 0) +
     (item.rejected || 0) +
     (item.revoked || 0) +
-    (item.completed || 0)
+    (item.completed || 0) +
+    (item.edited_a || 0) +
+    (item.rejected_a || 0)
   );
 };
 
@@ -759,7 +765,9 @@ const kabkotTotal = (item) => {
     (item.approved || 0) +
     (item.rejected || 0) +
     (item.revoked || 0) +
-    (item.completed || 0)
+    (item.completed || 0) +
+    (item.edited_a || 0) +
+    (item.rejected_a || 0)
   );
 };
 
@@ -770,7 +778,9 @@ const kabkotRealisasi = (item) => {
     (item.approved || 0) +
     (item.rejected || 0) +
     (item.revoked || 0) +
-    (item.completed || 0)
+    (item.completed || 0) +
+    (item.edited_a || 0) +
+    (item.rejected_a || 0)
   );
 };
 
@@ -827,7 +837,7 @@ const getVisibility = (level) => {
   return false;
 };
 
-// Realisasi = semua selain Open
+// Realisasi = semua selain Open dan Draft
 const realisasi = computed(
   () =>
     (props.submitted_p || 0) +
@@ -835,7 +845,9 @@ const realisasi = computed(
     (props.approved || 0) +
     (props.rejected || 0) +
     (props.revoked || 0) +
-    (props.completed || 0)
+    (props.completed || 0) +
+    (props.edited_a || 0) +
+    (props.rejected_a || 0)
 );
 
 const pct = (val) => {
