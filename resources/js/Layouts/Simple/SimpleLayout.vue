@@ -20,7 +20,7 @@
 
         <div class="flex items-center space-x-4">
           <!-- Notification Bell -->
-          <div class="relative flex items-center">
+          <div class="relative flex items-center" ref="notifContainer">
             <button
               @click="toggleNotificationMenu"
               class="relative p-2 text-gray-500 hover:text-gray-700 transition-colors flex items-center justify-center focus:outline-none"
@@ -38,12 +38,100 @@
                 <i class="pi pi-bell text-xl"></i>
               </OverlayBadge>
             </button>
-            <Menu
-              ref="notificationMenu"
-              :model="notificationItems"
-              :popup="true"
-              class="w-75 text-sm"
-            />
+
+            <!-- Custom Notification Popover -->
+            <Transition name="notif-fade">
+              <div
+                v-if="showNotificationPanel"
+                class="notif-panel"
+              >
+                <div class="notif-header">
+                  <span class="notif-title">
+                    <i class="pi pi-bell mr-2"></i>Notifikasi
+                  </span>
+                  <button @click="showNotificationPanel = false" class="notif-close">
+                    <i class="pi pi-times"></i>
+                  </button>
+                </div>
+
+                <div class="notif-body" v-if="hasAnyNotification">
+
+                  <!-- Output Lembur -->
+                  <template v-if="outputItems.length > 0">
+                    <div class="notif-section-label">Output Lembur Saya</div>
+                    <div
+                      v-for="(item, i) in outputItems"
+                      :key="'out-' + i"
+                      class="notif-item"
+                      @click="navigateTo('simple.my-lembur')"
+                    >
+                      <span class="notif-item-icon bg-blue-100 text-blue-600">
+                        <i class="pi pi-file-edit"></i>
+                      </span>
+                      <div class="notif-item-text">
+                        <p class="notif-item-title">Isi Output Lembur</p>
+                        <p class="notif-item-sub">{{ item.tim_kerja }} &mdash; {{ item.maksud_lembur }}</p>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Ketua Tim -->
+                  <template v-if="pendingDetail.length > 0">
+                    <div class="notif-section-label">Verifikasi Ketua Tim</div>
+                    <div
+                      v-for="(item, i) in pendingDetail"
+                      :key="'katim-' + i"
+                      class="notif-item"
+                      @click="navigateTo('simple.lembur.verify')"
+                    >
+                      <span class="notif-item-icon bg-amber-100 text-amber-600">
+                        <i class="pi pi-check-square"></i>
+                      </span>
+                      <div class="notif-item-text">
+                        <p class="notif-item-title">
+                          {{ item.jumlah }} lembur perlu diperiksa
+                          <span v-if="item.is_lintas_tim" class="notif-badge-lintas">Lintas Tim</span>
+                        </p>
+                        <p class="notif-item-sub">
+                          <template v-if="item.is_lintas_tim">
+                            Dari tim lain &mdash; PJ: {{ item.tim_pj ?? item.tim_kerja }}
+                          </template>
+                          <template v-else>
+                            Tim: {{ item.tim_kerja }}
+                          </template>
+                        </p>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Kabag -->
+                  <template v-if="verifyDetail.length > 0">
+                    <div class="notif-section-label">Verifikasi Kabag</div>
+                    <div
+                      v-for="(item, i) in verifyDetail"
+                      :key="'kabag-' + i"
+                      class="notif-item"
+                      @click="navigateTo('simple.lembur.verify-kabag')"
+                    >
+                      <span class="notif-item-icon bg-purple-100 text-purple-600">
+                        <i class="pi pi-shield"></i>
+                      </span>
+                      <div class="notif-item-text">
+                        <p class="notif-item-title">{{ item.jumlah }} lembur perlu diverifikasi</p>
+                        <p class="notif-item-sub">Tim: {{ item.tim_kerja }}</p>
+                      </div>
+                    </div>
+                  </template>
+
+                </div>
+
+                <!-- Empty state -->
+                <div v-else class="notif-empty">
+                  <i class="pi pi-inbox text-3xl mb-2 text-gray-300"></i>
+                  <p>Tidak ada notifikasi</p>
+                </div>
+              </div>
+            </Transition>
           </div>
 
           <div
@@ -104,9 +192,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
-import Menu from "primevue/menu";
 import Avatar from "primevue/avatar";
 import OverlayBadge from "primevue/overlaybadge";
 import Sidebar from "./Sidebar.vue";
@@ -123,13 +210,27 @@ const props = defineProps({
 });
 const isSidebarOpen = ref(props.isOpen);
 const profileMenu = ref();
-const notificationMenu = ref();
+const showNotificationPanel = ref(false);
+const notifContainer = ref(null);
 
 onMounted(() => {
   if (window.innerWidth >= 1024) {
     isSidebarOpen.value = true;
   }
+
+  // Tutup notifikasi jika klik di luar
+  document.addEventListener('click', handleOutsideClick);
 });
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleOutsideClick);
+});
+
+const handleOutsideClick = (event) => {
+  if (notifContainer.value && !notifContainer.value.contains(event.target)) {
+    showNotificationPanel.value = false;
+  }
+};
 
 watch(
   () => props.isOpen,
@@ -146,11 +247,26 @@ const toggleProfileMenu = (event) => {
   profileMenu.value.toggle(event);
 };
 
-const toggleNotificationMenu = (event) => {
-  notificationMenu.value.toggle(event);
+const toggleNotificationMenu = () => {
+  showNotificationPanel.value = !showNotificationPanel.value;
 };
 
 const page = usePage();
+
+const outputItems = computed(() => page.props.pendingOutputs || []);
+const pendingDetail = computed(() => page.props.lemburPendingDetail || []);
+const verifyDetail = computed(() => page.props.lemburToVerifyDetail || []);
+
+const hasAnyNotification = computed(() =>
+  outputItems.value.length > 0 ||
+  pendingDetail.value.length > 0 ||
+  verifyDetail.value.length > 0
+);
+
+const navigateTo = (routeName) => {
+  showNotificationPanel.value = false;
+  router.visit(route(routeName));
+};
 
 const totalNotificationCount = computed(() => {
   return (
@@ -158,70 +274,6 @@ const totalNotificationCount = computed(() => {
     (page.props.lemburPending || 0) +
     (page.props.lemburToVerify || 0)
   );
-});
-
-const notificationItems = computed(() => {
-  const outputItems = page.props.pendingOutputs || [];
-  const pendingDetail = page.props.lemburPendingDetail || [];
-  const verifyDetail = page.props.lemburToVerifyDetail || [];
-
-  const items = [];
-
-  // --- Notifikasi Output (semua pegawai) ---
-  if (outputItems.length > 0) {
-    items.push({
-      label: "Output Lembur Saya",
-      disabled: true,
-      class: "text-xs text-gray-400 font-semibold uppercase tracking-wider",
-    });
-    outputItems.forEach((item) => {
-      items.push({
-        label: `Ada pengajuan lembur dari ${item.tim_kerja} terkait ${item.maksud_lembur}`,
-        icon: "pi pi-file-edit",
-        command: () => router.visit(route("simple.my-lembur")),
-      });
-    });
-  }
-
-  // --- Notifikasi Ketua Tim ---
-  if (pendingDetail.length > 0) {
-    if (items.length > 0) items.push({ separator: true });
-    items.push({
-      label: "Verifikasi Ketua Tim",
-      disabled: true,
-      class: "text-xs text-gray-400 font-semibold uppercase tracking-wider",
-    });
-    pendingDetail.forEach((item) => {
-      items.push({
-        label: `Ada ${item.jumlah} lembur dari ${item.tim_kerja} yang perlu diperiksa`,
-        icon: "pi pi-check-square",
-        command: () => router.visit(route("simple.lembur.verify")),
-      });
-    });
-  }
-
-  // --- Notifikasi Kabag ---
-  if (verifyDetail.length > 0) {
-    if (items.length > 0) items.push({ separator: true });
-    items.push({
-      label: "Verifikasi Kabag",
-      disabled: true,
-      class: "text-xs text-gray-400 font-semibold uppercase tracking-wider",
-    });
-    verifyDetail.forEach((item) => {
-      items.push({
-        label: `Ada ${item.jumlah} lembur dari ${item.tim_kerja} yang perlu diverifikasi`,
-        icon: "pi pi-shield",
-        command: () => router.visit(route("simple.lembur.verify-kabag")),
-      });
-    });
-  }
-
-  if (items.length === 0) {
-    return [{ label: "Tidak ada notifikasi", disabled: true }];
-  }
-
-  return items;
 });
 
 const profileItems = ref([
@@ -271,5 +323,146 @@ watch(
 }
 :deep(.p-inputtext) {
   @apply text-sm;
+}
+
+/* ── Notification Panel ── */
+.notif-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 340px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  background: #f9fafb;
+}
+
+.notif-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+}
+
+.notif-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+.notif-close:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.notif-body {
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.notif-section-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 16px 4px;
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.notif-item:hover {
+  background: #f9fafb;
+}
+
+.notif-item-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.notif-item-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-item-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  line-height: 1.4;
+}
+
+.notif-item-sub {
+  font-size: 0.72rem;
+  color: #6b7280;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.notif-badge-lintas {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 16px;
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+
+/* ── Transition ── */
+.notif-fade-enter-active,
+.notif-fade-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.notif-fade-enter-from,
+.notif-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
 }
 </style>
