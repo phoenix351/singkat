@@ -1,8 +1,10 @@
 <template>
   <aside
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
     class="fixed inset-y-0 left-0 z-50 bg-slate-900 text-white transition-all duration-300 ease-in-out lg:static overflow-hidden flex flex-col whitespace-nowrap"
     :class="
-      isOpen
+      isEffectivelyOpen
         ? 'w-64 translate-x-0'
         : 'w-64 -translate-x-full lg:w-20 lg:translate-x-0'
     "
@@ -12,17 +14,17 @@
     >
       <span
         class="text-xl font-bold tracking-wider text-blue-400 transition-opacity duration-300"
-        :class="isOpen ? 'opacity-100' : 'opacity-0'"
+        :class="isEffectivelyOpen ? 'opacity-100' : 'opacity-0'"
         >SIMPLE</span
       >
       <i
         class="pi pi-compass text-2xl text-blue-400 absolute transition-opacity duration-300"
-        :class="isOpen ? 'opacity-0' : 'opacity-100'"
+        :class="isEffectivelyOpen ? 'opacity-0' : 'opacity-100'"
       ></i>
     </div>
     <nav
       class="py-4 overflow-y-auto flex-1"
-      :class="isOpen ? 'px-4' : 'px-4 lg:px-3'"
+      :class="isEffectivelyOpen ? 'px-4' : 'px-4 lg:px-3'"
     >
       <ul class="space-y-1">
         <li v-for="(item, index) in menuItems" :key="index">
@@ -30,34 +32,34 @@
             <button
               v-if="checkAvailability(item.role)"
               @click="toggleDropdown(index)"
-              :title="!isOpen ? item.label : ''"
+              :title="!isEffectivelyOpen ? item.label : ''"
               class="w-full flex items-center py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all group overflow-hidden"
               :class="
-                isOpen ? 'px-4 justify-start' : 'px-4 lg:px-0 lg:justify-center'
+                isEffectivelyOpen ? 'px-4 justify-start' : 'px-4 lg:px-0 lg:justify-center'
               "
             >
               <i
                 :class="[
                   item.icon,
                   'text-lg w-6 flex-shrink-0 group-hover:text-white transition-all text-center',
-                  isOpen ? 'mr-3' : 'mr-3 lg:mr-0',
+                  isEffectivelyOpen ? 'mr-3' : 'mr-3 lg:mr-0',
                 ]"
               ></i>
               <span
                 class="flex-1 text-left transition-opacity duration-300 whitespace-nowrap"
-                :class="isOpen ? 'opacity-100 block' : 'opacity-0 lg:hidden'"
+                :class="isEffectivelyOpen ? 'opacity-100 block' : 'opacity-0 lg:hidden'"
                 >{{ item.label }}</span
               >
               <i
                 class="pi pi-chevron-down text-xs transition-transform duration-300"
                 :class="[
                   openDropdowns.has(index) ? 'rotate-180' : 'rotate-0',
-                  isOpen ? 'opacity-100' : 'opacity-0 lg:hidden',
+                  isEffectivelyOpen ? 'opacity-100' : 'opacity-0 lg:hidden',
                 ]"
               ></i>
             </button>
             <ul
-              v-show="openDropdowns.has(index) && isOpen"
+              v-show="openDropdowns.has(index) && isEffectivelyOpen"
               class="mt-1 ml-3 pl-3 border-l border-slate-700 space-y-1"
             >
               <li
@@ -101,25 +103,25 @@
           <Link
             v-else-if="checkAvailability(item.role)"
             :href="route(item.route)"
-            :title="!isOpen ? item.label : ''"
+            :title="!isEffectivelyOpen ? item.label : ''"
             class="flex items-center py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all group overflow-hidden"
             :class="[
               page.props.route == item.route ? 'text-white bg-slate-800' : '',
-              isOpen ? 'px-4 justify-start' : 'px-4 lg:px-0 lg:justify-center',
+              isEffectivelyOpen ? 'px-4 justify-start' : 'px-4 lg:px-0 lg:justify-center',
             ]"
           >
             <i
               :class="[
                 item.icon,
                 'text-lg w-6 flex-shrink-0 group-hover:text-white transition-all text-center',
-                isOpen ? 'mr-3' : 'mr-3 lg:mr-0',
+                isEffectivelyOpen ? 'mr-3' : 'mr-3 lg:mr-0',
               ]"
             ></i>
             <span
               class="transition-opacity duration-300 whitespace-nowrap"
               :class="[
                 { 'font-bold': page.props.route == item.route },
-                isOpen ? 'opacity-100 block' : 'opacity-0 lg:hidden',
+                isEffectivelyOpen ? 'opacity-100 block' : 'opacity-0 lg:hidden',
               ]"
               >{{ item.label }}</span
             >
@@ -131,7 +133,7 @@
 </template>
 <script setup>
 import { Link, usePage } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 const props = defineProps({
   isOpen: {
@@ -140,6 +142,9 @@ const props = defineProps({
   },
 });
 const page = usePage();
+
+const isHovered = ref(false);
+const isEffectivelyOpen = computed(() => props.isOpen || isHovered.value);
 
 const openDropdowns = ref(new Set());
 const toggleDropdown = (index) => {

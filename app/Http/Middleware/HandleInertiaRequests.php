@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ManManagement\AnggotaTimKerja;
 use App\Models\ManManagement\Role;
 use App\Models\Simple\LemburPegawai;
 use Illuminate\Http\Request;
@@ -42,22 +43,72 @@ class HandleInertiaRequests extends Middleware
         $lemburToVerifyDetail = [];
 
         if (Auth::check() && str_starts_with($route, 'simple.')) {
-            $lemburData = LemburPegawai::with('lembur.tim')
+            $lemburData = LemburPegawai::with('lembur.tim', 'lembur.timPenanggungJawab')
                 ->where('pegawai_id', Auth::id())
                 ->whereNull('output')
                 ->get();
 
-            if (Role::currentRole() == 'admin' || Role::statusKeanggotaan() == 'ketua') {
-                $pendingRows = LemburPegawai::with('lembur.tim')->where('status', 1)->get();
+            if (Role::currentRole() == 'admin') {
+                // Admin melihat semua lembur pending dari semua tim
+                $pendingRows = LemburPegawai::with('lembur.tim', 'lembur.timPenanggungJawab')
+                    ->where('status', 1)
+                    ->get();
+
+                $lemburPending = $pendingRows->count();
+                $lemburPendingDetail = $pendingRows
+                    ->groupBy(fn($lp) => $lp->lembur->tim->label ?? $lp->lembur->timPenanggungJawab->label ?? '-')
+                    ->map(fn($group, $timLabel) => [
+                        'tim_kerja'     => $timLabel,
+                        'jumlah'        => $group->count(),
+                        'is_lintas_tim' => $group->first()?->lembur?->tim_id === null,
+                        'tim_pj'        => $group->first()?->lembur?->timPenanggungJawab?->label ?? null,
+                    ])
+                    ->values();
+
+            } elseif (Role::statusKeanggotaan() == 'ketua') {
+                // Ketua Tim hanya melihat lembur dari tim yang ia ketuai
+                // Ambil tim_id yang diketuai oleh user yang login
+                $timDiketuai = AnggotaTimKerja::where('pegawai_id', Auth::id())
+                    ->where('keanggotaan', 'ketua')
+                    ->pluck('tim_id')
+                    ->toArray();
+
+                // Ambil lembur dengan status 1 yang:
+                // - tim_id-nya adalah tim yang diketuai (lembur reguler), ATAU
+                // - tim_penanggung_jawab_id-nya adalah tim yang diketuai (lintas tim)
+                $pendingRows = LemburPegawai::with('lembur.tim', 'lembur.timPenanggungJawab')
+                    ->where('status', 1)
+                    ->whereHas('lembur', function ($q) use ($timDiketuai) {
+                        $q->where(function ($inner) use ($timDiketuai) {
+                            $inner->whereIn('tim_id', $timDiketuai)
+                                  ->orWhereIn('tim_penanggung_jawab_id', $timDiketuai);
+                        });
+                    })
+                    ->get();
+
                 $lemburPending = $pendingRows->count();
 
-                // Kelompokkan per tim, hitung jumlah per tim
+                // Kelompokkan: kunci = "LINTAS::{tim_asal}" atau "{tim_biasa}"
                 $lemburPendingDetail = $pendingRows
-                    ->groupBy(fn($lp) => $lp->lembur->tim->label ?? '-')
-                    ->map(fn($group, $timLabel) => [
-                        'tim_kerja' => $timLabel,
-                        'jumlah'    => $group->count(),
-                    ])
+                    ->groupBy(function ($lp) {
+                        $isLintas = $lp->lembur->tim_id === null;
+                        $timLabel = $lp->lembur->tim->label
+                            ?? $lp->lembur->timPenanggungJawab->label
+                            ?? '-';
+                        return $isLintas ? 'LINTAS::' . $timLabel : $timLabel;
+                    })
+                    ->map(function ($group, $key) {
+                        $isLintas = str_starts_with($key, 'LINTAS::');
+                        $timLabel = $isLintas ? substr($key, 8) : $key;
+                        return [
+                            'tim_kerja'     => $timLabel,
+                            'jumlah'        => $group->count(),
+                            'is_lintas_tim' => $isLintas,
+                            'tim_pj'        => $isLintas
+                                ? ($group->first()?->lembur?->timPenanggungJawab?->label ?? null)
+                                : null,
+                        ];
+                    })
                     ->values();
             }
 
@@ -77,10 +128,14 @@ class HandleInertiaRequests extends Middleware
 
             $pendingOutputCount = $lemburData->count();
             $pendingOutputs = $lemburData->map(function ($lp) {
+                $isLintas = $lp->lembur->tim_id === null;
+                $timLabel = $isLintas
+                    ? 'Lintas Tim (PJ: ' . ($lp->lembur->timPenanggungJawab->label ?? '-') . ')'
+                    : ($lp->lembur->tim->label ?? '-');
                 return [
-                    'id' => $lp->id,
+                    'id'            => $lp->id,
                     'maksud_lembur' => $lp->lembur->maksud_lembur ?? '-',
-                    'tim_kerja' => $lp->lembur->tim->label ?? '-',
+                    'tim_kerja'     => $timLabel,
                 ];
             });
         }
