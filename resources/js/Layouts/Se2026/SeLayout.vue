@@ -20,7 +20,7 @@
                 Dashboard Sensus Ekonomi 2026
               </h1>
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                Provinsi Sulawesi Utara (versi 2.1.1)
+                Provinsi Sulawesi Utara (versi 2.2)
               </p>
             </div>
           </div>
@@ -78,7 +78,7 @@
         class="border-t border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm py-3 px-4 text-center"
       >
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Projek SEtahuBulat versi 2.1.1 &mdash;
+          &copy; 2026 Projek SEtahuBulat versi 2.2 &mdash;
           <a href="https://sulut.bps.go.id" class="font-bold"
             >BPS Provinsi Sulawesi Utara</a
           >
@@ -163,7 +163,7 @@
       </p>
     </div>
     <template #footer>
-      <div class="flex justify-end gap-2">
+      <div class="flex flex-wrap justify-end gap-2">
         <Button
           label="Batalkan File Ini"
           size="small"
@@ -172,11 +172,196 @@
           @click="confirmDialog.resolve(false)"
         />
         <Button
+          label="Cek tau kenapa?"
+          size="small"
+          severity="warn"
+          icon="pi pi-search"
+          :loading="diffDialog.loading"
+          @click="openDiffDialog"
+        />
+        <Button
           label="Tetap Lanjutkan"
           size="small"
           severity="danger"
           icon="pi pi-exclamation-triangle"
           @click="confirmDialog.resolve(true)"
+        />
+      </div>
+    </template>
+  </Dialog>
+
+  <!-- DIFF CHECK DIALOG -->
+  <Dialog
+    v-model:visible="diffDialog.visible"
+    modal
+    header="🔍 Analisis Perbedaan Data"
+    class="w-[95vw] max-w-[700px]"
+    position="center"
+    :style="{ maxHeight: '90vh' }"
+  >
+    <div class="flex flex-col gap-5">
+      <!-- Loading state -->
+      <div
+        v-if="diffDialog.loading"
+        class="flex flex-col items-center gap-3 py-8"
+      >
+        <i class="pi pi-spin pi-spinner text-3xl text-orange-500"></i>
+        <p class="text-sm text-slate-500">Membandingkan data...</p>
+      </div>
+
+      <template v-else>
+        <!-- Subsls yang berkurang -->
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-2 h-2 rounded-full bg-red-500"></div>
+            <h3 class="font-bold text-sm text-slate-700">
+              Wilayah SubSLS yang Berkurang
+            </h3>
+            <span
+              class="ml-auto text-xs bg-red-100 text-red-700 font-semibold px-2 py-0.5 rounded-full"
+            >
+              {{ diffDialog.subsls.length }} wilayah
+            </span>
+          </div>
+          <div
+            v-if="diffDialog.subsls.length === 0"
+            class="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2"
+          >
+            ✅ Tidak ada wilayah SubSLS yang berkurang.
+          </div>
+          <div
+            v-else
+            class="border border-slate-200 rounded-xl overflow-hidden"
+          >
+            <div
+              class="bg-slate-50 px-3 py-1.5 grid grid-cols-3 gap-2 text-xs font-bold text-slate-500 uppercase tracking-wide border-b border-slate-200"
+            >
+              <span>Kode SubSLS</span>
+              <span class="text-right">Di Database</span>
+              <span class="text-right">Di File Baru</span>
+            </div>
+            <div class="max-h-[200px] overflow-y-auto">
+              <div
+                v-for="row in diffDialog.subsls"
+                :key="row.subsls_code"
+                class="px-3 py-2 grid grid-cols-3 gap-2 text-xs border-b border-slate-100 last:border-0 hover:bg-red-50/60 transition-colors"
+              >
+                <span class="font-mono text-slate-700">{{
+                  row.subsls_code
+                }}</span>
+                <span class="text-right font-semibold text-slate-600">{{
+                  row.db_total.toLocaleString("id-ID")
+                }}</span>
+                <span class="text-right font-bold text-red-600"
+                  >{{ row.file_total.toLocaleString("id-ID") }}
+                  <span class="text-red-400"
+                    >({{
+                      row.diff > 0
+                        ? "-" + row.diff.toLocaleString("id-ID")
+                        : "–"
+                    }})</span
+                  ></span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email yang berkurang -->
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+            <h3 class="font-bold text-sm text-slate-700">
+              Email/Petugas yang Berkurang
+            </h3>
+            <span
+              class="ml-auto text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full"
+            >
+              {{ diffDialog.emails.length }} petugas
+            </span>
+          </div>
+          <div
+            v-if="diffDialog.emails.length === 0"
+            class="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2"
+          >
+            ✅ Tidak ada email/petugas yang berkurang.
+          </div>
+          <div
+            v-else
+            class="border border-slate-200 rounded-xl overflow-hidden"
+          >
+            <div
+              class="bg-slate-50 px-3 py-1.5 grid grid-cols-3 gap-2 text-xs font-bold text-slate-500 uppercase tracking-wide border-b border-slate-200"
+            >
+              <span class="col-span-1">Email</span>
+              <span class="text-right">Di Database</span>
+              <span class="text-right">Di File Baru</span>
+            </div>
+            <div class="max-h-[200px] overflow-y-auto">
+              <div
+                v-for="row in diffDialog.emails"
+                :key="row.email"
+                class="px-3 py-2 grid grid-cols-3 gap-2 text-xs border-b border-slate-100 last:border-0 hover:bg-amber-50/60 transition-colors"
+              >
+                <span class="col-span-1 text-slate-700 truncate">{{
+                  row.email
+                }}</span>
+                <span class="text-right font-semibold text-slate-600">{{
+                  row.db_total.toLocaleString("id-ID")
+                }}</span>
+                <span class="text-right font-bold text-amber-600"
+                  >{{ row.file_total.toLocaleString("id-ID") }}
+                  <span class="text-amber-400"
+                    >({{
+                      row.diff > 0
+                        ? "-" + row.diff.toLocaleString("id-ID")
+                        : "–"
+                    }})</span
+                  ></span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email hilang dari file (ada di DB tapi tidak ada di file baru) -->
+        <div v-if="diffDialog.missingEmails.length > 0">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-2 h-2 rounded-full bg-rose-600"></div>
+            <h3 class="font-bold text-sm text-slate-700">
+              Email Hilang dari File Baru
+            </h3>
+            <span
+              class="ml-auto text-xs bg-rose-100 text-rose-700 font-semibold px-2 py-0.5 rounded-full"
+            >
+              {{ diffDialog.missingEmails.length }} petugas
+            </span>
+          </div>
+          <div class="border border-slate-200 rounded-xl overflow-hidden">
+            <div class="max-h-[150px] overflow-y-auto">
+              <div
+                v-for="row in diffDialog.missingEmails"
+                :key="row.email"
+                class="px-3 py-2 flex items-center gap-2 text-xs border-b border-slate-100 last:border-0 hover:bg-rose-50/60 transition-colors"
+              >
+                <i class="pi pi-user-minus text-rose-500"></i>
+                <span class="text-slate-700">{{ row.email }}</span>
+                <span class="ml-auto font-bold text-rose-600"
+                  >{{ row.db_total.toLocaleString("id-ID") }} data hilang</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+    <template #footer>
+      <div class="flex justify-end">
+        <Button
+          label="Tutup"
+          size="small"
+          severity="secondary"
+          @click="diffDialog.visible = false"
         />
       </div>
     </template>
@@ -529,23 +714,155 @@ const confirmDialog = ref({
   kode: "",
   existingTotal: 0,
   newTotal: 0,
+  parsedData: null,
+  isPml: false,
   resolve: null,
 });
 
+// ─── Diff Dialog State ───
+const diffDialog = ref({
+  visible: false,
+  loading: false,
+  subsls: [],
+  emails: [],
+  missingEmails: [],
+});
+
 // Menunggu keputusan user via Promise
-const waitForConfirmation = (data) => {
+const waitForConfirmation = (data, parsedData, isPml) => {
   return new Promise((resolve) => {
     confirmDialog.value = {
       visible: true,
       kode: data.kode,
       existingTotal: data.existing_total,
       newTotal: data.new_total,
+      parsedData: parsedData,
+      isPml: isPml,
       resolve: (confirmed) => {
         confirmDialog.value.visible = false;
         resolve(confirmed);
       },
     };
   });
+};
+
+// ─── Diff Analysis ───
+const openDiffDialog = async () => {
+  diffDialog.value = {
+    visible: true,
+    loading: true,
+    subsls: [],
+    emails: [],
+    missingEmails: [],
+  };
+
+  try {
+    const { data: dbData } = await axios.get(route("se2026.fetch-diff-check"), {
+      params: {
+        kode: confirmDialog.value.kode,
+        is_pml: confirmDialog.value.isPml ? 1 : 0,
+      },
+    });
+
+    const parsedData = confirmDialog.value.parsedData; // array of arrays, first row is header
+    const statusCols = [
+      "open",
+      "draft",
+      "submitted_p",
+      "submitted_r",
+      "approved",
+      "rejected",
+      "revoked",
+      "completed",
+      "edited_a",
+      "rejected_a",
+    ];
+
+    // Build header map from parsed file
+    const header = parsedData[0] || [];
+    const colIndex = {};
+    header.forEach((h, i) => {
+      colIndex[h] = i;
+    });
+
+    // Aggregate file totals per subsls_code
+    const fileBySubsls = {};
+    for (let r = 1; r < parsedData.length; r++) {
+      const row = parsedData[r];
+      const code = String(row[colIndex["subsls_code"]] ?? "");
+      if (!code) continue;
+      let sum = 0;
+      statusCols.forEach((col) => {
+        sum += Number(row[colIndex[col]] ?? 0);
+      });
+      fileBySubsls[code] = (fileBySubsls[code] ?? 0) + sum;
+    }
+
+    // Aggregate file totals per email
+    const fileByEmail = {};
+    for (let r = 1; r < parsedData.length; r++) {
+      const row = parsedData[r];
+      const email = String(row[colIndex["email"]] ?? "");
+      if (!email) continue;
+      let sum = 0;
+      statusCols.forEach((col) => {
+        sum += Number(row[colIndex[col]] ?? 0);
+      });
+      fileByEmail[email] = (fileByEmail[email] ?? 0) + sum;
+    }
+
+    // Compare subsls
+    const subslsDiff = [];
+    dbData.by_subsls.forEach((item) => {
+      const fileTotal = fileBySubsls[item.subsls_code] ?? 0;
+      if (fileTotal < item.total) {
+        subslsDiff.push({
+          subsls_code: item.subsls_code,
+          db_total: item.total,
+          file_total: fileTotal,
+          diff: item.total - fileTotal,
+        });
+      }
+    });
+
+    // Compare emails — berkurang
+    const emailDiff = [];
+    const missingEmails = [];
+    dbData.by_email.forEach((item) => {
+      const fileTotal = fileByEmail[item.email];
+      if (fileTotal === undefined) {
+        missingEmails.push({ email: item.email, db_total: item.total });
+      } else if (fileTotal < item.total) {
+        emailDiff.push({
+          email: item.email,
+          db_total: item.total,
+          file_total: fileTotal,
+          diff: item.total - fileTotal,
+        });
+      }
+    });
+
+    // Sort by biggest diff first
+    subslsDiff.sort((a, b) => b.diff - a.diff);
+    emailDiff.sort((a, b) => b.diff - a.diff);
+    missingEmails.sort((a, b) => b.db_total - a.db_total);
+
+    diffDialog.value = {
+      visible: true,
+      loading: false,
+      subsls: subslsDiff,
+      emails: emailDiff,
+      missingEmails,
+    };
+  } catch (err) {
+    diffDialog.value.loading = false;
+    toast.add({
+      severity: "error",
+      summary: "Error",
+      detail: "Gagal memuat data perbandingan.",
+      life: 3000,
+    });
+  }
 };
 
 const dialogTitle = computed(() => {
@@ -771,6 +1088,9 @@ const startBatchUpload = async () => {
       const parsedData = await parseFile(fileEntry.raw);
       fileEntry.parsedData = parsedData;
 
+      // Detect whether this is a PML file from the file name
+      const isPml = fileEntry.name.split("_")[2] === "pml";
+
       // Send to backend
       let response = await axios.post(route("se2026.upload-data-batch"), {
         _token: csrfToken,
@@ -781,7 +1101,11 @@ const startBatchUpload = async () => {
 
       // Handle needs_confirmation: data baru lebih sedikit dari DB
       if (response.data?.needs_confirmation) {
-        const userConfirmed = await waitForConfirmation(response.data);
+        const userConfirmed = await waitForConfirmation(
+          response.data,
+          parsedData,
+          isPml
+        );
         if (!userConfirmed) {
           fileEntry.status = "cancelled";
           fileEntry.errorMessage =

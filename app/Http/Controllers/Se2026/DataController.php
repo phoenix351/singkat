@@ -806,4 +806,41 @@ class DataController extends Controller
         });
         return response()->json($logs->setCollection($mappedCollection));
     }
+
+    /**
+     * Fetch per-subsls and per-email totals from DB for a kode (kabkot),
+     * so the frontend can diff against the newly uploaded file.
+     */
+    public function fetchDiffCheck(Request $request)
+    {
+        $kode   = $request->kode;
+        $isPml  = filter_var($request->is_pml ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        if (!$kode) {
+            return response()->json(['message' => 'Kode diperlukan'], 422);
+        }
+
+        $statusCols = ['open', 'draft', 'submitted_p', 'submitted_r', 'approved', 'rejected', 'revoked', 'completed', 'edited_a', 'rejected_a'];
+        $sqlSum     = implode(' + ', array_map(fn($col) => "COALESCE({$col}, 0)", $statusCols));
+
+        $dataModel = $isPml ? DataFasihPml::class : DataFasih::class;
+
+        // Per subsls_code
+        $bySubsls = $dataModel::where('subsls_code', 'like', $kode . '%')
+            ->selectRaw("subsls_code, ({$sqlSum}) as total")
+            ->get()
+            ->map(fn($r) => ['subsls_code' => $r->subsls_code, 'total' => (int) $r->total]);
+
+        // Per email (aggregated across all subsls for that kode)
+        $byEmail = $dataModel::where('subsls_code', 'like', $kode . '%')
+            ->selectRaw("email, SUM({$sqlSum}) as total")
+            ->groupBy('email')
+            ->get()
+            ->map(fn($r) => ['email' => $r->email, 'total' => (int) $r->total]);
+
+        return response()->json([
+            'by_subsls' => $bySubsls,
+            'by_email'  => $byEmail,
+        ]);
+    }
 }

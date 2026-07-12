@@ -18,6 +18,7 @@ Route::prefix('se2026')->middleware(['auth', 'use.vue.inertia', 'permission'])->
     Route::get('/fetch-capaian-ppl', [PetugasController::class, 'capaianPpl'])->name('petugas.capaian-ppl');
     Route::get('/fetch-capaian-pml', [PetugasController::class, 'capaianPml'])->name('petugas.capaian-pml');
     Route::get('/fetch-log', [DataController::class, 'fetchLog'])->name('fetch-log');
+    Route::get('/fetch-diff-check', [DataController::class, 'fetchDiffCheck'])->name('fetch-diff-check');
     Route::get('/fetch-data-ppl', [DataController::class, 'fetchDataPpl'])->name('fetch-data-ppl');
     Route::get('/fetch-data-pml', [DataController::class, 'fetchDataPml'])->name('fetch-data-pml');
     Route::get('/update-petugas/{petugas}', [DataController::class, 'updatePetugas'])->name('update-petugas');
