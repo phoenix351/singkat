@@ -343,9 +343,15 @@ class DataController extends Controller
                 $cek_subsls = MasterSubSls::where('code', (string) $mapped['subsls_code'])->first();
                 if ($cek_subsls) {
                     if ($exploded_fileName[2] != 'pml') {
-                        $new_data = DataFasih::create($mapped);
+                        $new_data = DataFasih::updateOrCreate([
+                            'email' => $mapped['email'] ?? null,
+                            'subsls_code' => $mapped['subsls_code'] ?? null,
+                        ], $mapped);
                     } else {
-                        $new_data = DataFasihPml::create($mapped);
+                        $new_data = DataFasihPml::updateOrCreate([
+                            'email' => $mapped['email'] ?? null,
+                            'subsls_code' => $mapped['subsls_code'] ?? null,
+                        ], $mapped);
                     }
                     $processedCount++;
                 }
@@ -602,7 +608,7 @@ class DataController extends Controller
             ->when(!$sls && !$desa && $kec, fn($q) => $q->where('subsls_code', 'like', $kec . '%'))
             ->when(!$sls && !$desa && !$kec && $kabkot, fn($q) => $q->where('subsls_code', 'like', $kabkot . '%'))
             ->with(['subsls', 'subsls.desa', 'subsls.desa.kec', 'subsls.desa.kec.kabkot'])
-            ->orderByRaw("MIN(subsls_code) asc")
+            ->orderBy("subsls_code", "asc")
             ->get()
             ->groupBy('email');
 
