@@ -990,7 +990,7 @@ const parseFile = (file) => {
                       approved = statusItem.count;
                     else if (statusName === "REJECTED BY PENGAWAS")
                       rejected = statusItem.count;
-                    else if (statusName === "COMPLETED")
+                    else if (statusName === "COMPLETED BY ADMIN KABUPATEN")
                       completed = statusItem.count;
                     else if (statusName === "REVOKED")
                       revoked = statusItem.count;
