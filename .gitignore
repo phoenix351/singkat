@@ -4,6 +4,7 @@ npm-debug.log
 yarn-error.log
 /public/build/
 /public/*.sql
+/public/*.zip
 # Laravel 4 specific
 bootstrap/compiled.php
 app/storage/

@@ -40,7 +40,13 @@
         >
           <template #body="{ data }">
             <span :class="{ 'font-bold': !data.lembur?.tim_id }">
-              {{ data.lembur?.tim_id ? data.lembur?.tim?.label : (data.lembur?.tim_penanggung_jawab_id ? 'Lintas Tim Kerja (PJ: ' + data.pj_kerja + ')' : 'Lintas Tim Kerja') }}
+              {{
+                data.lembur?.tim_id
+                  ? data.lembur?.tim?.label
+                  : data.lembur?.tim_penanggung_jawab_id
+                  ? "Lintas Tim Kerja (PJ: " + data.pj_kerja + ")"
+                  : "Lintas Tim Kerja"
+              }}
             </span>
           </template>
           <template #filter>
@@ -99,7 +105,7 @@
                 value="Belum diisi"
               />
               <Button
-                v-if="!data.output && data.status != '4' && data.status != '2'"
+                v-if="!data.output && data.status != '4'"
                 @click="fillOutput(data)"
                 v-tooltip.top="'Isi output'"
                 icon="pi pi-pencil"
@@ -183,7 +189,13 @@
         <div>
           <label class="block font-bold mb-2">Tim Kerja</label>
           <InputText
-            :model-value="editedData.lembur?.tim_id ? editedData.lembur?.tim?.label : (editedData.lembur?.tim_penanggung_jawab_id ? 'Lintas Tim Kerja (PJ: ' + editedData.pj_kerja + ')' : 'Lintas Tim Kerja')"
+            :model-value="
+              editedData.lembur?.tim_id
+                ? editedData.lembur?.tim?.label
+                : editedData.lembur?.tim_penanggung_jawab_id
+                ? 'Lintas Tim Kerja (PJ: ' + editedData.pj_kerja + ')'
+                : 'Lintas Tim Kerja'
+            "
             :class="{ 'font-bold': !editedData.lembur?.tim_id }"
             fluid
             disabled
