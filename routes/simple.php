@@ -6,7 +6,7 @@ use App\Http\Controllers\Simple\SpklController;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('simple')->middleware('auth')->name('simple.')
+Route::prefix('simple')->name('simple.')
     ->middleware(['auth', 'use.vue.inertia'])
     ->group(function () {
         Route::get('/', [HomeController::class, 'index'])->name('index');
@@ -19,6 +19,7 @@ Route::prefix('simple')->middleware('auth')->name('simple.')
         Route::post('/my-lembur/fill-output', [LemburController::class, 'fillOutput'])->name('my-lembur.fill-output');
 
         Route::get('/pengajuan-lembur', [LemburController::class, 'index'])->name('lembur');
+        Route::get('/lihat-lembur', [LemburController::class, 'lihatLembur'])->name('lembur.lihat');
         Route::post('/pengajuan-lembur/store', [LemburController::class, 'store'])->name('lembur.store');
         Route::patch('/pengajuan-lembur/patch', [LemburController::class, 'store'])->name('lembur.patch');
         Route::delete('/pengajuan-lembur/destroy-pegawai/{id}', [LemburController::class, 'destroyPegawai'])->name('lembur.destroy-pegawai');

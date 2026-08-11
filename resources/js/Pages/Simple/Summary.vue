@@ -68,7 +68,10 @@
         </template>
         <Column field="label" header="Nama Pegawai/Tim"></Column>
         <Column field="total_lembur" header="Total Pengajuan Lembur"></Column>
-        <Column field="durasi_lembur" header="Total Durasi Lembur"></Column>
+        <Column
+          field="durasi_lembur"
+          :header="search.data_type === 'tim' ? 'Rata-rata Durasi Lembur' : 'Total Durasi Lembur'"
+        ></Column>
       </DataTable>
     </div>
   </SimpleLayout>
