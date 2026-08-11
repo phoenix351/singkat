@@ -49,11 +49,7 @@
         <Column header="Alasan Lembur" field="maksud_lembur" />
         <Column header="Jumlah Lembur yang Disetujui Kabag" field="jumlah">
           <template #body="{ data }">
-            <Badge
-              size="small"
-              :value="`${data.jumlah} pegawai`"
-              severity="info"
-            ></Badge>
+            <Badge size="small" :value="`${data.jumlah} pegawai`" severity="info"></Badge>
           </template>
         </Column>
         <Column class="whitespace-nowrap" header="Nomor SPKL" field="no_spkl">
@@ -97,7 +93,7 @@
             ></Button>
           </template>
         </Column>
-        <Column header="Kirim">
+        <Column class="whitespace-nowrap" header="Kirim">
           <template #body="{ data }">
             <Button
               v-if="!data.upload_status"
@@ -109,13 +105,10 @@
               :severity="'success'"
             ></Button>
             <Badge
+              size="small"
               v-else
               @click="
-                openUploadDialog(
-                  data.lembur_id,
-                  data.upload_status,
-                  data.file_path
-                )
+                openUploadDialog(data.lembur_id, data.upload_status, data.file_path)
               "
               class="cursor-pointer"
               :value="'Terkirim, ' + formatDateTime(data.upload_status)"
@@ -172,9 +165,7 @@
           />
         </div>
         <div>
-          <label class="block font-bold mb-2"
-            >Daftar Pegawai yang Lembur :</label
-          >
+          <label class="block font-bold mb-2">Daftar Pegawai yang Lembur :</label>
           <ul class="list-disc pl-5 mt-2">
             <li v-for="(item, index) in currentListPegawai" :key="index">
               {{ item.pegawai.name }}
@@ -202,9 +193,7 @@
     >
       <div class="flex flex-col gap-4">
         <div>
-          <label class="block font-bold mb-2"
-            >Pilih Laporan yang Sudah di-Ttd</label
-          >
+          <label class="block font-bold mb-2">Pilih Laporan yang Sudah di-Ttd</label>
           <FileUpload
             size="small"
             ref="fileupload"
@@ -323,9 +312,7 @@ const fetchData = async () => {
 const currentListPegawai = ref([]);
 const lemburToPrint = ref({});
 const prepareLaporan = async (lembur) => {
-  const { data: myTim } = await axios.get(
-    route("man-management.fetch-my-team")
-  );
+  const { data: myTim } = await axios.get(route("man-management.fetch-my-team"));
   const isMyTim = myTim.includes(lembur.tim_id);
   if (!isMyTim) {
     toast.add({

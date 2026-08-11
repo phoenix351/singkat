@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Simple;
 
 use App\Http\Controllers\Controller;
 use App\Models\ManManagement\Pegawai;
-use App\Models\ManManagement\TimKerja;
 use App\Models\Simple\LemburPegawai;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -41,13 +40,20 @@ class HomeController extends Controller
             ->sortByDesc(fn($count) => $count)
             ->take(5);
         $fiveTeamMost = (clone $query)
-            ->where('status', '4')
-            ->with('lembur.tim')->get()->groupBy('lembur.tim.label')
-            ->map(function ($group) {
-                return $group->count();
-            })
-            ->sortByDesc(fn($count) => $count)
-            ->take(5);
+            ->from('sulutweb_simple.lembur_pegawai as lp')
+            ->where('lp.status', 4)
+            ->join('sulutweb_simple.lembur as l', 'lp.lembur_id', '=', 'l.id')
+            ->join(
+                'sulutweb_man_management.timkerja as tk',
+                'tk.id',
+                '=',
+                DB::raw('COALESCE(l.tim_id, l.tim_penanggung_jawab_id)')
+            )
+            ->select('tk.label', DB::raw('COUNT(DISTINCT l.id) as total_lembur'))
+            ->groupBy('tk.id', 'tk.label')
+            ->orderByDesc('total_lembur')
+            ->limit(5)
+            ->pluck('total_lembur', 'tk.label');
         $lp = $query->get();
         $pending = $lp->where('status', 1)->count();
         $setuju_katim = $lp->where('status', 2)->count();
@@ -119,9 +125,21 @@ class HomeController extends Controller
             if ($data_type && $data_type == 'tim') {
                 $query
                     ->join('sulutweb_simple.lembur as l', 'lp.lembur_id', '=', 'l.id')
-                    ->leftJoin('sulutweb_man_management.timkerja as tk', 'l.tim_id', '=', 'tk.id')
-                    ->select(DB::raw("COALESCE(tk.label, 'Lintas Tim Kerja') as label"), DB::raw('count(lp.id) as total_lembur'))
-                    ->groupBy('tk.id', DB::raw("COALESCE(tk.label, 'Lintas Tim Kerja')"))
+                    // Lembur biasa milik tim pengaju, sedangkan lembur lintas tim
+                    // milik tim penanggung jawab. Satu pengajuan dapat memuat
+                    // beberapa pegawai, sehingga yang dihitung adalah l.id.
+                    ->leftJoin(
+                        'sulutweb_man_management.timkerja as tk',
+                        'tk.id',
+                        '=',
+                        DB::raw('COALESCE(l.tim_id, l.tim_penanggung_jawab_id)')
+                    )
+                    ->select(
+                        'tk.id as tim_id',
+                        DB::raw("COALESCE(tk.label, 'Tim tidak ditemukan') as label"),
+                        DB::raw('COUNT(DISTINCT l.id) as total_lembur')
+                    )
+                    ->groupBy('tk.id', 'tk.label')
                     ->orderByDesc('total_lembur');
             } else {
                 $query->join('sulutweb_man_management.pegawai as p', 'lp.pegawai_id', '=', 'p.id')
@@ -157,9 +175,10 @@ class HomeController extends Controller
                 $pegawaiId = Pegawai::where('name', $item->label)->value('id');
                 $queryLp->where('pegawai_id', $pegawaiId);
             } else if ($data_type && $data_type == 'tim') {
-                $timId = TimKerja::where('label', $item->label)->value('id');
+                $timId = $item->tim_id;
                 $queryLp->whereHas('lembur', function ($q) use ($timId) {
-                    $q->where('tim_id', $timId);
+                    $q->where('tim_id', $timId)
+                        ->orWhere('tim_penanggung_jawab_id', $timId);
                 });
             }
             // $item->pegawai_id = $pegawaiId;
@@ -178,6 +197,7 @@ class HomeController extends Controller
             }
             $data_lp_pegawai = $queryLp->get();
             $durasi_pegawai = 0;
+            $jumlah_pegawai = $data_lp_pegawai->pluck('pegawai_id')->unique()->count();
             foreach ($data_lp_pegawai as $lp) {
                 $tgl = Carbon::parse($lp->tanggal);
                 $dayOfWeek = $tgl->dayOfWeekIso;
@@ -211,7 +231,9 @@ class HomeController extends Controller
                 $durasi_pegawai += $durasi_final;
             }
 
-            $item->durasi_lembur = $durasi_pegawai;
+            $item->durasi_lembur = $data_type === 'tim' && $jumlah_pegawai > 0
+                ? round($durasi_pegawai / $jumlah_pegawai, 2)
+                : $durasi_pegawai;
         }
         if ($request->paginated) {
             return response()->json($data);

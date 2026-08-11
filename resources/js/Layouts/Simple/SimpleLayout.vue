@@ -46,10 +46,7 @@
                   <span class="notif-title">
                     <i class="pi pi-bell mr-2"></i>Notifikasi
                   </span>
-                  <button
-                    @click="showNotificationPanel = false"
-                    class="notif-close"
-                  >
+                  <button @click="showNotificationPanel = false" class="notif-close">
                     <i class="pi pi-times"></i>
                   </button>
                 </div>
@@ -91,9 +88,7 @@
                       <div class="notif-item-text">
                         <p class="notif-item-title">
                           {{ item.jumlah }} lembur perlu diperiksa
-                          <span
-                            v-if="item.is_lintas_tim"
-                            class="notif-badge-lintas"
+                          <span v-if="item.is_lintas_tim" class="notif-badge-lintas"
                             >Lintas Tim</span
                           >
                         </p>
@@ -102,9 +97,7 @@
                             Dari tim lain &mdash; PJ:
                             {{ item.tim_pj ?? item.tim_kerja }}
                           </template>
-                          <template v-else>
-                            Tim: {{ item.tim_kerja }}
-                          </template>
+                          <template v-else> Tim: {{ item.tim_kerja }} </template>
                         </p>
                       </div>
                     </div>
@@ -119,9 +112,7 @@
                       class="notif-item"
                       @click="navigateTo('simple.lembur.verify-kabag')"
                     >
-                      <span
-                        class="notif-item-icon bg-purple-100 text-purple-600"
-                      >
+                      <span class="notif-item-icon bg-purple-100 text-purple-600">
                         <i class="pi pi-shield"></i>
                       </span>
                       <div class="notif-item-text">
@@ -147,11 +138,7 @@
             class="flex items-center gap-3 pl-4 cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition-colors"
             @click="toggleProfileMenu"
           >
-            <Avatar
-              icon="pi pi-user"
-              class="bg-blue-100 text-blue-600"
-              shape="circle"
-            />
+            <Avatar icon="pi pi-user" class="bg-blue-100 text-blue-600" shape="circle" />
             <div class="hidden md:block text-sm">
               <p class="font-semibold text-gray-700 leading-none">
                 {{ page.props.auth.user.name }}
@@ -179,13 +166,13 @@
         class="bg-white py-4 px-6 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-sm text-gray-500"
       >
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Simple versi 1.1 &mdash;
+          &copy; 2026 Simple versi 1.2 &mdash;
           <a href="https://sulut.bps.go.id" class="font-bold"
             >BPS Provinsi Sulawesi Utara</a
           >
           dibuat oleh:
-          <a href="https://github.com/rifqind" class="font-bold">AuraSphere</a>,
-          didukung oleh:
+          <a href="https://github.com/rifqind" class="font-bold">AuraSphere</a>, didukung
+          oleh:
           <span class="font-bold">Tim SDM</span>
         </p>
       </footer>
@@ -266,11 +253,11 @@ const displayRole = computed(() => {
   const role = page.props.auth.role;
   const keanggotaan = page.props.auth.keanggotaan;
 
-  if (role === 'admin') return 'admin';
-  if (role === 'operator') return 'operator';
-  if (role === 'validator') return 'kabag';
-  if (keanggotaan === 'ketua') return 'ketua tim';
-  return 'anggota';
+  if (role === "admin") return "admin";
+  if (role === "operator") return "operator";
+  if (role === "validator") return "kabag";
+  if (keanggotaan === "ketua") return "ketua tim";
+  return "anggota";
 });
 
 const outputItems = computed(() => page.props.pendingOutputs || []);

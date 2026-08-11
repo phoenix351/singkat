@@ -446,7 +446,10 @@ class SpklController extends Controller
                 }
             }
             $template_processor->setComplexBlock('table', $table);
-            $filename = 'Laporan Lembur ' . $nama_tim . '_' . $bulan . '_' . $tahun . '.docx';
+            // Nama tim tetap dipakai pada isi laporan, tetapi karakter path tidak boleh
+            // menjadi bagian dari nama file unduhan.
+            $nama_tim_filename = str_replace(['/', '\\'], '-', $nama_tim);
+            $filename = 'Laporan Lembur ' . $nama_tim_filename . '_' . $bulan . '_' . $tahun . '.docx';
             if (ob_get_length())
                 ob_end_clean();
             return response()->streamDownload(function () use ($template_processor) {

@@ -35,7 +35,9 @@
               :title="!isEffectivelyOpen ? item.label : ''"
               class="w-full flex items-center py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all group overflow-hidden"
               :class="
-                isEffectivelyOpen ? 'px-4 justify-start' : 'px-4 lg:px-0 lg:justify-center'
+                isEffectivelyOpen
+                  ? 'px-4 justify-start'
+                  : 'px-4 lg:px-0 lg:justify-center'
               "
             >
               <i
@@ -62,10 +64,7 @@
               v-show="openDropdowns.has(index) && isEffectivelyOpen"
               class="mt-1 ml-3 pl-3 border-l border-slate-700 space-y-1"
             >
-              <li
-                v-for="(child, childIndex) in item.children"
-                :key="childIndex"
-              >
+              <li v-for="(child, childIndex) in item.children" :key="childIndex">
                 <Link
                   v-if="child.route"
                   :href="route(child.route)"
@@ -175,6 +174,11 @@ const menuItems = ref([
     label: "Pengajuan Lembur",
     icon: "pi pi-calendar-plus",
     route: "simple.lembur",
+  },
+  {
+    label: "Lihat Lembur",
+    icon: "pi pi-calendar-plus",
+    route: "simple.lembur.lihat",
   },
   {
     label: "Laporan Lembur Tim",
