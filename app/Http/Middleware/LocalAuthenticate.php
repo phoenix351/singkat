@@ -19,7 +19,7 @@ class LocalAuthenticate extends Authenticate
         // dd(app()->environment());
         if (app()->environment('local') && !Auth::check()) {
             Auth::loginUsingId(267); // Ganti dengan ID User target
-            // Auth::loginUsingId(117); // Ganti dengan ID User target
+            // Auth::loginUsingId(245); // Ganti dengan ID User target
         }
 
         // Jalankan fungsi handle bawaan (parent)
