@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('simple')->name('simple.')
-    ->middleware(['local.auth', 'use.vue.inertia'])
+    ->middleware(['auth', 'use.vue.inertia'])
     ->group(function () {
         Route::get('/', [HomeController::class, 'index'])->name('index');
 
