@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use PhpOffice\PhpWord\Element\Table;
+use PhpOffice\PhpWord\Settings;
 use PhpOffice\PhpWord\TemplateProcessor;
 
 class SpklController extends Controller
@@ -156,6 +157,7 @@ class SpklController extends Controller
         $kpaId = Role::where('roles', 'kaprov')->value('to_role_id');
         $kpa = $kpaId ? Pegawai::find($kpaId) : null;
 
+        Settings::setOutputEscapingEnabled(true);
         $template_path = public_path('document/template_spkl.docx');
         $template_processor = new TemplateProcessor($template_path);
 
@@ -198,8 +200,8 @@ class SpklController extends Controller
         $noPresensi = 1;
         $no = 1;
         foreach ($lembur as $pegawaiId => $items) {
+            // SPKL Table (Tabel 1: Daftar Perintah Lembur)
             foreach ($items as $index => $i) {
-                //spkl
                 $table->addRow();
                 if ($index == 0) {
                     $table->addCell(500, ['vMerge' => 'restart'])->addText($no++);
@@ -211,34 +213,42 @@ class SpklController extends Controller
                     $table->addCell(2500, ['vMerge' => 'continue']);
                 }
                 $table->addCell(2000)->addText(Carbon::parse($i->tanggal)->locale('id')->translatedFormat('j F Y'));
-                $table->addCell(3000)->addText($i->lembur->maksud_lembur);
+                $maksudCell = $table->addCell(3000);
+                $maksudLines = preg_split('/\r\n|\r|\n/', (string) ($i->lembur->maksud_lembur ?? ''));
+                foreach ($maksudLines as $line) {
+                    $maksudCell->addText($line);
+                }
+            }
 
-                //presensi
+            // Presensi Table (Tabel 2: Rekapitulasi Presensi Lembur)
+            $groupedByDate = $items->groupBy('tanggal');
+            $dateIndex = 0;
+            foreach ($groupedByDate as $tanggal => $dateItems) {
+                $firstItem = $dateItems->first();
                 $presensi->addRow();
-                if ($index == 0) {
+                if ($dateIndex == 0) {
                     $presensi->addCell(500, ['vMerge' => 'restart'])->addText($noPresensi++);
-                    $presensi->addCell(2000, ['vMerge' => 'restart'])->addText($i->pegawai->name);
+                    $presensi->addCell(2000, ['vMerge' => 'restart'])->addText($firstItem->pegawai->name);
                     $presensi->addCell(3000, ['vMerge' => 'restart'])
-                        ->addText($i->pegawai->nip_lama . '/' . $i->pegawai->nip);
+                        ->addText($firstItem->pegawai->nip_lama . '/' . $firstItem->pegawai->nip);
                 } else {
                     $presensi->addCell(500, ['vMerge' => 'continue']);
                     $presensi->addCell(2000, ['vMerge' => 'continue']);
                     $presensi->addCell(3000, ['vMerge' => 'continue']);
                 }
-                $tgl = Carbon::parse($i->tanggal)->locale('id');
+                $tgl = Carbon::parse($tanggal)->locale('id');
                 $presensi->addCell(2000)->addText($tgl->translatedFormat('l, j F Y'));
 
-                $jam_berangkat = $i->jam_berangkat;
-                $jam_pulang = $i->jam_pulang;
-
+                $jam_berangkat = $firstItem->jam_berangkat;
+                $jam_pulang = $firstItem->jam_pulang;
                 $dayOfWeek = $tgl->dayOfWeekIso;
 
-                if ($dayOfWeek >= 1 && $dayOfWeek <= 4) {
-                    $jam_berangkat = '16:00:00';
-                } elseif ($dayOfWeek == 5) {
-                    $jam_berangkat = '16:30:00';
-                }
+                $maxDurasi = $dateItems->max('jumlah_jam');
+
                 $lamanya = 0;
+                $tampil_berangkat = '-';
+                $tampil_pulang = '-';
+
                 if ($jam_berangkat && $jam_pulang) {
                     $masuk = Carbon::parse($jam_berangkat);
                     $pulang = Carbon::parse($jam_pulang);
@@ -247,14 +257,34 @@ class SpklController extends Controller
                         $pulang->addDay();
                     }
 
-                    $lamanya = round($pulang->diffInMinutes($masuk) / 60, 2);
+                    if ($dayOfWeek <= 5) {
+                        $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
+                        $batas_pulang = Carbon::parse($batas_pulang_str);
+                        $mulai_lembur = $masuk->greaterThan($batas_pulang) ? $masuk : $batas_pulang;
+
+                        if ($pulang->greaterThan($mulai_lembur)) {
+                            $selisih = round($mulai_lembur->diffInMinutes($pulang) / 60, 2);
+                        } else {
+                            $selisih = 0;
+                        }
+                        $tampil_berangkat = ($dayOfWeek <= 4) ? '16:00' : '16:30';
+                    } else {
+                        $selisih = round($masuk->diffInMinutes($pulang) / 60, 2);
+                        $tampil_berangkat = Carbon::parse($jam_berangkat)->format('H:i');
+                    }
+
+                    $tampil_pulang = Carbon::parse($jam_pulang)->format('H:i');
+
+                    // Sesuaikan durasi lembur dengan durasi pengajuan terpanjang pada hari itu
+                    $durasi_final = ($maxDurasi && $selisih > $maxDurasi) ? $maxDurasi : $selisih;
+                    $lamanya = $durasi_final;
                 }
 
-                $tampil_berangkat = $jam_berangkat ? Carbon::parse($jam_berangkat)->format('H:i') : '-';
-                $tampil_pulang = $jam_pulang ? Carbon::parse($jam_pulang)->format('H:i') : '-';
                 $presensi->addCell(2000)->addText($tampil_berangkat);
                 $presensi->addCell(2000)->addText($tampil_pulang);
                 $presensi->addCell(2000)->addText(str_replace('.', ',', (string) abs($lamanya)));
+
+                $dateIndex++;
             }
         }
         $template_processor->setValue('kpa', $kpa ? $kpa->name : '-');
@@ -402,6 +432,7 @@ class SpklController extends Controller
                 ->orderBy('sp.name', 'asc');
             $lembur = $query->get()->groupBy('pegawai_id');
 
+            Settings::setOutputEscapingEnabled(true);
             $template_path = public_path('document/template_laporan lembur.docx');
             $template_processor = new TemplateProcessor($template_path);
 
@@ -441,8 +472,17 @@ class SpklController extends Controller
                         $table->addCell(2500, ['vMerge' => 'continue']);
                     }
                     $table->addCell(2000)->addText(Carbon::parse($i->tanggal)->locale('id')->translatedFormat('j F Y'));
-                    $table->addCell(3000)->addText($i->lembur->maksud_lembur);
-                    $table->addCell(3000)->addText($i->output);
+                    $maksudCell = $table->addCell(3000);
+                    $maksudLines = preg_split('/\r\n|\r|\n/', (string) ($i->lembur->maksud_lembur ?? ''));
+                    foreach ($maksudLines as $line) {
+                        $maksudCell->addText($line);
+                    }
+
+                    $outputCell = $table->addCell(3000);
+                    $outputLines = preg_split('/\r\n|\r|\n/', (string) ($i->output ?? ''));
+                    foreach ($outputLines as $line) {
+                        $outputCell->addText($line);
+                    }
                 }
             }
             $template_processor->setComplexBlock('table', $table);
@@ -528,52 +568,61 @@ class SpklController extends Controller
     {
         $pegawaiMap = [];
         $rekap = [];
-        foreach ($lembur as $l) {
-            $nip_lama = $l->pegawai->nip_lama;
-            $pegawaiMap[$nip_lama] = $l->pegawai->name;
+        $lemburByPegawai = $lembur->groupBy(function ($item) {
+            return $item->pegawai->nip_lama;
+        });
+
+        foreach ($lemburByPegawai as $nip_lama => $items) {
+            $firstPegawai = $items->first()->pegawai;
+            $pegawaiMap[$nip_lama] = $firstPegawai->name;
             if (!isset($rekap[$nip_lama])) {
                 $rekap[$nip_lama] = [];
             }
 
-            $tgl = Carbon::parse($l->tanggal);
-            $dayOfWeek = $tgl->dayOfWeekIso;
+            $groupedByDate = $items->groupBy('tanggal');
+            foreach ($groupedByDate as $tanggal => $dateItems) {
+                $first = $dateItems->first();
+                $tgl = Carbon::parse($tanggal);
+                $dayOfWeek = $tgl->dayOfWeekIso;
 
-            $durasi = $l->jumlah_jam;
-            $durasi_final = 0;
-            if ($l->jam_berangkat && $l->jam_pulang) {
-                $masuk = Carbon::parse($l->jam_berangkat);
-                $pulang = Carbon::parse($l->jam_pulang);
+                $maxDurasi = $dateItems->max('jumlah_jam');
+                $durasi_final = 0;
 
-                if ($pulang->lessThan($masuk)) {
-                    $pulang->addDay();
-                }
+                if ($first->jam_berangkat && $first->jam_pulang) {
+                    $masuk = Carbon::parse($first->jam_berangkat);
+                    $pulang = Carbon::parse($first->jam_pulang);
 
-                if ($dayOfWeek <= 5) {
-                    $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
-                    $batas_pulang = Carbon::parse($batas_pulang_str);
-
-                    $mulai_lembur = $masuk->greaterThan($batas_pulang) ? $masuk : $batas_pulang;
-
-                    if ($pulang->greaterThan($mulai_lembur)) {
-                        $selisih = floor($mulai_lembur->diffInMinutes($pulang) / 60);
-                    } else {
-                        $selisih = 0;
+                    if ($pulang->lessThan($masuk)) {
+                        $pulang->addDay();
                     }
-                } else {
-                    $selisih = floor($masuk->diffInMinutes($pulang) / 60);
+
+                    if ($dayOfWeek <= 5) {
+                        $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
+                        $batas_pulang = Carbon::parse($batas_pulang_str);
+
+                        $mulai_lembur = $masuk->greaterThan($batas_pulang) ? $masuk : $batas_pulang;
+
+                        if ($pulang->greaterThan($mulai_lembur)) {
+                            $selisih = floor($mulai_lembur->diffInMinutes($pulang) / 60);
+                        } else {
+                            $selisih = 0;
+                        }
+                    } else {
+                        $selisih = floor($masuk->diffInMinutes($pulang) / 60);
+                    }
+
+                    $durasi_final = ($maxDurasi && $selisih > $maxDurasi) ? $maxDurasi : $selisih;
                 }
+                if ($durasi_final <= 0)
+                    continue;
 
-                $durasi_final = ($selisih > $durasi) ? $durasi : $selisih;
+                $tipe = ($dayOfWeek >= 6) ? 'HL' : 'HB';
+                $kolom = $tipe . $durasi_final;
+                if (!isset($rekap[$nip_lama][$kolom])) {
+                    $rekap[$nip_lama][$kolom] = 0;
+                }
+                $rekap[$nip_lama][$kolom]++;
             }
-            if ($durasi_final <= 0)
-                continue;
-
-            $tipe = ($dayOfWeek >= 6) ? 'HL' : 'HB';
-            $kolom = $tipe . $durasi_final;
-            if (!isset($rekap[$nip_lama][$kolom])) {
-                $rekap[$nip_lama][$kolom] = 0;
-            }
-            $rekap[$nip_lama][$kolom]++;
         }
 
         $template_path = public_path('document/template_rekap utk uang.xlsx');
@@ -678,51 +727,58 @@ class SpklController extends Controller
     private function buildLemburWebGaji($lembur, $bulan, $tahun)
     {
         $rekap = [];
-        foreach ($lembur as $l) {
-            $nip = $l->pegawai->nip;
+        $lemburByPegawai = $lembur->groupBy(function ($item) {
+            return $item->pegawai->nip;
+        });
+
+        foreach ($lemburByPegawai as $nip => $items) {
+            $firstPegawai = $items->first()->pegawai;
             if (!isset($rekap[$nip])) {
                 $rekap[$nip] = [
-                    'nama' => $l->pegawai->name,
+                    'nama' => $firstPegawai->name,
                     'durasi' => []
                 ];
             }
 
-            $tgl = Carbon::parse($l->tanggal);
-            $hari = $tgl->format('j');
-            $dayOfWeek = $tgl->dayOfWeekIso;
+            $groupedByDate = $items->groupBy('tanggal');
+            foreach ($groupedByDate as $tanggal => $dateItems) {
+                $first = $dateItems->first();
+                $tgl = Carbon::parse($tanggal);
+                $hari = $tgl->format('j');
+                $dayOfWeek = $tgl->dayOfWeekIso;
 
-            $durasi = $l->jumlah_jam;
-            $durasi_final = 0;
-            if ($l->jam_berangkat && $l->jam_pulang) {
-                $masuk = Carbon::parse($l->jam_berangkat);
-                $pulang = Carbon::parse($l->jam_pulang);
+                $maxDurasi = $dateItems->max('jumlah_jam');
+                $durasi_final = 0;
 
-                if ($pulang->lessThan($masuk)) {
-                    $pulang->addDay();
-                }
+                if ($first->jam_berangkat && $first->jam_pulang) {
+                    $masuk = Carbon::parse($first->jam_berangkat);
+                    $pulang = Carbon::parse($first->jam_pulang);
 
-                if ($dayOfWeek <= 5) {
-                    $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
-                    $batas_pulang = Carbon::parse($batas_pulang_str);
-
-                    $mulai_lembur = $masuk->greaterThan($batas_pulang) ? $masuk : $batas_pulang;
-
-                    if ($pulang->greaterThan($mulai_lembur)) {
-                        $selisih = floor($mulai_lembur->diffInMinutes($pulang) / 60);
-                    } else {
-                        $selisih = 0;
+                    if ($pulang->lessThan($masuk)) {
+                        $pulang->addDay();
                     }
-                } else {
-                    $selisih = floor($masuk->diffInMinutes($pulang) / 60);
+
+                    if ($dayOfWeek <= 5) {
+                        $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
+                        $batas_pulang = Carbon::parse($batas_pulang_str);
+
+                        $mulai_lembur = $masuk->greaterThan($batas_pulang) ? $masuk : $batas_pulang;
+
+                        if ($pulang->greaterThan($mulai_lembur)) {
+                            $selisih = floor($mulai_lembur->diffInMinutes($pulang) / 60);
+                        } else {
+                            $selisih = 0;
+                        }
+                    } else {
+                        $selisih = floor($masuk->diffInMinutes($pulang) / 60);
+                    }
+
+                    $durasi_final = ($maxDurasi && $selisih > $maxDurasi) ? $maxDurasi : $selisih;
                 }
 
-                $durasi_final = ($selisih > $durasi) ? $durasi : $selisih;
-            }
-            if ($durasi_final > 0) {
-                if (!isset($rekap[$nip]['durasi'][$hari])) {
-                    $rekap[$nip]['durasi'][$hari] = 0;
+                if ($durasi_final > 0) {
+                    $rekap[$nip]['durasi'][$hari] = $durasi_final;
                 }
-                $rekap[$nip]['durasi'][$hari] += $durasi_final;
             }
         }
 

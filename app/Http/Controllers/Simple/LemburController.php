@@ -28,16 +28,25 @@ class LemburController extends Controller
         else
             $currentPage = 1;
 
+        $filters = $request->input('filters', []);
+        $tahun = !empty($filters['tahun']) ? $filters['tahun'] : date('Y');
+        $bulan = !empty($filters['bulan']) ? $filters['bulan'] : date('n');
+
         $query = Lembur::query();
         $query->leftJoin('sulutweb_man_management.timkerja as st', 'st.id', 'lembur.tim_id')
             ->leftJoin('sulutweb_man_management.timkerja as tpj', 'tpj.id', 'lembur.tim_penanggung_jawab_id');
-        $query->whereHas('pegawai', function ($q) {
-            $q->where('created_by', Auth::id());
+        $query->whereHas('pegawai', function ($q) use ($tahun, $bulan) {
+            $q->where('created_by', Auth::id())
+                ->whereYear('tanggal', $tahun)
+                ->whereMonth('tanggal', $bulan);
         });
 
         $query->with([
-            'pegawai' => function ($q) {
-                $q->where('created_by', Auth::id())->with(['pegawai', 'edited']);
+            'pegawai' => function ($q) use ($tahun, $bulan) {
+                $q->where('created_by', Auth::id())
+                    ->whereYear('tanggal', $tahun)
+                    ->whereMonth('tanggal', $bulan)
+                    ->with(['pegawai', 'edited']);
             }
         ]);
         if ($request->sortOrder) {
@@ -98,7 +107,6 @@ class LemburController extends Controller
         }
 
         if ($request->has('filters')) {
-            $filters = $request->filters;
             if (!empty($filters['tim_kerja'])) {
                 $searchTim = $filters['tim_kerja'];
                 $query->where(function ($q) use ($searchTim) {
@@ -107,29 +115,6 @@ class LemburController extends Controller
                             $q2->whereNull('lembur.tim_id')
                                 ->where('tpj.label', 'like', '%' . $searchTim . '%');
                         });
-                });
-            }
-            if (!empty($filters['tanggal'])) {
-                $monthMap = [
-                    'januari' => '-01-',
-                    'februari' => '-02-',
-                    'maret' => '-03-',
-                    'april' => '-04-',
-                    'mei' => '-05-',
-                    'juni' => '-06-',
-                    'juli' => '-07-',
-                    'agustus' => '-08-',
-                    'september' => '-09-',
-                    'oktober' => '-10-',
-                    'november' => '-11-',
-                    'desember' => '-12-'
-                ];
-                $dateSearch = str_ireplace(array_keys($monthMap), array_values($monthMap), $filters['tanggal']);
-                $dateSearch = str_replace([' ', '--'], ['-', '-'], $dateSearch);
-                $query->where(function ($q) use ($dateSearch) {
-                    $q->WhereHas('pegawai', function ($q2) use ($dateSearch) {
-                        $q2->WhereRaw("DATE_FORMAT(tanggal, '%e-%m-%Y') LIKE ?", ['%' . $dateSearch . '%']);
-                    });
                 });
             }
             if (!empty($filters['maksud_lembur'])) {
@@ -368,6 +353,15 @@ class LemburController extends Controller
             });
         }
 
+        $filters = $request->input('filters', []);
+        $tahun = !empty($filters['tahun']) ? $filters['tahun'] : date('Y');
+        $bulan = !empty($filters['bulan']) ? $filters['bulan'] : date('n');
+
+        $query->whereHas('pegawai', function ($q) use ($tahun, $bulan) {
+            $q->whereYear('tanggal', $tahun)
+                ->whereMonth('tanggal', $bulan);
+        });
+
         //search
         if ($request->sortOrder) {
             $fieldOrder = $request->sortField;
@@ -420,7 +414,6 @@ class LemburController extends Controller
         }
 
         if ($request->has('filters')) {
-            $filters = $request->filters;
             if (!empty($filters['tim_kerja'])) {
                 $searchTim = $filters['tim_kerja'];
                 $query->where(function ($q) use ($searchTim) {
@@ -431,34 +424,17 @@ class LemburController extends Controller
                         });
                 });
             }
-            if (!empty($filters['tanggal'])) {
-                $monthMap = [
-                    'januari' => '-01-',
-                    'februari' => '-02-',
-                    'maret' => '-03-',
-                    'april' => '-04-',
-                    'mei' => '-05-',
-                    'juni' => '-06-',
-                    'juli' => '-07-',
-                    'agustus' => '-08-',
-                    'september' => '-09-',
-                    'oktober' => '-10-',
-                    'november' => '-11-',
-                    'desember' => '-12-'
-                ];
-                $dateSearch = str_ireplace(array_keys($monthMap), array_values($monthMap), $filters['tanggal']);
-                $dateSearch = str_replace([' ', '--'], ['-', '-'], $dateSearch);
-                $query->where(function ($q) use ($dateSearch) {
-                    $q->WhereHas('pegawai', function ($q2) use ($dateSearch) {
-                        $q2->WhereRaw("DATE_FORMAT(tanggal, '%e-%m-%Y') LIKE ?", ['%' . $dateSearch . '%']);
-                    });
-                });
-            }
             if (!empty($filters['maksud_lembur'])) {
                 $query->where('lembur.maksud_lembur', 'like', '%' . $filters['maksud_lembur'] . '%');
             }
         }
-        $query->with(['pegawai.pegawai', 'pegawai.edited']);
+        $query->with([
+            'pegawai' => function ($q) use ($tahun, $bulan) {
+                $q->whereYear('tanggal', $tahun)
+                    ->whereMonth('tanggal', $bulan)
+                    ->with(['pegawai', 'edited']);
+            }
+        ]);
         $query->select(['lembur.*', 'st.label as tim_kerja', 'tpj.label as pj_kerja']);
         $lembur = $query->paginate($paginated, ['*'], 'page', $currentPage);
 
@@ -516,13 +492,22 @@ class LemburController extends Controller
         $query->leftJoin('sulutweb_man_management.timkerja as st', 'st.id', 'lembur.tim_id')
             ->leftJoin('sulutweb_man_management.timkerja as tpj', 'tpj.id', 'lembur.tim_penanggung_jawab_id');
 
-        $query->whereHas('pegawai', function ($q) {
-            $q->whereIn('status', ['2', '4', '5']);
+        $filters = $request->input('filters', []);
+        $tahun = !empty($filters['tahun']) ? $filters['tahun'] : date('Y');
+        $bulan = !empty($filters['bulan']) ? $filters['bulan'] : date('n');
+
+        $query->whereHas('pegawai', function ($q) use ($tahun, $bulan) {
+            $q->whereIn('status', ['2', '4', '5'])
+                ->whereYear('tanggal', $tahun)
+                ->whereMonth('tanggal', $bulan);
         });
 
         $query->with([
-            'pegawai' => function ($q) {
-                $q->whereIn('status', ['2', '4', '5'])->with(['pegawai', 'edited']);
+            'pegawai' => function ($q) use ($tahun, $bulan) {
+                $q->whereIn('status', ['2', '4', '5'])
+                    ->whereYear('tanggal', $tahun)
+                    ->whereMonth('tanggal', $bulan)
+                    ->with(['pegawai', 'edited']);
             }
         ]);
 
@@ -578,7 +563,6 @@ class LemburController extends Controller
         }
 
         if ($request->has('filters')) {
-            $filters = $request->filters;
             if (!empty($filters['tim_kerja'])) {
                 $searchTim = $filters['tim_kerja'];
                 $query->where(function ($q) use ($searchTim) {
@@ -587,29 +571,6 @@ class LemburController extends Controller
                             $q2->whereNull('lembur.tim_id')
                                 ->whereRaw('? LIKE ?', ['Lintas Tim Kerja', '%' . $searchTim . '%']);
                         });
-                });
-            }
-            if (!empty($filters['tanggal'])) {
-                $monthMap = [
-                    'januari' => '-01-',
-                    'februari' => '-02-',
-                    'maret' => '-03-',
-                    'april' => '-04-',
-                    'mei' => '-05-',
-                    'juni' => '-06-',
-                    'juli' => '-07-',
-                    'agustus' => '-08-',
-                    'september' => '-09-',
-                    'oktober' => '-10-',
-                    'november' => '-11-',
-                    'desember' => '-12-'
-                ];
-                $dateSearch = str_ireplace(array_keys($monthMap), array_values($monthMap), $filters['tanggal']);
-                $dateSearch = str_replace([' ', '--'], ['-', '-'], $dateSearch);
-                $query->where(function ($q) use ($dateSearch) {
-                    $q->WhereHas('pegawai', function ($q2) use ($dateSearch) {
-                        $q2->WhereRaw("DATE_FORMAT(tanggal, '%e-%m-%Y') LIKE ?", ['%' . $dateSearch . '%']);
-                    });
                 });
             }
             if (!empty($filters['maksud_lembur'])) {
@@ -670,11 +631,17 @@ class LemburController extends Controller
         else
             $currentPage = 1;
 
+        $filters = $request->input('filters', []);
+        $tahun = !empty($filters['tahun']) ? $filters['tahun'] : date('Y');
+        $bulan = !empty($filters['bulan']) ? $filters['bulan'] : date('n');
+
         $query = LemburPegawai::query();
         $query->join('lembur', 'lembur.id', '=', 'lembur_pegawai.lembur_id')
             ->leftJoin('sulutweb_man_management.timkerja as st', 'st.id', '=', 'lembur.tim_id')
             ->leftJoin('sulutweb_man_management.timkerja as tpj', 'tpj.id', '=', 'lembur.tim_penanggung_jawab_id');
-        $query->where('lembur_pegawai.pegawai_id', Auth::id());
+        $query->where('lembur_pegawai.pegawai_id', Auth::id())
+            ->whereYear('lembur_pegawai.tanggal', $tahun)
+            ->whereMonth('lembur_pegawai.tanggal', $bulan);
 
         if ($request->sortOrder) {
             $fieldOrder = $request->sortField;
@@ -683,7 +650,6 @@ class LemburController extends Controller
         } else
             $query->orderBy('updated_at', 'desc')->orderBy('tanggal', 'desc');
         if ($request->has('filters')) {
-            $filters = $request->filters;
             if (!empty($filters['tim_kerja'])) {
                 $searchTim = $filters['tim_kerja'];
                 $query->where(function ($q) use ($searchTim) {
@@ -693,25 +659,6 @@ class LemburController extends Controller
                                 ->whereRaw('? LIKE ?', ['Lintas Tim Kerja', '%' . $searchTim . '%']);
                         });
                 });
-            }
-            if (!empty($filters['tanggal'])) {
-                $monthMap = [
-                    'januari' => '-01-',
-                    'februari' => '-02-',
-                    'maret' => '-03-',
-                    'april' => '-04-',
-                    'mei' => '-05-',
-                    'juni' => '-06-',
-                    'juli' => '-07-',
-                    'agustus' => '-08-',
-                    'september' => '-09-',
-                    'oktober' => '-10-',
-                    'november' => '-11-',
-                    'desember' => '-12-'
-                ];
-                $dateSearch = str_ireplace(array_keys($monthMap), array_values($monthMap), $filters['tanggal']);
-                $dateSearch = str_replace([' ', '--'], ['-', '-'], $dateSearch);
-                $query->whereRaw("DATE_FORMAT(lembur_pegawai.tanggal, '%e-%m-%Y') LIKE ?", ['%' . $dateSearch . '%']);
             }
             if (!empty($filters['maksud_lembur'])) {
                 $query->where('lembur.maksud_lembur', 'like', '%' . $filters['maksud_lembur'] . '%');
@@ -784,17 +731,25 @@ class LemburController extends Controller
         $query = Lembur::query();
         $query->leftJoin('sulutweb_man_management.timkerja as st', 'st.id', 'lembur.tim_id')
             ->leftJoin('sulutweb_man_management.timkerja as tpj', 'tpj.id', 'lembur.tim_penanggung_jawab_id');
-        $query->whereHas('pegawai', function ($q) use ($canViewAllStatuses, $visibleStatuses) {
+        $filters = $request->input('filters', []);
+        $tahun = !empty($filters['tahun']) ? $filters['tahun'] : date('Y');
+        $bulan = !empty($filters['bulan']) ? $filters['bulan'] : date('n');
+
+        $query->whereHas('pegawai', function ($q) use ($canViewAllStatuses, $visibleStatuses, $tahun, $bulan) {
             if (!$canViewAllStatuses) {
                 $q->whereIn('status', $visibleStatuses);
             }
+            $q->whereYear('tanggal', $tahun)
+                ->whereMonth('tanggal', $bulan);
         });
 
         $query->with([
-            'pegawai' => function ($q) use ($canViewAllStatuses, $visibleStatuses) {
+            'pegawai' => function ($q) use ($canViewAllStatuses, $visibleStatuses, $tahun, $bulan) {
                 if (!$canViewAllStatuses) {
                     $q->whereIn('status', $visibleStatuses);
                 }
+                $q->whereYear('tanggal', $tahun)
+                    ->whereMonth('tanggal', $bulan);
                 $q->with(['pegawai', 'edited']);
             }
         ]);
@@ -867,7 +822,6 @@ class LemburController extends Controller
         }
 
         if ($request->has('filters')) {
-            $filters = $request->filters;
             if (!empty($filters['tim_kerja'])) {
                 $searchTim = $filters['tim_kerja'];
                 $query->where(function ($q) use ($searchTim) {
@@ -876,29 +830,6 @@ class LemburController extends Controller
                             $q2->whereNull('lembur.tim_id')
                                 ->where('tpj.label', 'like', '%' . $searchTim . '%');
                         });
-                });
-            }
-            if (!empty($filters['tanggal'])) {
-                $monthMap = [
-                    'januari' => '-01-',
-                    'februari' => '-02-',
-                    'maret' => '-03-',
-                    'april' => '-04-',
-                    'mei' => '-05-',
-                    'juni' => '-06-',
-                    'juli' => '-07-',
-                    'agustus' => '-08-',
-                    'september' => '-09-',
-                    'oktober' => '-10-',
-                    'november' => '-11-',
-                    'desember' => '-12-'
-                ];
-                $dateSearch = str_ireplace(array_keys($monthMap), array_values($monthMap), $filters['tanggal']);
-                $dateSearch = str_replace([' ', '--'], ['-', '-'], $dateSearch);
-                $query->where(function ($q) use ($dateSearch) {
-                    $q->WhereHas('pegawai', function ($q2) use ($dateSearch) {
-                        $q2->WhereRaw("DATE_FORMAT(tanggal, '%e-%m-%Y') LIKE ?", ['%' . $dateSearch . '%']);
-                    });
                 });
             }
             if (!empty($filters['maksud_lembur'])) {

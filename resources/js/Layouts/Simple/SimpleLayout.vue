@@ -7,13 +7,9 @@
     <div class="flex-1 flex flex-col min-h-screen transition-all duration-300">
       <!-- Topbar -->
       <header
-        class="sticky top-0 z-40 bg-white/80 backdrop-blur-md h-16 flex items-center justify-between px-4 lg:px-8"
-      >
+        class="sticky top-0 z-40 bg-white/80 backdrop-blur-md h-16 flex items-center justify-between px-4 lg:px-8">
         <div class="flex items-center">
-          <button
-            @click="toggleSidebar"
-            class="text-gray-500 hover:text-gray-700 focus:outline-none mr-4"
-          >
+          <button @click="toggleSidebar" class="text-gray-500 hover:text-gray-700 focus:outline-none mr-4">
             <i class="pi pi-bars text-xl"></i>
           </button>
         </div>
@@ -21,20 +17,13 @@
         <div class="flex items-center space-x-4">
           <!-- Notification Bell -->
           <div class="relative flex items-center" ref="notifContainer">
-            <button
-              @click="toggleNotificationMenu"
+            <button @click="toggleNotificationMenu"
               class="relative p-2 text-gray-500 hover:text-gray-700 transition-colors flex items-center justify-center focus:outline-none"
-              :title="
-                totalNotificationCount > 0
+              :title="totalNotificationCount > 0
                   ? `Ada ${totalNotificationCount} notifikasi yang perlu perhatian`
                   : 'Tidak ada notifikasi'
-              "
-            >
-              <OverlayBadge
-                :value="totalNotificationCount || null"
-                severity="danger"
-                size="small"
-              >
+                ">
+              <OverlayBadge :value="totalNotificationCount || null" severity="danger" size="small">
                 <i class="pi pi-bell text-xl"></i>
               </OverlayBadge>
             </button>
@@ -55,12 +44,8 @@
                   <!-- Output Lembur -->
                   <template v-if="outputItems.length > 0">
                     <div class="notif-section-label">Output Lembur Saya</div>
-                    <div
-                      v-for="(item, i) in outputItems"
-                      :key="'out-' + i"
-                      class="notif-item"
-                      @click="navigateTo('simple.my-lembur')"
-                    >
+                    <div v-for="(item, i) in outputItems" :key="'out-' + i" class="notif-item"
+                      @click="navigateTo('simple.my-lembur')">
                       <span class="notif-item-icon bg-blue-100 text-blue-600">
                         <i class="pi pi-file-edit"></i>
                       </span>
@@ -76,21 +61,15 @@
                   <!-- Ketua Tim -->
                   <template v-if="pendingDetail.length > 0">
                     <div class="notif-section-label">Verifikasi Ketua Tim</div>
-                    <div
-                      v-for="(item, i) in pendingDetail"
-                      :key="'katim-' + i"
-                      class="notif-item"
-                      @click="navigateTo('simple.lembur.verify')"
-                    >
+                    <div v-for="(item, i) in pendingDetail" :key="'katim-' + i" class="notif-item"
+                      @click="navigateTo('simple.lembur.verify')">
                       <span class="notif-item-icon bg-amber-100 text-amber-600">
                         <i class="pi pi-check-square"></i>
                       </span>
                       <div class="notif-item-text">
                         <p class="notif-item-title">
                           {{ item.jumlah }} lembur perlu diperiksa
-                          <span v-if="item.is_lintas_tim" class="notif-badge-lintas"
-                            >Lintas Tim</span
-                          >
+                          <span v-if="item.is_lintas_tim" class="notif-badge-lintas">Lintas Tim</span>
                         </p>
                         <p class="notif-item-sub">
                           <template v-if="item.is_lintas_tim">
@@ -106,12 +85,8 @@
                   <!-- Kabag -->
                   <template v-if="verifyDetail.length > 0">
                     <div class="notif-section-label">Verifikasi Kabag</div>
-                    <div
-                      v-for="(item, i) in verifyDetail"
-                      :key="'kabag-' + i"
-                      class="notif-item"
-                      @click="navigateTo('simple.lembur.verify-kabag')"
-                    >
+                    <div v-for="(item, i) in verifyDetail" :key="'kabag-' + i" class="notif-item"
+                      @click="navigateTo('simple.lembur.verify-kabag')">
                       <span class="notif-item-icon bg-purple-100 text-purple-600">
                         <i class="pi pi-shield"></i>
                       </span>
@@ -134,10 +109,8 @@
             </Transition>
           </div>
 
-          <div
-            class="flex items-center gap-3 pl-4 cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition-colors"
-            @click="toggleProfileMenu"
-          >
+          <div class="flex items-center gap-3 pl-4 cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition-colors"
+            @click="toggleProfileMenu">
             <Avatar icon="pi pi-user" class="bg-blue-100 text-blue-600" shape="circle" />
             <div class="hidden md:block text-sm">
               <p class="font-semibold text-gray-700 leading-none">
@@ -163,13 +136,10 @@
 
       <!-- Footer -->
       <footer
-        class="bg-white py-4 px-6 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-sm text-gray-500"
-      >
+        class="bg-white py-4 px-6 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Simple versi 1.2 &mdash;
-          <a href="https://sulut.bps.go.id" class="font-bold"
-            >BPS Provinsi Sulawesi Utara</a
-          >
+          &copy; 2026 Simple versi 1.2.1 &mdash;
+          <a href="https://sulut.bps.go.id" class="font-bold">BPS Provinsi Sulawesi Utara</a>
           dibuat oleh:
           <a href="https://github.com/rifqind" class="font-bold">AuraSphere</a>, didukung
           oleh:
@@ -179,11 +149,8 @@
     </div>
 
     <!-- Overlay for mobile sidebar -->
-    <div
-      v-if="isSidebarOpen"
-      @click="toggleSidebar"
-      class="fixed inset-0 bg-slate-900/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
-    ></div>
+    <div v-if="isSidebarOpen" @click="toggleSidebar"
+      class="fixed inset-0 bg-slate-900/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"></div>
   </div>
 </template>
 
@@ -329,6 +296,7 @@ watch(
 :deep(.p-inputtext::placeholder) {
   @apply text-sm;
 }
+
 :deep(.p-inputtext) {
   @apply text-sm;
 }
@@ -375,6 +343,7 @@ watch(
   transition: background 0.15s, color 0.15s;
   line-height: 1;
 }
+
 .notif-close:hover {
   background: #e5e7eb;
   color: #374151;
@@ -403,6 +372,7 @@ watch(
   cursor: pointer;
   transition: background 0.15s;
 }
+
 .notif-item:hover {
   background: #f9fafb;
 }
@@ -468,6 +438,7 @@ watch(
 .notif-fade-leave-active {
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
+
 .notif-fade-enter-from,
 .notif-fade-leave-to {
   opacity: 0;

@@ -108,7 +108,7 @@
             ></i>
           </Link>
         </div>
-        <div class="flex-grow h-64">
+        <div class="flex-grow h-72">
           <Chart
             v-if="Object.keys(timsData || {}).length > 0"
             type="bar"
@@ -133,7 +133,7 @@
             ></i>
           </Link>
         </div>
-        <div class="flex-grow h-64">
+        <div class="flex-grow h-72">
           <Chart
             v-if="Object.keys(pegawaisData || {}).length > 0"
             type="bar"
@@ -290,18 +290,54 @@ const pegawaisData = ref(props.pegawais);
 const timsData = ref(props.tims);
 
 const chartOptions = ref({
+  indexAxis: "y",
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: {
       display: false,
     },
+    tooltip: {
+      callbacks: {
+        title: function (context) {
+          return context[0]?.label || "";
+        },
+        label: function (context) {
+          return ` ${context.parsed.x} pengajuan lembur`;
+        },
+      },
+    },
   },
   scales: {
-    y: {
+    x: {
       beginAtZero: true,
       ticks: {
         stepSize: 1,
+        precision: 0,
+        color: "#64748b",
+      },
+      grid: {
+        color: "#f1f5f9",
+      },
+    },
+    y: {
+      grid: {
+        display: false,
+      },
+      ticks: {
+        autoSkip: false,
+        color: "#334155",
+        font: {
+          size: 11,
+          weight: "500",
+        },
+        callback: function (val) {
+          const label = this.getLabelForValue(val);
+          if (label && label.length > 25) {
+            return label.substring(0, 23) + "...";
+          }
+          return label;
+        },
       },
     },
   },
@@ -316,7 +352,10 @@ const timChartData = computed(() => {
         label: "Jumlah Lembur",
         data: Object.values(dataObj),
         backgroundColor: "#3b82f6",
-        borderRadius: 4,
+        hoverBackgroundColor: "#2563eb",
+        borderRadius: 6,
+        barPercentage: 0.65,
+        categoryPercentage: 0.85,
       },
     ],
   };
@@ -331,7 +370,10 @@ const pegawaiChartData = computed(() => {
         label: "Jumlah Lembur",
         data: Object.values(dataObj),
         backgroundColor: "#10b981",
-        borderRadius: 4,
+        hoverBackgroundColor: "#059669",
+        borderRadius: 6,
+        barPercentage: 0.65,
+        categoryPercentage: 0.85,
       },
     ],
   };

@@ -198,37 +198,41 @@ class HomeController extends Controller
             $data_lp_pegawai = $queryLp->get();
             $durasi_pegawai = 0;
             $jumlah_pegawai = $data_lp_pegawai->pluck('pegawai_id')->unique()->count();
-            foreach ($data_lp_pegawai as $lp) {
-                $tgl = Carbon::parse($lp->tanggal);
-                $dayOfWeek = $tgl->dayOfWeekIso;
-                $durasi = $lp->jumlah_jam;
-                $durasi_final = 0;
+            $lpGrouped = $data_lp_pegawai->groupBy(['pegawai_id', 'tanggal']);
+            foreach ($lpGrouped as $pegawaiId => $byDate) {
+                foreach ($byDate as $tanggal => $dateItems) {
+                    $lp = $dateItems->first();
+                    $tgl = Carbon::parse($tanggal);
+                    $dayOfWeek = $tgl->dayOfWeekIso;
+                    $durasi = $dateItems->max('jumlah_jam');
+                    $durasi_final = 0;
 
-                if ($lp->jam_berangkat && $lp->jam_pulang) {
-                    $masuk = Carbon::parse($lp->jam_berangkat);
-                    $pulang = Carbon::parse($lp->jam_pulang);
+                    if ($lp->jam_berangkat && $lp->jam_pulang) {
+                        $masuk = Carbon::parse($lp->jam_berangkat);
+                        $pulang = Carbon::parse($lp->jam_pulang);
 
-                    if ($pulang->lessThan($masuk)) {
-                        $pulang->addDay();
-                    }
-
-                    if ($dayOfWeek <= 5) {
-                        $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
-                        $batas_pulang = Carbon::parse($batas_pulang_str);
-
-                        $mulai_lembur = $masuk->greaterThan($batas_pulang) ? $masuk : $batas_pulang;
-
-                        if ($pulang->greaterThan($mulai_lembur)) {
-                            $selisih = floor($mulai_lembur->diffInMinutes($pulang) / 60);
-                        } else {
-                            $selisih = 0;
+                        if ($pulang->lessThan($masuk)) {
+                            $pulang->addDay();
                         }
-                    } else {
-                        $selisih = floor($masuk->diffInMinutes($pulang) / 60);
+
+                        if ($dayOfWeek <= 5) {
+                            $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
+                            $batas_pulang = Carbon::parse($batas_pulang_str);
+
+                            $mulai_lembur = $masuk->greaterThan($batas_pulang) ? $masuk : $batas_pulang;
+
+                            if ($pulang->greaterThan($mulai_lembur)) {
+                                $selisih = floor($mulai_lembur->diffInMinutes($pulang) / 60);
+                            } else {
+                                $selisih = 0;
+                            }
+                        } else {
+                            $selisih = floor($masuk->diffInMinutes($pulang) / 60);
+                        }
+                        $durasi_final = ($durasi && $selisih > $durasi) ? $durasi : $selisih;
                     }
-                    $durasi_final = ($selisih > $durasi) ? $durasi : $selisih;
+                    $durasi_pegawai += $durasi_final;
                 }
-                $durasi_pegawai += $durasi_final;
             }
 
             $item->durasi_lembur = $data_type === 'tim' && $jumlah_pegawai > 0

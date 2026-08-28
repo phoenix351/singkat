@@ -1,13 +1,26 @@
 <template>
+
   <Head title="Lembur" />
   <SimpleLayout :is-open="isSidebarOpen">
+    <div class="text-xl font-bold mb-4">Verifikasi Kepala Bagian Umum</div>
+    <div class="flex flex-wrap items-end gap-4 mb-4">
+      <div class="flex flex-col gap-2">
+        <label class="font-bold">Tahun</label>
+        <Select v-model="filterModel.tahun" placeholder="Pilih tahun" :options="yearDrop" optionLabel="label"
+          optionValue="value" class="w-40" />
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="font-bold">Bulan</label>
+        <Select v-model="filterModel.bulan" placeholder="Pilih bulan" :options="monthDrop" optionLabel="label"
+          optionValue="value" class="w-48" />
+      </div>
+      <div>
+        <Button @click="fetchData" icon="pi pi-search" class="mb-0" />
+      </div>
+    </div>
     <div class="card">
       <div class="mb-4 flex flex-wrap items-center justify-between">
-        <div
-          class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0"
-        >
-          Verifikasi Kepala Bagian Umum
-        </div>
+        <div></div>
         <div class="flex space-x-2 items-center w-full md:w-full lg:w-auto">
           <IconField>
             <InputIcon>
@@ -17,29 +30,13 @@
           </IconField>
         </div>
       </div>
-      <DataTable
-        :value="paginatedItem.data"
-        class="w-full text-sm"
-        lazy
-        paginator
-        showGridlines
-        stripedRows
-        v-model:expandedRows="expandedRows"
-        dataKey="id"
-        :rowExpandable="isRowExpandable"
-        :rows="paginatedItem.per_page"
-        :first="(paginatedItem.current_page - 1) * paginatedItem.per_page"
-        :total-records="paginatedItem.total"
-        :rows-per-page-options="[5, 10, 20, 50, 100]"
-        :removable-sort="true"
-        :sort-field="sortField"
-        :sort-order="sortOrder"
-        filterDisplay="row"
-        @page="fetchData"
-        @sort="fetchData"
+      <DataTable :value="paginatedItem.data" class="w-full text-sm" lazy paginator showGridlines stripedRows
+        v-model:expandedRows="expandedRows" dataKey="id" :rowExpandable="isRowExpandable" :rows="paginatedItem.per_page"
+        :first="(paginatedItem.current_page - 1) * paginatedItem.per_page" :total-records="paginatedItem.total"
+        :rows-per-page-options="[5, 10, 20, 50, 100]" :removable-sort="true" :sort-field="sortField"
+        :sort-order="sortOrder" filterDisplay="row" @page="fetchData" @sort="fetchData"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data"
-      >
+        current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data">
         <template #empty>
           <div class="text-center">Data tidak ada</div>
         </template>
@@ -57,43 +54,23 @@
         </Column>
         <Column header="Tim Kerja" sortable :show-filter-menu="false">
           <template #body="{ data }">
-            <span
-              v-if="data.pegawai && data.pegawai.length > 0"
-              :class="{ 'font-bold': !data.tim_id }"
-            >
-              {{ data.tim_id ? data.tim_kerja : (data.tim_penanggung_jawab_id ? 'Lintas Tim Kerja (PJ: ' + data.pj_kerja + ')' : 'Lintas Tim Kerja') }}
+            <span v-if="data.pegawai && data.pegawai.length > 0" :class="{ 'font-bold': !data.tim_id }">
+              {{ data.tim_id ? data.tim_kerja : (data.tim_penanggung_jawab_id ? 'Lintas Tim Kerja (PJ: ' + data.pj_kerja
+                + ')' : 'Lintas Tim Kerja') }}
             </span>
             <span v-else>-</span>
           </template>
           <template #filter>
-            <InputText
-              v-model="filterModel.tim_kerja"
-              class="text-sm"
-              fluid
-              placeholder="Cari tim kerja"
-            />
+            <InputText v-model="filterModel.tim_kerja" class="text-sm" fluid placeholder="Cari tim kerja" />
           </template>
         </Column>
-        <Column
-          header="Tanggal"
-          :show-filter-menu="false"
-          field="tanggal"
-          sortable
-        >
+        <Column header="Tanggal" :show-filter-menu="false" field="tanggal" sortable>
           <template #body="{ data }">
             {{
               data.pegawai && data.pegawai.length > 0
                 ? formatDateOnly(data.pegawai[0].tanggal)
                 : "-"
             }}
-          </template>
-          <template #filter>
-            <InputText
-              v-model="filterModel.tanggal"
-              class="text-sm"
-              fluid
-              placeholder="Cari tanggal"
-            />
           </template>
         </Column>
         <Column header="Jumlah Jam" sortable>
@@ -105,77 +82,44 @@
             }}
           </template>
         </Column>
-        <Column
-          class="whitespace-nowrap"
-          header="Status Pengajuan"
-          field="status_pengajuan"
-          sortable
-        >
+        <Column class="whitespace-nowrap" header="Status Pengajuan" field="status_pengajuan" sortable>
           <template #body="{ data }">
             <div class="flex flex-col gap-1">
-              <Badge
-                size="small"
-                v-for="item in getStatusCounts(data.pegawai)"
-                :key="item.label"
-                :value="`${item.count} ${item.label}`"
-                :severity="
-                  item.code === '1'
+              <Badge size="small" v-for="item in getStatusCounts(data.pegawai)" :key="item.label"
+                :value="`${item.count} ${item.label}`" :severity="item.code === '1'
                     ? 'warn'
                     : item.code === '2'
-                    ? 'success'
-                    : item.code === '3'
-                    ? 'danger'
-                    : item.code === '4'
-                    ? 'info'
-                    : item.code === '5'
-                    ? 'contrast'
-                    : 'secondary'
-                "
-              />
+                      ? 'success'
+                      : item.code === '3'
+                        ? 'danger'
+                        : item.code === '4'
+                          ? 'info'
+                          : item.code === '5'
+                            ? 'contrast'
+                            : 'secondary'
+                  " />
             </div>
           </template>
         </Column>
         <Column header="Alasan Lembur" field="maksud_lembur" sortable>
           <template #filter>
-            <InputText
-              v-model="filterModel.maksud_lembur"
-              class="text-sm"
-              fluid
-              placeholder="Cari alasan lembur"
-            />
+            <InputText v-model="filterModel.maksud_lembur" class="text-sm" fluid placeholder="Cari alasan lembur" />
           </template>
         </Column>
         <Column header="Link" field="link_dokumentasi">
           <template #body="{ data }">
-            <Button
-              v-if="data.link_dokumentasi"
-              icon="pi pi-external-link"
-              variant="outlined"
-              rounded
-              class="mr-2"
-              :severity="'info'"
-              @click="toDocumentation(data.link_dokumentasi)"
-            ></Button>
+            <Button v-if="data.link_dokumentasi" icon="pi pi-external-link" variant="outlined" rounded class="mr-2"
+              :severity="'info'" @click="toDocumentation(data.link_dokumentasi)"></Button>
             <div v-else>-</div>
           </template>
         </Column>
         <Column header="Setuju/Tolak" :exportable="false">
           <template #body="slotProps">
             <div class="flex justify-end gap-2 w-full">
-              <Button
-                @click="updateData({ data: slotProps.data, status: 'setuju' })"
-                icon="pi pi-check"
-                variant="outlined"
-                rounded
-                class="mr-2"
-              />
-              <Button
-                @click="updateData({ data: slotProps.data, status: 'ditolak' })"
-                icon="pi pi-times"
-                variant="outlined"
-                rounded
-                severity="danger"
-              />
+              <Button @click="updateData({ data: slotProps.data, status: 'setuju' })" icon="pi pi-check"
+                variant="outlined" rounded class="mr-2" />
+              <Button @click="updateData({ data: slotProps.data, status: 'ditolak' })" icon="pi pi-times"
+                variant="outlined" rounded severity="danger" />
             </div>
           </template>
         </Column>
@@ -184,36 +128,20 @@
             <div class="flex mb-2 justify-between flex-wrap items-center">
               <h5 class="font-bold">Daftar Pegawai Lembur</h5>
               <div class="flex justify-end w-auto">
-                <Button
-                  @click="updateData({ status: 'setuju', individual: true })"
-                  v-if="selectedPegawai.length > 0"
-                  rounded
-                  class="mr-2"
-                >
+                <Button @click="updateData({ status: 'setuju', individual: true })" v-if="selectedPegawai.length > 0"
+                  rounded class="mr-2">
                   <i class="pi pi-check" />
                   Terima
                 </Button>
-                <Button
-                  @click="updateData({ status: 'ditolak', individual: true })"
-                  v-if="selectedPegawai.length > 0"
-                  rounded
-                  severity="danger"
-                >
+                <Button @click="updateData({ status: 'ditolak', individual: true })" v-if="selectedPegawai.length > 0"
+                  rounded severity="danger">
                   <i class="pi pi-times" />
                   Tolak
                 </Button>
               </div>
             </div>
-            <DataTable
-              v-model:selection="selectedPegawai"
-              :value="slotProps.data.pegawai"
-              data-key="id"
-              showGridlines
-              paginator
-              :rows="10"
-              :rowsPerPageOptions="[10, 20]"
-              size="small"
-            >
+            <DataTable v-model:selection="selectedPegawai" :value="slotProps.data.pegawai" data-key="id" showGridlines
+              paginator :rows="10" :rowsPerPageOptions="[10, 20]" size="small">
               <Column selection-mode="multiple" />
               <Column header="No" style="width: 3rem">
                 <template #body="itemProps">{{ itemProps.index + 1 }}</template>
@@ -226,45 +154,34 @@
               </Column>
               <Column header="Output Lembur">
                 <template #body="{ data }">
-                  <Badge
-                    v-if="!data.output"
-                    severity="secondary"
-                    value="Belum diisi"
-                  />
+                  <Badge v-if="!data.output" severity="secondary" value="Belum diisi" />
                   <span v-if="data.output" class="whitespace-pre-wrap">{{
                     data.output
                   }}</span>
                 </template>
               </Column>
-              <Column
-                class="whitespace-nowrap"
-                header="Status"
-                style="text-align: center"
-              >
+              <Column class="whitespace-nowrap" header="Catatan">
+                <template #body="{ data }">
+                  <Badge v-if="!data.catatan" severity="secondary" value="Tidak ada catatan" />
+                  <span v-else>{{ data.catatan }}</span>
+                </template>
+              </Column>
+              <Column class="whitespace-nowrap" header="Status" style="text-align: center">
                 <template #body="{ data }">
                   <div class="flex flex-col items-center justify-center gap-1">
-                    <Badge
-                      size="small"
-                      :value="data.status_detail || data.status"
-                      :severity="
-                        String(data.status) === '1'
-                          ? 'warn'
-                          : String(data.status) === '2'
+                    <Badge size="small" :value="data.status_detail || data.status" :severity="String(data.status) === '1'
+                        ? 'warn'
+                        : String(data.status) === '2'
                           ? 'success'
                           : String(data.status) === '3'
-                          ? 'danger'
-                          : String(data.status) === '4'
-                          ? 'info'
-                          : String(data.status) === '5'
-                          ? 'contrast'
-                          : 'secondary'
-                      "
-                    />
-                    <Badge
-                      size="small"
-                      severity="secondary"
-                      :value="formatDateTime(data.updated_at)"
-                    />
+                            ? 'danger'
+                            : String(data.status) === '4'
+                              ? 'info'
+                              : String(data.status) === '5'
+                                ? 'contrast'
+                                : 'secondary'
+                      " />
+                    <Badge size="small" severity="secondary" :value="formatDateTime(data.updated_at)" />
                   </div>
                 </template>
               </Column>
@@ -278,16 +195,10 @@
         </template>
       </DataTable>
     </div>
-    <Dialog
-      v-model:visible="confirmDialog"
-      modal
-      header="Konfirmasi"
-      class="w-full md:w-[30vw]"
-    >
+    <Dialog v-model:visible="confirmDialog" modal header="Konfirmasi" class="w-full md:w-[30vw]">
       <div class="flex flex-col gap-4">
         <p>
-          <span v-if="!confirmData.individual"
-            >Kamu akan melakukan perubahan status ke seluruh pegawai di lembur
+          <span v-if="!confirmData.individual">Kamu akan melakukan perubahan status ke seluruh pegawai di lembur
             ini.
           </span>
           Apakah kamu yakin
@@ -296,29 +207,13 @@
         </p>
         <div v-if="confirmData.status === 'ditolak'">
           <label class="block font-bold mb-2">Catatan Penolakan</label>
-          <Textarea
-            v-model="confirmData.catatan"
-            rows="3"
-            placeholder="Alasan penolakan..."
-            fluid
-            class="w-full"
-          />
+          <Textarea v-model="confirmData.catatan" rows="3" placeholder="Alasan penolakan..." fluid class="w-full" />
         </div>
       </div>
       <template #footer>
-        <Button
-          label="Batal"
-          @click="confirmDialog = false"
-          variant="outlined"
-          severity="secondary"
-          size="small"
-        />
-        <Button
-          :label="confirmData.status === 'setuju' ? 'Setujui' : 'Tolak'"
-          :severity="confirmData.status === 'setuju' ? 'success' : 'danger'"
-          @click="processUpdate"
-          size="small"
-        />
+        <Button label="Batal" @click="confirmDialog = false" variant="outlined" severity="secondary" size="small" />
+        <Button :label="confirmData.status === 'setuju' ? 'Setujui' : 'Tolak'"
+          :severity="confirmData.status === 'setuju' ? 'success' : 'danger'" @click="processUpdate" size="small" />
       </template>
     </Dialog>
   </SimpleLayout>
@@ -335,10 +230,36 @@ const isSidebarOpen = ref(true);
 onMounted(() => {
   isSidebarOpen.value = false;
 });
+const currentYear = new Date().getFullYear();
+const currentMonth = new Date().getMonth() + 1;
+
+const yearDrop = ref(
+  Array.from({ length: 10 }, (_, i) => ({
+    label: (currentYear - i).toString(),
+    value: currentYear - i,
+  }))
+);
+
+const monthDrop = ref([
+  { label: "Januari", value: 1 },
+  { label: "Februari", value: 2 },
+  { label: "Maret", value: 3 },
+  { label: "April", value: 4 },
+  { label: "Mei", value: 5 },
+  { label: "Juni", value: 6 },
+  { label: "Juli", value: 7 },
+  { label: "Agustus", value: 8 },
+  { label: "September", value: 9 },
+  { label: "Oktober", value: 10 },
+  { label: "November", value: 11 },
+  { label: "Desember", value: 12 },
+]);
+
 const searchField = ref(null);
 const filterModel = ref({
+  tahun: currentYear,
+  bulan: currentMonth,
   tim_kerja: null,
-  tanggal: null,
   maksud_lembur: null,
 });
 const getStatusCounts = (pegawai) => {

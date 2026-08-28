@@ -1,13 +1,37 @@
 <template>
   <Head title="Lembur" />
   <SimpleLayout :is-open="isSidebarOpen">
+    <div class="text-xl font-bold mb-4">Pengajuan Lembur Saya</div>
+    <div class="flex flex-wrap items-end gap-4 mb-4">
+      <div class="flex flex-col gap-2">
+        <label class="font-bold">Tahun</label>
+        <Select
+          v-model="filterModel.tahun"
+          placeholder="Pilih tahun"
+          :options="yearDrop"
+          optionLabel="label"
+          optionValue="value"
+          class="w-40"
+        />
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="font-bold">Bulan</label>
+        <Select
+          v-model="filterModel.bulan"
+          placeholder="Pilih bulan"
+          :options="monthDrop"
+          optionLabel="label"
+          optionValue="value"
+          class="w-48"
+        />
+      </div>
+      <div>
+        <Button @click="fetchData" icon="pi pi-search" class="mb-0" />
+      </div>
+    </div>
     <div class="card">
       <div class="mb-4 flex flex-wrap items-center justify-between">
-        <div
-          class="text-xl font-bold w-full md:w-full lg:w-auto mb-2 md:mb-2 lg:mb-0"
-        >
-          Pengajuan Lembur Saya
-        </div>
+        <div></div>
         <div class="flex space-x-2 items-center w-full md:w-full lg:w-auto">
           <IconField>
             <InputIcon>
@@ -100,14 +124,6 @@
                 ? formatDateOnly(data.pegawai[0].tanggal)
                 : "-"
             }}
-          </template>
-          <template #filter>
-            <InputText
-              v-model="filterModel.tanggal"
-              class="text-sm"
-              fluid
-              placeholder="Cari tanggal"
-            />
           </template>
         </Column>
         <Column header="Jumlah Jam" sortable>
@@ -716,10 +732,36 @@ onMounted(() => {
 });
 const page = usePage();
 const confirm = useConfirm();
+const currentYear = new Date().getFullYear();
+const currentMonth = new Date().getMonth() + 1;
+
+const yearDrop = ref(
+  Array.from({ length: 10 }, (_, i) => ({
+    label: (currentYear - i).toString(),
+    value: currentYear - i,
+  }))
+);
+
+const monthDrop = ref([
+  { label: "Januari", value: 1 },
+  { label: "Februari", value: 2 },
+  { label: "Maret", value: 3 },
+  { label: "April", value: 4 },
+  { label: "Mei", value: 5 },
+  { label: "Juni", value: 6 },
+  { label: "Juli", value: 7 },
+  { label: "Agustus", value: 8 },
+  { label: "September", value: 9 },
+  { label: "Oktober", value: 10 },
+  { label: "November", value: 11 },
+  { label: "Desember", value: 12 },
+]);
+
 const searchField = ref(null);
 const filterModel = ref({
+  tahun: currentYear,
+  bulan: currentMonth,
   tim_kerja: null,
-  tanggal: null,
   maksud_lembur: null,
 });
 
