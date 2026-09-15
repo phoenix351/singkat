@@ -1,53 +1,24 @@
 <template>
+
   <Head title="SPKL" />
   <SimpleLayout :is-open="isSidebarOpen">
     <div class="text-xl font-bold mb-4">Pengajuan SPKL</div>
     <div class="flex flex-wrap items-end gap-4">
       <div class="flex flex-col gap-2">
         <label class="font-bold">Tahun</label>
-        <Select
-          v-model="search.tahun"
-          placeholder="Pilih tahun"
-          :options="yearDrop"
-          optionLabel="label"
-          optionValue="value"
-          class="w-40"
-        />
+        <Select v-model="search.tahun" placeholder="Pilih tahun" :options="yearDrop" optionLabel="label"
+          optionValue="value" class="w-40" />
       </div>
       <div class="flex flex-col gap-2">
         <label class="font-bold">Bulan</label>
-        <Select
-          v-model="search.bulan"
-          placeholder="Pilih bulan"
-          :options="monthDrop"
-          optionLabel="label"
-          optionValue="value"
-          class="w-48"
-        />
+        <Select v-model="search.bulan" placeholder="Pilih bulan" :options="monthDrop" optionLabel="label"
+          optionValue="value" class="w-48" />
       </div>
       <div class="space-x-2">
         <Button @click="fetchData" icon="pi pi-search" class="mb-0" />
-        <Button
-          @click="presensiDialog = true"
-          label="Presensi"
-          icon="pi pi-upload"
-          severity="warn"
-          class="mb-0"
-        />
-        <Button
-          @click="createDialog = true"
-          label="Laporan"
-          icon="pi pi-print"
-          severity="info"
-          class="mb-0"
-        />
-        <Button
-          @click="printUang"
-          label="Uang"
-          icon="pi pi-print"
-          severity="contrast"
-          class="mb-0"
-        />
+        <Button @click="presensiDialog = true" label="Presensi" icon="pi pi-upload" severity="warn" class="mb-0" />
+        <Button @click="createDialog = true" label="Laporan" icon="pi pi-print" severity="info" class="mb-0" />
+        <Button @click="printUang" label="Uang" icon="pi pi-print" severity="contrast" class="mb-0" />
       </div>
     </div>
     <div class="card mt-4">
@@ -59,26 +30,13 @@
           <InputText placeholder="Cari Pegawai" v-model="search.pegawai" />
         </IconField>
       </div>
-      <DataTable
-        :value="paginatedItem.data"
-        class="w-full text-sm"
-        lazy
-        paginator
-        showGridlines
-        :rows="paginatedItem.per_page"
-        :first="(paginatedItem.current_page - 1) * paginatedItem.per_page"
-        :total-records="paginatedItem.total"
-        :rows-per-page-options="[10, 20, 50, 100]"
-        :removable-sort="true"
-        :sort-field="sortField"
-        :sort-order="sortOrder"
-        @page="fetchData"
-        @sort="fetchData"
-        groupRowsBy="pegawai_id"
+      <DataTable :value="paginatedItem.data" class="w-full text-sm" lazy paginator showGridlines
+        :rows="paginatedItem.per_page" :first="(paginatedItem.current_page - 1) * paginatedItem.per_page"
+        :total-records="paginatedItem.total" :rows-per-page-options="[10, 20, 50, 100]" :removable-sort="true"
+        :sort-field="sortField" :sort-order="sortOrder" @page="fetchData" @sort="fetchData" groupRowsBy="pegawai_id"
         rowGroupMode="rowspan"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data"
-      >
+        current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data">
         <template #empty>
           <div class="text-center">
             Data bulan ini belum ada yang sudah disetujui
@@ -90,11 +48,7 @@
         <Column hidden field="pegawai_id" />
         <Column class="whitespace-nowrap" header="No. SPKL" field="pegawai_id">
           <template #body="{ data }">
-            <Badge
-              v-if="data.lembur.spkl?.nomor_spkl"
-              :value="data.lembur.spkl.nomor_spkl"
-              severity="info"
-            />
+            <Badge v-if="data.lembur.spkl?.nomor_spkl" :value="data.lembur.spkl.nomor_spkl" severity="info" />
             <Badge v-else value="Belum diajukan" severity="secondary" />
           </template>
         </Column>
@@ -110,19 +64,15 @@
           }}</template>
         </Column>
         <Column class="whitespace-nowrap" header="Jam Berangkat">
-          <template #body="{ data }"
-            ><span v-if="data.jam_berangkat">{{ data.jam_berangkat }}</span>
-            <Badge size="small" v-if="!data.jam_berangkat" severity="secondary"
-              ><span class="italic">Tidak ditemukan</span></Badge
-            >
+          <template #body="{ data }"><span v-if="data.jam_berangkat">{{ data.jam_berangkat }}</span>
+            <Badge size="small" v-if="!data.jam_berangkat" severity="secondary"><span class="italic">Tidak
+                ditemukan</span></Badge>
           </template>
         </Column>
         <Column class="whitespace-nowrap" header="Jam Pulang">
-          <template #body="{ data }"
-            ><span v-if="data.jam_pulang">{{ data.jam_pulang }}</span>
-            <Badge size="small" v-if="!data.jam_pulang" severity="secondary"
-              ><span class="italic">Tidak ditemukan</span></Badge
-            >
+          <template #body="{ data }"><span v-if="data.jam_pulang">{{ data.jam_pulang }}</span>
+            <Badge size="small" v-if="!data.jam_pulang" severity="secondary"><span class="italic">Tidak ditemukan</span>
+            </Badge>
           </template>
         </Column>
         <Column header="Alasan Lembur" field="lembur.maksud_lembur" />
@@ -133,141 +83,61 @@
         </Column>
         <Column header="Link" field="link_dokumentasi">
           <template #body="{ data }">
-            <Button
-              v-if="data.lembur.link_dokumentasi"
-              icon="pi pi-external-link"
-              variant="outlined"
-              rounded
-              class="mr-2"
-              :severity="'info'"
-              @click="toDocumentation(data.lembur.link_dokumentasi)"
-            ></Button>
+            <Button v-if="data.lembur.link_dokumentasi" icon="pi pi-external-link" variant="outlined" rounded
+              class="mr-2" :severity="'info'" @click="toDocumentation(data.lembur.link_dokumentasi)"></Button>
             <div v-else>-</div>
           </template>
         </Column>
       </DataTable>
     </div>
-    <Dialog
-      position="top"
-      v-model:visible="createDialog"
-      modal
-      header="Cetak SPKL"
-      class="min-w-[30vw]"
-    >
+    <Dialog position="top" v-model:visible="createDialog" modal header="Cetak SPKL" class="min-w-[30vw]">
       <div class="flex flex-col gap-4">
         <div>
           <label class="block font-bold mb-2">DIPA Tahun Anggaran</label>
-          <Select
-            v-model="form.tahun_dipa"
-            placeholder="Pilih tahun DIPA"
-            :options="yearDrop"
-            optionLabel="label"
-            optionValue="value"
-            fluid
-            showClear
-          />
-          <div
-            v-if="page.props.errors.tahun_dipa"
-            class="text-red-500 text-sm mt-2"
-          >
+          <Select v-model="form.tahun_dipa" placeholder="Pilih tahun DIPA" :options="yearDrop" optionLabel="label"
+            optionValue="value" fluid showClear />
+          <div v-if="page.props.errors.tahun_dipa" class="text-red-500 text-sm mt-2">
             {{ page.props.errors?.tahun_dipa }}
           </div>
         </div>
         <div>
           <label class="block font-bold mb-2">Tanggal Pengajuan</label>
-          <DatePicker
-            v-model="form.tanggal_pengajuan"
-            fluid
-            showIcon
-            locale="id-ID"
-            dateFormat="dd MM yy"
-            placeholder="Isi tanggal pengajuan"
-          />
-          <div
-            v-if="page.props.errors.tanggal_pengajuan"
-            class="text-red-500 text-sm mt-2"
-          >
+          <DatePicker v-model="form.tanggal_pengajuan" fluid showIcon locale="id-ID" dateFormat="dd MM yy"
+            placeholder="Isi tanggal pengajuan" />
+          <div v-if="page.props.errors.tanggal_pengajuan" class="text-red-500 text-sm mt-2">
             {{ page.props.errors?.tanggal_pengajuan }}
           </div>
         </div>
         <div>
           <label class="block font-bold mb-2">Nomor SPKL</label>
-          <InputText
-            placeholder="Isikan nomor spkl"
-            v-model="form.nomor_spkl"
-            fluid
-          />
-          <div
-            v-if="page.props.errors.nomor_spkl"
-            class="text-red-500 text-sm mt-2"
-          >
+          <InputText placeholder="Isikan nomor spkl" v-model="form.nomor_spkl" fluid />
+          <div v-if="page.props.errors.nomor_spkl" class="text-red-500 text-sm mt-2">
             {{ page.props.errors?.nomor_spkl }}
           </div>
         </div>
         <div>
           <label class="block font-bold mb-2">Ttd di Rekap Presensi</label>
-          <Select
-            v-model="form.ttd_rekap"
-            placeholder="Pilih Yang Ttd Rekap Presensi"
-            :options="tim_kerja"
-            optionLabel="label"
-            optionValue="value"
-            fluid
-            filter
-            showClear
-          />
-          <div
-            v-if="page.props.errors.ttd_rekap"
-            class="text-red-500 text-sm mt-2"
-          >
+          <Select v-model="form.ttd_rekap" placeholder="Pilih Yang Ttd Rekap Presensi" :options="tim_kerja"
+            optionLabel="label" optionValue="value" fluid filter showClear />
+          <div v-if="page.props.errors.ttd_rekap" class="text-red-500 text-sm mt-2">
             {{ page.props.errors?.ttd_rekap }}
           </div>
         </div>
       </div>
       <template #footer>
-        <Button
-          label="Cancel"
-          @click="createDialog = false"
-          size="small"
-          severity="danger"
-          autofocus
-        />
-        <Button
-          @click="submit"
-          label="Cetak"
-          size="small"
-          severity="success"
-          autofocus
-        />
+        <Button label="Cancel" @click="createDialog = false" size="small" severity="danger" autofocus />
+        <Button @click="submit" label="Cetak" size="small" severity="success" autofocus />
       </template>
     </Dialog>
-    <Dialog
-      position="top"
-      v-model:visible="presensiDialog"
-      modal
-      header="Upload Presensi"
-      class="min-w-[30vw]"
-    >
+    <Dialog position="top" v-model:visible="presensiDialog" modal header="Upload Presensi" class="min-w-[30vw]">
       <div class="flex flex-col gap-4">
         <div>
           <label class="block font-bold mb-2">Pilih Bulan</label>
           <div class="flex flex-wrap flex-row space-x-2">
-            <Select
-              class="w-[45%]"
-              v-model="presensiYear"
-              placeholder="Pilih tahun"
-              :options="yearDrop"
-              optionLabel="label"
-              optionValue="value"
-            />
-            <Select
-              class="w-[45%]"
-              v-model="presensiMonth"
-              placeholder="Pilih bulan"
-              :options="monthDrop"
-              optionLabel="label"
-              optionValue="value"
-            />
+            <Select class="w-[45%]" v-model="presensiYear" placeholder="Pilih tahun" :options="yearDrop"
+              optionLabel="label" optionValue="value" />
+            <Select class="w-[45%]" v-model="presensiMonth" placeholder="Pilih bulan" :options="monthDrop"
+              optionLabel="label" optionValue="value" />
           </div>
         </div>
         <div>
@@ -278,31 +148,13 @@
             <i class="pi pi-file"></i>
             Template
           </Button>
-          <FileUpload
-            ref="fileupload"
-            mode="basic"
-            name="file"
-            accept=".xlsx,.xls,.csv"
-            :maxFileSize="1000000"
-            @select="onSelectFile"
-          />
+          <FileUpload ref="fileupload" mode="basic" name="file" accept=".xlsx,.xls,.csv" :maxFileSize="1000000"
+            @select="onSelectFile" />
         </div>
       </div>
       <template #footer>
-        <Button
-          label="Cancel"
-          @click="presensiDialog = false"
-          size="small"
-          severity="danger"
-          autofocus
-        />
-        <Button
-          @click="submitPresensi"
-          label="Upload"
-          size="small"
-          severity="success"
-          autofocus
-        />
+        <Button label="Cancel" @click="presensiDialog = false" size="small" severity="danger" autofocus />
+        <Button @click="submitPresensi" label="Upload" size="small" severity="success" autofocus />
       </template>
     </Dialog>
   </SimpleLayout>
@@ -462,6 +314,14 @@ const onSelectFile = (e) => {
 const presensiUploaded = computed(() => {
   if (selectedFile.value && selectedFile.value.length > 2) {
     const tanggalArray = selectedFile.value[0].slice(1);
+    // Kategorisasi tanggal: S=Sabtu, M=Minggu, L=Libur, K=Kerja (null/undefined)
+    const kategoriRow = selectedFile.value[1] ? selectedFile.value[1].slice(1) : [];
+    // Buat array kategori sepanjang tanggalArray, isi default 'K' untuk yang undefined/null
+    const kategoriArray = tanggalArray.map((_, idx) => {
+      const val = idx < kategoriRow.length ? kategoriRow[idx] : undefined;
+      return (val && typeof val === "string" && val.trim() !== "") ? val.trim() : "K";
+    });
+
     const hasil = [];
 
     const pYear = presensiYear.value || new Date().getFullYear();
@@ -489,9 +349,11 @@ const presensiUploaded = computed(() => {
             selisih = Math.round(selisih * 100) / 100;
             const tgl = Number(tanggalArray[j - 1]);
             const tanggalDate = new Date(pYear, pMonth - 1, tgl);
+            const kategori = kategoriArray[j - 1] || "K";
 
             hasil.push({
               nip: nip.toString(),
+              kategori: kategori,
               tanggal: tanggalDate,
               jam_masuk: masuk,
               jam_pulang: pulang,
@@ -612,4 +474,4 @@ const printUang = async () => {
   nativeForm.submit();
   document.body.removeChild(nativeForm);
 };
-</script> 
+</script>

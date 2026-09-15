@@ -23,7 +23,8 @@ class LemburPegawai extends Model
         'created_by',
         'edited_by',
         'jam_berangkat',
-        'jam_pulang'
+        'jam_pulang',
+        'kategori'
     ];
 
     protected $appends = ['status_detail'];

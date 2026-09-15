@@ -113,7 +113,8 @@ class SpklController extends Controller
                 if ($pegawai) {
                     $result = [
                         'jam_berangkat' => $value['jam_masuk'],
-                        'jam_pulang' => $value['jam_pulang']
+                        'jam_pulang' => $value['jam_pulang'],
+                        'kategori' => $value['kategori'] ?? 'K',
                     ];
                     $lp_to_update = LemburPegawai::where('pegawai_id', $pegawai->id)
                         ->where('tanggal', $tgl);
@@ -146,10 +147,13 @@ class SpklController extends Controller
         ]);
 
         $query = LemburPegawai::from('sulutweb_simple.lembur_pegawai')
+            ->select('sulutweb_simple.lembur_pegawai.*')
             ->where('status', 4)
             ->join('sulutweb_man_management.pegawai as sp', 'sp.id', 'lembur_pegawai.pegawai_id')
             ->whereYear('tanggal', $request->tahun)
             ->whereMonth('tanggal', $request->bulan)
+            ->whereNotNull('jam_berangkat')
+            ->whereNotNull('jam_pulang')
             ->with(['pegawai', 'lembur']);
         $query->orderBy('sp.name', 'asc')->orderBy('tanggal', 'asc');
         $lembur = $query->get()->groupBy('pegawai_id');
@@ -175,7 +179,7 @@ class SpklController extends Controller
             'alignment' => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER
         ]);
         $table->addRow();
-        $table->addCell(500)->addText('No.', ['bold' => true]);
+        $table->addCell(600)->addText('No.', ['bold' => true]);
         $table->addCell(2000)->addText('Nama Pegawai', ['bold' => true]);
         $table->addCell(2500)->addText('Jabatan', ['bold' => true]);
         $table->addCell(2000)->addText('Tanggal', ['bold' => true]);
@@ -189,10 +193,11 @@ class SpklController extends Controller
         ]);
 
         $presensi->addRow();
-        $presensi->addCell(500)->addText('No.', ['bold' => true]);
+        $presensi->addCell(600)->addText('No.', ['bold' => true]);
         $presensi->addCell(2000)->addText('Nama Pegawai', ['bold' => true]);
         $presensi->addCell(3000)->addText('NIP', ['bold' => true]);
         $presensi->addCell(2000)->addText('Hari, Tanggal', ['bold' => true]);
+        $presensi->addCell(2000)->addText('Jumlah Jam Pengajuan', ['bold' => true]);
         $presensi->addCell(2000)->addText('Presensi Masuk', ['bold' => true]);
         $presensi->addCell(2000)->addText('Presensi Pulang', ['bold' => true]);
         $presensi->addCell(2000)->addText('Lamanya Lembur', ['bold' => true]);
@@ -204,11 +209,11 @@ class SpklController extends Controller
             foreach ($items as $index => $i) {
                 $table->addRow();
                 if ($index == 0) {
-                    $table->addCell(500, ['vMerge' => 'restart'])->addText($no++);
+                    $table->addCell(600, ['vMerge' => 'restart'])->addText($no++);
                     $table->addCell(2000, ['vMerge' => 'restart'])->addText($i->pegawai->name);
                     $table->addCell(2500, ['vMerge' => 'restart'])->addText($i->pegawai->jabatan);
                 } else {
-                    $table->addCell(500, ['vMerge' => 'continue']);
+                    $table->addCell(600, ['vMerge' => 'continue']);
                     $table->addCell(2000, ['vMerge' => 'continue']);
                     $table->addCell(2500, ['vMerge' => 'continue']);
                 }
@@ -227,18 +232,18 @@ class SpklController extends Controller
                 $firstItem = $dateItems->first();
                 $presensi->addRow();
                 if ($dateIndex == 0) {
-                    $presensi->addCell(500, ['vMerge' => 'restart'])->addText($noPresensi++);
+                    $presensi->addCell(600, ['vMerge' => 'restart'])->addText($noPresensi++);
                     $presensi->addCell(2000, ['vMerge' => 'restart'])->addText($firstItem->pegawai->name);
                     $presensi->addCell(3000, ['vMerge' => 'restart'])
                         ->addText($firstItem->pegawai->nip_lama . '/' . $firstItem->pegawai->nip);
                 } else {
-                    $presensi->addCell(500, ['vMerge' => 'continue']);
+                    $presensi->addCell(600, ['vMerge' => 'continue']);
                     $presensi->addCell(2000, ['vMerge' => 'continue']);
                     $presensi->addCell(3000, ['vMerge' => 'continue']);
                 }
                 $tgl = Carbon::parse($tanggal)->locale('id');
                 $presensi->addCell(2000)->addText($tgl->translatedFormat('l, j F Y'));
-
+                $presensi->addCell(2000)->addText($firstItem->jumlah_jam);
                 $jam_berangkat = $firstItem->jam_berangkat;
                 $jam_pulang = $firstItem->jam_pulang;
                 $dayOfWeek = $tgl->dayOfWeekIso;
@@ -249,6 +254,9 @@ class SpklController extends Controller
                 $tampil_berangkat = '-';
                 $tampil_pulang = '-';
 
+                $kategori = $dateItems->pluck('kategori')->filter()->first() ?? $firstItem->kategori ?? ($dayOfWeek <= 5 ? 'K' : ($dayOfWeek == 6 ? 'S' : 'M'));
+                $isHariKerja = ($kategori === 'K');
+
                 if ($jam_berangkat && $jam_pulang) {
                     $masuk = Carbon::parse($jam_berangkat);
                     $pulang = Carbon::parse($jam_pulang);
@@ -257,7 +265,7 @@ class SpklController extends Controller
                         $pulang->addDay();
                     }
 
-                    if ($dayOfWeek <= 5) {
+                    if ($isHariKerja) {
                         $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
                         $batas_pulang = Carbon::parse($batas_pulang_str);
                         $mulai_lembur = $masuk->greaterThan($batas_pulang) ? $masuk : $batas_pulang;
@@ -269,6 +277,7 @@ class SpklController extends Controller
                         }
                         $tampil_berangkat = ($dayOfWeek <= 4) ? '16:00' : '16:30';
                     } else {
+                        // Kategori L, S, M (Libur / Weekend)
                         $selisih = round($masuk->diffInMinutes($pulang) / 60, 2);
                         $tampil_berangkat = Carbon::parse($jam_berangkat)->format('H:i');
                     }
@@ -282,7 +291,7 @@ class SpklController extends Controller
 
                 $presensi->addCell(2000)->addText($tampil_berangkat);
                 $presensi->addCell(2000)->addText($tampil_pulang);
-                $presensi->addCell(2000)->addText(str_replace('.', ',', (string) abs($lamanya)));
+                $presensi->addCell(2000)->addText((string) floor(abs($lamanya)));
 
                 $dateIndex++;
             }
@@ -325,16 +334,16 @@ class SpklController extends Controller
         if (!in_array($role, $isOpen)) {
             $query->whereHas('lembur', function ($q) use ($myTeam) {
                 $q->whereIn('tim_id', $myTeam)
-                  ->orWhereIn('tim_penanggung_jawab_id', $myTeam);
+                    ->orWhereIn('tim_penanggung_jawab_id', $myTeam);
             });
         }
 
         $query->with(['lembur.tim', 'lembur.timPenanggungJawab', 'lembur.spkl']);
         $lp = $query->get()->groupBy(function ($item) {
-                return $item->lembur->tim->label
-                    ?? $item->lembur->timPenanggungJawab->label
-                    ?? 'Tidak Ada Tim';
-            })
+            return $item->lembur->tim->label
+                ?? $item->lembur->timPenanggungJawab->label
+                ?? 'Tidak Ada Tim';
+        })
             ->map(function ($group, $key) {
                 $first_item = $group->first();
                 $upload_status = LaporanUpload::where('lembur_id', $first_item->lembur_id)->first();
@@ -418,12 +427,12 @@ class SpklController extends Controller
                     // Kondisi 1: Lembur biasa (tim_id cocok) DAN pegawai adalah anggota tim
                     $q->where(function ($q1) use ($tim_ref, $anggota_tim) {
                         $q1->whereIn('pegawai_id', $anggota_tim)
-                           ->whereHas('lembur', function ($q_lembur) use ($tim_ref) {
-                               $q_lembur->where('tim_id', $tim_ref->id);
-                           });
+                            ->whereHas('lembur', function ($q_lembur) use ($tim_ref) {
+                                $q_lembur->where('tim_id', $tim_ref->id);
+                            });
                     })
-                    // Kondisi 2: Lembur lintas tim (tim_penanggung_jawab_id cocok) -> SEMUA pegawai di pengajuan masuk
-                    ->orWhereHas('lembur', function ($q_lembur) use ($tim_ref) {
+                        // Kondisi 2: Lembur lintas tim (tim_penanggung_jawab_id cocok) -> SEMUA pegawai di pengajuan masuk
+                        ->orWhereHas('lembur', function ($q_lembur) use ($tim_ref) {
                         $q_lembur->where('tim_penanggung_jawab_id', $tim_ref->id);
                     });
                 })
@@ -524,6 +533,7 @@ class SpklController extends Controller
         ]);
 
         $query = LemburPegawai::from('sulutweb_simple.lembur_pegawai')
+            ->select('sulutweb_simple.lembur_pegawai.*')
             ->where('status', 4)
             ->whereNotNull('jam_berangkat')
             ->whereNotNull('jam_pulang')
@@ -588,6 +598,9 @@ class SpklController extends Controller
                 $maxDurasi = $dateItems->max('jumlah_jam');
                 $durasi_final = 0;
 
+                $kategori = $dateItems->pluck('kategori')->filter()->first() ?? $first->kategori ?? ($dayOfWeek <= 5 ? 'K' : ($dayOfWeek == 6 ? 'S' : 'M'));
+                $isHariKerja = ($kategori === 'K');
+
                 if ($first->jam_berangkat && $first->jam_pulang) {
                     $masuk = Carbon::parse($first->jam_berangkat);
                     $pulang = Carbon::parse($first->jam_pulang);
@@ -596,7 +609,7 @@ class SpklController extends Controller
                         $pulang->addDay();
                     }
 
-                    if ($dayOfWeek <= 5) {
+                    if ($isHariKerja) {
                         $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
                         $batas_pulang = Carbon::parse($batas_pulang_str);
 
@@ -608,6 +621,7 @@ class SpklController extends Controller
                             $selisih = 0;
                         }
                     } else {
+                        // Kategori L, S, M (Libur / Weekend)
                         $selisih = floor($masuk->diffInMinutes($pulang) / 60);
                     }
 
@@ -616,7 +630,7 @@ class SpklController extends Controller
                 if ($durasi_final <= 0)
                     continue;
 
-                $tipe = ($dayOfWeek >= 6) ? 'HL' : 'HB';
+                $tipe = $isHariKerja ? 'HB' : 'HL';
                 $kolom = $tipe . $durasi_final;
                 if (!isset($rekap[$nip_lama][$kolom])) {
                     $rekap[$nip_lama][$kolom] = 0;
@@ -750,6 +764,9 @@ class SpklController extends Controller
                 $maxDurasi = $dateItems->max('jumlah_jam');
                 $durasi_final = 0;
 
+                $kategori = $dateItems->pluck('kategori')->filter()->first() ?? $first->kategori ?? ($dayOfWeek <= 5 ? 'K' : ($dayOfWeek == 6 ? 'S' : 'M'));
+                $isHariKerja = ($kategori === 'K');
+
                 if ($first->jam_berangkat && $first->jam_pulang) {
                     $masuk = Carbon::parse($first->jam_berangkat);
                     $pulang = Carbon::parse($first->jam_pulang);
@@ -758,7 +775,7 @@ class SpklController extends Controller
                         $pulang->addDay();
                     }
 
-                    if ($dayOfWeek <= 5) {
+                    if ($isHariKerja) {
                         $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
                         $batas_pulang = Carbon::parse($batas_pulang_str);
 
@@ -770,6 +787,7 @@ class SpklController extends Controller
                             $selisih = 0;
                         }
                     } else {
+                        // Kategori L, S, M (Libur / Weekend)
                         $selisih = floor($masuk->diffInMinutes($pulang) / 60);
                     }
 

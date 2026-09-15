@@ -207,6 +207,9 @@ class HomeController extends Controller
                     $durasi = $dateItems->max('jumlah_jam');
                     $durasi_final = 0;
 
+                    $kategori = $dateItems->pluck('kategori')->filter()->first() ?? $lp->kategori ?? ($dayOfWeek <= 5 ? 'K' : ($dayOfWeek == 6 ? 'S' : 'M'));
+                    $isHariKerja = ($kategori === 'K');
+
                     if ($lp->jam_berangkat && $lp->jam_pulang) {
                         $masuk = Carbon::parse($lp->jam_berangkat);
                         $pulang = Carbon::parse($lp->jam_pulang);
@@ -215,7 +218,7 @@ class HomeController extends Controller
                             $pulang->addDay();
                         }
 
-                        if ($dayOfWeek <= 5) {
+                        if ($isHariKerja) {
                             $batas_pulang_str = ($dayOfWeek <= 4) ? '16:00:00' : '16:30:00';
                             $batas_pulang = Carbon::parse($batas_pulang_str);
 
@@ -227,6 +230,7 @@ class HomeController extends Controller
                                 $selisih = 0;
                             }
                         } else {
+                            // Kategori L, S, M (Libur / Weekend)
                             $selisih = floor($masuk->diffInMinutes($pulang) / 60);
                         }
                         $durasi_final = ($durasi && $selisih > $durasi) ? $durasi : $selisih;
