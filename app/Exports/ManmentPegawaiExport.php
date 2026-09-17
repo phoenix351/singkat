@@ -17,21 +17,112 @@ class ManmentPegawaiExport implements FromCollection, WithHeadings, WithColumnFo
     /**
      * @return \Illuminate\Support\Collection
      */
+    protected $searchField;
+    protected $listColumn;
+    protected $sortField;
+    protected $sortOrder;
     protected $kabupaten;
 
-    public function __construct($kabupaten = null)
+    public function __construct($param = null, $listColumn = null)
     {
-        $this->kabupaten = $kabupaten;
+        if ($param instanceof \Illuminate\Http\Request) {
+            $this->searchField = $param->input('searchField');
+            $this->listColumn = $param->input('listColumn', []);
+            $this->sortField = $param->input('sortField');
+            $this->sortOrder = $param->input('sortOrder');
+            $this->kabupaten = $param->input('kabupaten');
+        } elseif (is_array($param)) {
+            $this->searchField = $param['searchField'] ?? null;
+            $this->listColumn = $param['listColumn'] ?? [];
+            $this->sortField = $param['sortField'] ?? null;
+            $this->sortOrder = $param['sortOrder'] ?? null;
+            $this->kabupaten = $param['kabupaten'] ?? null;
+        } else {
+            $this->searchField = $param;
+            $this->kabupaten = $param;
+            $this->listColumn = is_array($listColumn) ? $listColumn : [];
+        }
+
+        $req = request();
+        if ($req instanceof \Illuminate\Http\Request) {
+            if ($this->searchField === null || $this->searchField === '' || $this->searchField === 'null') {
+                $this->searchField = $req->input('searchField');
+            }
+            if (empty($this->listColumn)) {
+                $this->listColumn = $req->input('listColumn', []);
+            }
+            if ($this->sortField === null) {
+                $this->sortField = $req->input('sortField');
+            }
+            if ($this->sortOrder === null) {
+                $this->sortOrder = $req->input('sortOrder');
+            }
+            if ($this->kabupaten === null || $this->kabupaten === '' || $this->kabupaten === 'null') {
+                $this->kabupaten = $req->input('kabupaten');
+            }
+        }
     }
 
     public function collection()
     {
-        //
         $query = Pegawai::query();
-        $query->select(['nip_lama', 'nip', 'username', 'email', 'name', 'golongan', 'jabatan', 'provinsi', 'kabupaten']);
-        if ($this->kabupaten !== 'null') $query->where('kabupaten', 'like', '%' . $this->kabupaten . '%');
-        $pegawai = $query
-            ->get();
+        $query->select(['id', 'nip_lama', 'nip', 'username', 'email', 'name', 'golongan', 'jabatan', 'provinsi', 'kabupaten', 'organisasi']);
+
+        if (!empty($this->sortOrder)) {
+            $order = $this->sortOrder == 1 ? 'asc' : 'desc';
+            if ($this->sortField === 'satker') {
+                $query->orderBy('organisasi', $order);
+            } elseif (!empty($this->sortField)) {
+                $query->orderBy($this->sortField, $order);
+            }
+        } else {
+            $query->orderBy('organisasi', 'asc')
+                ->orderBy('name', 'asc');
+        }
+
+        $search = $this->searchField;
+        if (($search === null || $search === '' || $search === 'null') && ($this->kabupaten !== null && $this->kabupaten !== '' && $this->kabupaten !== 'null')) {
+            $search = $this->kabupaten;
+        }
+
+        if ($search !== null && $search !== '' && $search !== 'null') {
+            $columns = !empty($this->listColumn) && is_array($this->listColumn)
+                ? array_values($this->listColumn)
+                : ['nip_lama', 'nip', 'username', 'email', 'name', 'golongan', 'jabatan', 'satker', 'kabupaten'];
+
+            $validColumns = [];
+            foreach ($columns as $col) {
+                if ($col === 'satker' || in_array($col, ['nip_lama', 'nip', 'username', 'email', 'name', 'golongan', 'jabatan', 'provinsi', 'kabupaten', 'organisasi'])) {
+                    $validColumns[] = $col;
+                }
+            }
+
+            if (empty($validColumns)) {
+                $validColumns = ['nip_lama', 'nip', 'username', 'email', 'name', 'golongan', 'jabatan', 'satker', 'kabupaten'];
+            }
+
+            $query->where(function ($q) use ($search, $validColumns) {
+                foreach ($validColumns as $key => $value) {
+                    if ($key === 0) {
+                        if ($value === 'satker') {
+                            $q->where('organisasi', 'like', '%' . $search . '%')
+                                ->orWhere('kabupaten', 'like', '%' . $search . '%');
+                        } else {
+                            $q->where($value, 'like', '%' . $search . '%');
+                        }
+                    } else {
+                        if ($value === 'satker') {
+                            $q->orWhere('organisasi', 'like', '%' . $search . '%')
+                                ->orWhere('kabupaten', 'like', '%' . $search . '%');
+                        } else {
+                            $q->orWhere($value, 'like', '%' . $search . '%');
+                        }
+                    }
+                }
+            });
+        }
+
+        $pegawai = $query->get();
         return $pegawai;
     }
 

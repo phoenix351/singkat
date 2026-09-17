@@ -59,8 +59,7 @@ Route::prefix('man-management')->name('man-management.')->middleware(['auth', 'u
         });
 
         Route::get('/export/pegawai', function (Request $request) {
-            $kabupaten = $request->kabupaten;
-            return Excel::download(new ManmentPegawaiExport($kabupaten), 'pegawai.xlsx');
+            return Excel::download(new ManmentPegawaiExport($request), 'pegawai.xlsx');
         })->name('export-pegawai');
         Route::get('/export/tim-kerja', function (Request $request) {
             $tahun = $request->tahun;

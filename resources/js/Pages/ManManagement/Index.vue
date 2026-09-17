@@ -521,10 +521,23 @@ const uploadPegawai = async ({ update = false }) => {
   }
 };
 const exportPegawai = () => {
+  const params = new URLSearchParams();
+  if (searchField.value) {
+    params.append("searchField", searchField.value);
+  }
+  selectedColumns.value.forEach((col, index) => {
+    params.append(`listColumn[${index}]`, col.field);
+  });
+  if (sortField.value) {
+    params.append("sortField", sortField.value);
+  }
+  if (sortOrder.value) {
+    params.append("sortOrder", sortOrder.value);
+  }
+  const queryString = params.toString();
   const url =
     route("man-management.export-pegawai") +
-    "?" +
-    new URLSearchParams({ kabupaten: searchField.value }).toString();
+    (queryString ? "?" + queryString : "");
   window.location.href = url;
 };
 const downloadTemplate = () => {

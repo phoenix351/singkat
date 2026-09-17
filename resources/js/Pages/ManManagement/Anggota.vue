@@ -1,4 +1,5 @@
 <template>
+
   <Head title="Keanggotaan" />
   <AppLayout>
     <div class="card">
@@ -13,95 +14,45 @@
             </InputIcon>
             <InputText v-model.trim="searchField" placeholder="Cari Tim Kerja" />
           </IconField>
-          <Button
-            icon="pi pi-download"
-            rounded
-            aria-label="Download"
-            severity="success"
-            class="mr-2 mb-2 lg:mb-0"
-          />
+          <Button icon="pi pi-download" rounded aria-label="Download" severity="success" class="mr-2 mb-2 lg:mb-0" />
           <!-- @click="showToast" -->
-          <Button
-            @click="createDialog = true"
-            severity="info"
-            rounded
-            class="mb-2 lg:mb-0"
-          >
+          <Button @click="createDialog = true" severity="info" rounded class="mb-2 lg:mb-0">
             <i class="pi pi-plus"></i>
             Tambah Anggota Tim Baru
           </Button>
         </div>
       </div>
-      <DataTable
-        :value="anggota.data"
-        class="w-full"
-        lazy
-        paginator
-        :rows="anggota.per_page"
-        :first="(anggota.current_page - 1) * anggota.per_page"
-        :total-records="anggota.total"
-        :rows-per-page-options="[10, 20, 50, 100]"
-        :removable-sort="true"
-        :sort-field="sortField"
-        :sort-order="sortOrder"
-        @page="fetchData"
-        @sort="fetchData"
+      <DataTable :value="anggota.data" class="w-full" lazy paginator :rows="anggota.per_page"
+        :first="(anggota.current_page - 1) * anggota.per_page" :total-records="anggota.total"
+        :rows-per-page-options="[10, 20, 50, 100]" :removable-sort="true" :sort-field="sortField"
+        :sort-order="sortOrder" @page="fetchData" @sort="fetchData"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data"
-      >
-        <Column
-          v-for="item in allColumns"
-          :key="item.field"
-          :field="item.field"
-          :header="item.header"
-          sortable
-        />
+        current-page-report-template="Menampilkan {first} s.d {last} dari {totalRecords} data">
+        <Column v-for="item in allColumns" :key="item.field" :field="item.field" :header="item.header" sortable />
         <template #empty>
           <div class="text-center">Data tidak ada</div>
         </template>
         <Column :exportable="false" style="min-width: 12rem">
           <template #body="slotProps">
             <div class="flex justify-end gap-2 w-full">
-              <Button
-                icon="pi pi-pencil"
-                @click="updateAnggota(slotProps.data)"
-                variant="outlined"
-                rounded
-                class="mr-2"
-              />
-              <Button
-                @click="deleteAnggota(slotProps.data)"
-                icon="pi pi-trash"
-                variant="outlined"
-                rounded
-                severity="danger"
-              />
+              <Button icon="pi pi-pencil" @click="updateAnggota(slotProps.data)" variant="outlined" rounded
+                class="mr-2" />
+              <Button @click="deleteAnggota(slotProps.data)" icon="pi pi-trash" variant="outlined" rounded
+                severity="danger" />
             </div>
           </template>
         </Column>
       </DataTable>
     </div>
-    <Dialog
-      v-model:visible="createDialog"
-      modal
-      header="Tambah Tim Kerja"
-      class="min-w-[30vw]"
-    >
+    <Dialog v-model:visible="createDialog" modal header="Tambah Tim Kerja" class="min-w-[30vw]">
       <div class="flex flex-col gap-6">
         <div>
           <label class="block font-bold mb-3">Upload/Manual</label>
-          <Select
-            :options="[
-              { label: 'Manual', value: 'manual' },
-              { label: 'Upload', value: 'upload' },
-            ]"
-            class="w-full"
-            showClear
-            option-label="label"
-            option-value="value"
-            v-model="form.tipe"
-            placeholder="Pilih Mode"
-          />
+          <Select :options="[
+            { label: 'Manual', value: 'manual' },
+            { label: 'Upload', value: 'upload' },
+          ]" class="w-full" showClear option-label="label" option-value="value" v-model="form.tipe"
+            placeholder="Pilih Mode" />
           <div v-if="form.errors.tipe" class="text-red-500 text-sm mt-2">
             {{ form.errors.tipe }}
           </div>
@@ -109,50 +60,27 @@
         <template v-if="form.tipe == 'manual'">
           <div>
             <label for="tim" class="block font-bold mb-3">Nama Tim Kerja</label>
-            <Select
-              :options="tim"
-              class="w-full"
-              showClear
-              filter
-              option-label="label"
-              option-value="value"
-              v-model="form.tim_id"
-              placeholder="Pilih Tim"
-            />
+            <Select :options="tim" class="w-full" showClear filter option-label="label" option-value="value"
+              v-model="form.tim_id" placeholder="Pilih Tim" />
             <div v-if="page.props.errors.tim_id" class="text-red-500 text-sm mt-2">
               {{ page.props.errors?.tim_id }}
             </div>
           </div>
           <div>
             <label for="pegawai" class="block font-bold mb-3">Nama Pegawai</label>
-            <Select
-              :options="pegawai"
-              class="w-full"
-              showClear
-              filter
-              option-label="label"
-              option-value="value"
-              v-model="form.pegawai_id"
-              placeholder="Pilih Pegawai"
-            />
+            <Select :options="pegawai" class="w-full" showClear filter option-label="label" option-value="value"
+              v-model="form.pegawai_id" placeholder="Pilih Pegawai" />
             <div v-if="page.props.errors.pegawai_id" class="text-red-500 text-sm mt-2">
               {{ page.props.errors?.pegawai_id }}
             </div>
           </div>
           <div>
             <label for="keanggotaan" class="block font-bold mb-3">Keanggotaan</label>
-            <Select
-              :options="[
-                { label: 'Anggota', value: 'anggota' },
-                { label: 'Ketua', value: 'ketua' },
-              ]"
-              class="w-full"
-              showClear
-              option-label="label"
-              option-value="value"
-              v-model="form.keanggotaan"
-              placeholder="Pilih Keanggotaan"
-            />
+            <Select :options="[
+              { label: 'Anggota', value: 'anggota' },
+              { label: 'Ketua', value: 'ketua' },
+            ]" class="w-full" showClear option-label="label" option-value="value" v-model="form.keanggotaan"
+              placeholder="Pilih Keanggotaan" />
             <div v-if="page.props.errors.keanggotaan" class="text-red-500 text-sm mt-2">
               {{ page.props.errors?.keanggotaan }}
             </div>
@@ -164,97 +92,40 @@
               <i class="pi pi-file"></i>
               Template
             </Button>
-            <FileUpload
-              ref="fileupload"
-              mode="basic"
-              name="file"
-              accept=".xlsx,.xls,.csv"
-              :maxFileSize="1000000"
-              @select="onSelectFile"
-            />
+            <FileUpload ref="fileupload" mode="basic" name="file" accept=".xlsx,.xls,.csv" :maxFileSize="1000000"
+              @select="onSelectFile" />
           </div>
         </template>
       </div>
       <template #footer>
-        <Button
-          label="Cancel"
-          @click="createDialog = false"
-          size="small"
-          severity="danger"
-          autofocus
-        />
-        <Button
-          @click="submit({ fileupload: selectedFile })"
-          label="Simpan"
-          size="small"
-          severity="success"
-          autofocus
-        />
+        <Button label="Cancel" @click="createDialog = false" size="small" severity="danger" autofocus />
+        <Button @click="submit({ fileupload: selectedFile })" label="Simpan" size="small" severity="success"
+          autofocus />
       </template>
     </Dialog>
-    <Dialog
-      v-model:visible="updateDialog"
-      modal
-      header="Edit Keanggotaan"
-      class="min-w-[30vw]"
-    >
+    <Dialog v-model:visible="updateDialog" modal header="Edit Keanggotaan" class="min-w-[30vw]">
       <div class="flex flex-col gap-6">
         <div>
           <label for="tim" class="block font-bold mb-3">Tim Kerja</label>
-          <Select
-            :options="tim"
-            class="w-full"
-            showClear
-            option-label="label"
-            option-value="value"
-            v-model="editedAnggota.tim_id"
-            placeholder="Pilih Tim"
-            disabled
-          />
+          <Select :options="tim" class="w-full" showClear option-label="label" option-value="value"
+            v-model="editedAnggota.tim_id" placeholder="Pilih Tim" disabled />
         </div>
         <div>
           <label for="pegawai" class="block font-bold mb-3">Nama Pegawai</label>
-          <Select
-            :options="pegawai"
-            class="w-full"
-            showClear
-            option-label="label"
-            option-value="value"
-            v-model="editedAnggota.pegawai_id"
-            placeholder="Pilih Pegawai"
-            disabled
-          />
+          <Select :options="pegawai" class="w-full" showClear option-label="label" option-value="value"
+            v-model="editedAnggota.pegawai_id" placeholder="Pilih Pegawai" disabled />
         </div>
         <div>
           <label for="keanggotaan" class="block font-bold mb-3">Keanggotaan</label>
-          <Select
-            :options="[
-              { label: 'Anggota', value: 'anggota' },
-              { label: 'Ketua', value: 'ketua' },
-            ]"
-            class="w-full"
-            showClear
-            option-label="label"
-            option-value="value"
-            v-model="editedAnggota.keanggotaan"
-            placeholder="Pilih Keanggotaan"
-          />
+          <Select :options="[
+            { label: 'Anggota', value: 'anggota' },
+            { label: 'Ketua', value: 'ketua' },
+          ]" class="w-full" showClear option-label="label" option-value="value" v-model="editedAnggota.keanggotaan"
+            placeholder="Pilih Keanggotaan" />
         </div>
       </div>
-      <template #footer
-        ><Button
-          label="Cancel"
-          @click="updateDialog = false"
-          size="small"
-          severity="danger"
-          autofocus />
-        <Button
-          @click="submit({ update: true })"
-          label="Simpan"
-          size="small"
-          severity="success"
-          autofocus
-      /></template>
+      <template #footer><Button label="Cancel" @click="updateDialog = false" size="small" severity="danger" autofocus />
+        <Button @click="submit({ update: true })" label="Simpan" size="small" severity="success" autofocus /></template>
     </Dialog>
   </AppLayout>
 </template>
@@ -275,8 +146,8 @@ const props = defineProps({
   pegawai: { type: Array },
 });
 const allColumns = [
-  { field: "tim.label", header: "Tim Kerja" },
-  { field: "pegawai.name", header: "Nama Pegawai" },
+  { field: "timkerja", header: "Tim Kerja" },
+  { field: "pegawai", header: "Nama Pegawai" },
   { field: "keanggotaan", header: "Keanggotaan" },
 ];
 const searchField = ref(null);
