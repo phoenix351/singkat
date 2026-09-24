@@ -230,7 +230,7 @@ class PegawaiController extends Controller
     {
         if ($request->input('fileUpload')) {
             $fileData = $request->input('fileUpload');
-            if ($fileData[0][0] != 'nama_tim' && $fileData[0][1] != 'nama_pegawai' && $fileData[0][2] != 'keanggotaan_tim') {
+            if (($fileData[0][0] ?? null) != 'nama_tim' || ($fileData[0][1] ?? null) != 'nip_bps' || ($fileData[0][2] ?? null) != 'keanggotaan_tim') {
                 return redirect()->route('man-management.anggota.index')->with('error', 'File yang diupload tidak sesuai template');
             }
             $notification = [];
@@ -240,10 +240,10 @@ class PegawaiController extends Controller
                 if ($key === 0)
                     continue;
                 if (!empty($value) && count($value) > 0) {
-                    $tim = TimKerja::where('label', $value[0])->value('id');
+                    $tim = TimKerja::where('label', trim((string)($value[0] ?? '')))->value('id');
                     if (!$tim)
                         $notification[] = ['type' => 'error', 'message' => 'Tim Kerja ' . $value[0] . ' tidak ada'];
-                    $pegawai = ManManagementPegawai::where('name', $value[1])->value('id');
+                    $pegawai = ManManagementPegawai::where('nip_lama', trim((string)($value[1] ?? '')))->value('id');
                     if (!$pegawai)
                         $notification[] = ['type' => 'error', 'message' => 'Pegawai ' . $value[1] . ' tidak ada'];
                     $check_keanggotaan = false;

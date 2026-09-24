@@ -138,8 +138,8 @@ class HomeController extends Controller
                     ->orWhere('mmtk.label', 'like', '%' . $request->searchField . '%');
             });
         }
-        $query->with(['tim', 'pegawai']);
-        $query->select(['mmktk.*']);
+        // $query->with(['tim', 'pegawai']);
+        $query->select(['mmktk.*', 'mmtk.label as timkerja', 'mmp.name as pegawai']);
         $anggota = $query->paginate($paginated, ['*'], 'page', $currentPage);
 
         $tim = TimKerja::select(['id as value', 'label'])->orderBy('label', 'asc')->get()->toArray();
