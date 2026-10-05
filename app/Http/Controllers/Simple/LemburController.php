@@ -127,16 +127,22 @@ class LemburController extends Controller
 
         $myTeam = AnggotaTimKerja::from('sulutweb_man_management.keanggotaan_timkerja as mkt')
             ->join('sulutweb_man_management.timkerja as ttk', 'mkt.tim_id', 'ttk.id')
-            ->select(['mkt.*', 'ttk.label as tim_kerja'])
+            ->select(['mkt.*', 'ttk.label as tim_kerja', 'ttk.tahun as tahun'])
             ->where('mkt.pegawai_id', Auth::user()->id)->get();
         $role = Role::currentRole();
         if ($role == 'admin') {
-            $myTeam = TimKerja::where('tahun', date('Y'))
+            $myTeam = TimKerja::orderBy('tahun', 'desc')
                 ->orderBy('label', 'asc')
-                ->select(['id as tim_id', 'label as tim_kerja'])
+                ->select(['id as tim_id', 'label as tim_kerja', 'tahun'])
                 ->get();
         }
         $keanggotaan = $myTeam->pluck('keanggotaan')->toArray();
+        $tahunTim = TimKerja::select('tahun')
+            ->distinct()
+            ->whereNotNull('tahun')
+            ->where('tahun', '!=', '')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun');
 
         if ($request->paginated) {
             return response()->json($lembur);
@@ -144,7 +150,8 @@ class LemburController extends Controller
         return Inertia::render('Simple/Lembur', [
             'lembur' => $lembur,
             'tim' => $myTeam,
-            'keanggotaan' => $keanggotaan
+            'keanggotaan' => $keanggotaan,
+            'tahun_tim' => $tahunTim,
         ]);
     }
 
@@ -592,26 +599,49 @@ class LemburController extends Controller
     {
         $validated = $request->validate([
             'individual' => ['required', 'boolean'],
-            'status' => ['required', 'string', 'in:setuju,ditolak'],
+            'status' => ['required', 'string', 'in:setuju,ditolak,sesuaikan'],
             'catatan' => ['required_if:status,ditolak', 'nullable', 'string'],
+            'jumlah_jam' => ['required_if:status,sesuaikan', 'nullable', 'numeric', 'min:0.5', 'max:24'],
             'lembur_id' => ['required_if:individual,false', 'integer'],
             'lembur_pegawai' => ['required_if:individual,true', 'nullable', 'array']
         ]);
 
         try {
             DB::connection('sulutweb_simple')->beginTransaction();
-            $statust = $validated['status'] == 'setuju' ? '4' : '5';
-            $updateData = [
-                'status' => $statust,
-                'catatan' => $validated['catatan'] ?? null,
-                'edited_by' => auth()->id()
-            ];
-            if ($validated['individual'] == true)
-                LemburPegawai::whereIn('id', $validated['lembur_pegawai'])->update($updateData);
-            else
-                LemburPegawai::where('lembur_id', $validated['lembur_id'])
-                    ->whereIn('status', ['2', '5'])
-                    ->update($updateData);
+
+            if ($validated['status'] == 'sesuaikan') {
+                $newJam = (float) $validated['jumlah_jam'];
+                $alasan = !empty($validated['catatan']) ? " (Alasan: " . trim($validated['catatan']) . ")" : "";
+
+                $queryLp = $validated['individual']
+                    ? LemburPegawai::whereIn('id', $validated['lembur_pegawai'])
+                    : LemburPegawai::where('lembur_id', $validated['lembur_id'])->whereIn('status', ['2', '4', '5']);
+
+                $lps = $queryLp->get();
+                foreach ($lps as $lp) {
+                    $catatanText = "Disetujui dengan penyesuaian dari {$lp->jumlah_jam} jam menjadi {$newJam} jam{$alasan}";
+                    $lp->update([
+                        'status' => '4',
+                        'jumlah_jam' => $newJam,
+                        'catatan' => $catatanText,
+                        'edited_by' => auth()->id()
+                    ]);
+                }
+            } else {
+                $statust = $validated['status'] == 'setuju' ? '4' : '5';
+                $updateData = [
+                    'status' => $statust,
+                    'catatan' => $validated['catatan'] ?? null,
+                    'edited_by' => auth()->id()
+                ];
+                if ($validated['individual'] == true)
+                    LemburPegawai::whereIn('id', $validated['lembur_pegawai'])->update($updateData);
+                else
+                    LemburPegawai::where('lembur_id', $validated['lembur_id'])
+                        ->whereIn('status', ['2', '4', '5'])
+                        ->update($updateData);
+            }
+
             DB::connection('sulutweb_simple')->commit();
             return redirect()->route('simple.lembur.verify-kabag')->with('success', 'Berhasil mengubah status lembur');
         } catch (\Throwable $th) {

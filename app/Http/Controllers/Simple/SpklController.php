@@ -68,6 +68,7 @@ class SpklController extends Controller
             'tanggal_pengajuan' => 'required',
             'nomor_spkl' => 'required',
             'ttd_rekap' => 'required',
+            'kategori_pegawai' => 'nullable|string',
         ], [
             'bulan.required' => 'Bulan wajib diisi',
             'tahun.required' => 'Tahun wajib diisi',
@@ -87,7 +88,8 @@ class SpklController extends Controller
             //code...
             DB::connection('sulutweb_simple')->beginTransaction();
             $lembur_id = $lembur->pluck('lembur_id')->toArray();
-            $spkl = Spkl::updateOrCreate(['nomor_spkl' => $validated['nomor_spkl']], $validated);
+            $spklData = collect($validated)->only(['nomor_spkl', 'bulan', 'tahun', 'tahun_dipa', 'tanggal_pengajuan'])->toArray();
+            $spkl = Spkl::updateOrCreate(['nomor_spkl' => $validated['nomor_spkl']], $spklData);
             $result = ['spkl_id' => $spkl->id];
             $lembur_to_update = Lembur::whereIn('id', $lembur_id);
             $lembur_to_update->update($result);
@@ -130,37 +132,13 @@ class SpklController extends Controller
         }
     }
 
-    public function print(Request $request)
+    private function isPppk($pegawai)
     {
-        $validated = $request->validate([
-            'bulan' => 'required',
-            'tahun' => 'required',
-            'tahun_dipa' => 'required',
-            'tanggal_pengajuan' => 'required',
-            'nomor_spkl' => 'required',
-        ], [
-            'bulan.required' => 'Bulan wajib diisi',
-            'tahun.required' => 'Tahun wajib diisi',
-            'tahun_dipa.required' => 'Tahun DIPA wajib diisi',
-            'tanggal_pengajuan.required' => 'Tanggal pengajuan wajib diisi',
-            'nomor_spkl.required' => 'Nomor SPKL wajib diisi',
-        ]);
+        return str_contains(strtolower($pegawai->email ?? ''), '-pppk');
+    }
 
-        $query = LemburPegawai::from('sulutweb_simple.lembur_pegawai')
-            ->select('sulutweb_simple.lembur_pegawai.*')
-            ->where('status', 4)
-            ->join('sulutweb_man_management.pegawai as sp', 'sp.id', 'lembur_pegawai.pegawai_id')
-            ->whereYear('tanggal', $request->tahun)
-            ->whereMonth('tanggal', $request->bulan)
-            ->whereNotNull('jam_berangkat')
-            ->whereNotNull('jam_pulang')
-            ->with(['pegawai', 'lembur']);
-        $query->orderBy('sp.name', 'asc')->orderBy('tanggal', 'asc');
-        $lembur = $query->get()->groupBy('pegawai_id');
-
-        $kpaId = Role::where('roles', 'kaprov')->value('to_role_id');
-        $kpa = $kpaId ? Pegawai::find($kpaId) : null;
-
+    private function generateSpklDocx($lemburGroupedByPegawai, Request $request, $kpa)
+    {
         Settings::setOutputEscapingEnabled(true);
         $template_path = public_path('document/template_spkl.docx');
         $template_processor = new TemplateProcessor($template_path);
@@ -204,7 +182,7 @@ class SpklController extends Controller
 
         $noPresensi = 1;
         $no = 1;
-        foreach ($lembur as $pegawaiId => $items) {
+        foreach ($lemburGroupedByPegawai as $pegawaiId => $items) {
             // SPKL Table (Tabel 1: Daftar Perintah Lembur)
             foreach ($items as $index => $i) {
                 $table->addRow();
@@ -308,14 +286,122 @@ class SpklController extends Controller
         $template_processor->setValue('ttd_rekap', $ttd_rekap ?? '-');
         $template_processor->setValue('ketua_ttd_rekap', $ketua_ttd_rekap->pegawai->name ?? '-');
 
-        $filename = "SPKL_" . $request->bulan . "_" . $request->tahun . ".docx";
-        if (ob_get_length())
-            ob_end_clean();
-        return response()->streamDownload(function () use ($template_processor) {
-            $template_processor->saveAs('php://output');
-        }, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        $tempPath = tempnam(sys_get_temp_dir(), 'spkl_') . '.docx';
+        $template_processor->saveAs($tempPath);
+        return $tempPath;
+    }
+
+    public function print(Request $request)
+    {
+        $validated = $request->validate([
+            'bulan' => 'required',
+            'tahun' => 'required',
+            'tahun_dipa' => 'required',
+            'tanggal_pengajuan' => 'required',
+            'nomor_spkl' => 'required',
+            'kategori_pegawai' => 'nullable|string',
+        ], [
+            'bulan.required' => 'Bulan wajib diisi',
+            'tahun.required' => 'Tahun wajib diisi',
+            'tahun_dipa.required' => 'Tahun DIPA wajib diisi',
+            'tanggal_pengajuan.required' => 'Tanggal pengajuan wajib diisi',
+            'nomor_spkl.required' => 'Nomor SPKL wajib diisi',
         ]);
+
+        $query = LemburPegawai::from('sulutweb_simple.lembur_pegawai')
+            ->select('sulutweb_simple.lembur_pegawai.*')
+            ->where('status', 4)
+            ->join('sulutweb_man_management.pegawai as sp', 'sp.id', 'lembur_pegawai.pegawai_id')
+            ->whereYear('tanggal', $request->tahun)
+            ->whereMonth('tanggal', $request->bulan)
+            ->whereNotNull('jam_berangkat')
+            ->whereNotNull('jam_pulang')
+            ->with(['pegawai', 'lembur']);
+        $query->orderBy('sp.name', 'asc')->orderBy('tanggal', 'asc');
+        $lembur = $query->get()->groupBy('pegawai_id');
+
+        $kpaId = Role::where('roles', 'kaprov')->value('to_role_id');
+        $kpa = $kpaId ? Pegawai::find($kpaId) : null;
+
+        $kategoriPegawai = $request->input('kategori_pegawai', 'all');
+
+        $lemburPns = $lembur->reject(function ($items) {
+            return $this->isPppk($items->first()->pegawai);
+        });
+        $lemburPppk = $lembur->filter(function ($items) {
+            return $this->isPppk($items->first()->pegawai);
+        });
+
+        if ($kategoriPegawai === 'pns') {
+            if ($lemburPns->isEmpty()) {
+                return redirect()->back()->with('error', 'Tidak ada data lembur untuk pegawai PNS pada bulan ini.');
+            }
+            $filePath = $this->generateSpklDocx($lemburPns, $request, $kpa);
+            $filename = "SPKL_{$request->bulan}_{$request->tahun}_PNS.docx";
+            return response()->download($filePath, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ])->deleteFileAfterSend(true);
+        }
+
+        if ($kategoriPegawai === 'pppk') {
+            if ($lemburPppk->isEmpty()) {
+                return redirect()->back()->with('error', 'Tidak ada data lembur untuk pegawai PPPK pada bulan ini.');
+            }
+            $filePath = $this->generateSpklDocx($lemburPppk, $request, $kpa);
+            $filename = "SPKL_{$request->bulan}_{$request->tahun}_PPPK.docx";
+            return response()->download($filePath, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ])->deleteFileAfterSend(true);
+        }
+
+        // Kategori 'all' (Semua)
+        if ($lemburPns->isEmpty() && $lemburPppk->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada data lembur pada bulan ini.');
+        }
+
+        // Jika hanya ada PNS
+        if ($lemburPppk->isEmpty()) {
+            $filePath = $this->generateSpklDocx($lemburPns, $request, $kpa);
+            $filename = "SPKL_{$request->bulan}_{$request->tahun}_PNS.docx";
+            return response()->download($filePath, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ])->deleteFileAfterSend(true);
+        }
+
+        // Jika hanya ada PPPK
+        if ($lemburPns->isEmpty()) {
+            $filePath = $this->generateSpklDocx($lemburPppk, $request, $kpa);
+            $filename = "SPKL_{$request->bulan}_{$request->tahun}_PPPK.docx";
+            return response()->download($filePath, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ])->deleteFileAfterSend(true);
+        }
+
+        // Jika ada keduanya (PNS dan PPPK): kemas dalam ZIP dengan folder PNS/ dan PPPK/
+        $filePns = $this->generateSpklDocx($lemburPns, $request, $kpa);
+        $filePppk = $this->generateSpklDocx($lemburPppk, $request, $kpa);
+
+        $zip = new \ZipArchive();
+        $zipFileName = "SPKL_{$request->bulan}_{$request->tahun}.zip";
+        $zipFilePath = tempnam(sys_get_temp_dir(), 'zip');
+
+        if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            $zip->addFile($filePns, "PNS/SPKL_{$request->bulan}_{$request->tahun}_PNS.docx");
+            $zip->addFile($filePppk, "PPPK/SPKL_{$request->bulan}_{$request->tahun}_PPPK.docx");
+            $zip->close();
+
+            foreach ([$filePns, $filePppk] as $f) {
+                if ($f && file_exists($f)) {
+                    unlink($f);
+                }
+            }
+
+            return response()->download($zipFilePath, $zipFileName, [
+                'Content-Type' => 'application/zip',
+            ])->deleteFileAfterSend(true);
+        } else {
+            return redirect()->back()->with('error', 'Gagal membuat file arsip ZIP untuk SPKL');
+        }
     }
 
     public function laporan(Request $request)
@@ -544,23 +630,65 @@ class SpklController extends Controller
 
         $lembur = $query->get();
 
-        $file1 = $this->buildRekapUang($lembur, $request->bulan, $request->tahun);
-        $file2 = $this->buildLemburBos($lembur, $request->bulan, $request->tahun);
-        $file3 = $this->buildLemburWebGaji($lembur, $request->bulan, $request->tahun);
+        if ($lembur->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada data lembur yang disetujui pada bulan ini.');
+        }
+
+        $lemburPns = $lembur->reject(function ($lp) {
+            return $this->isPppk($lp->pegawai);
+        });
+        $lemburPppk = $lembur->filter(function ($lp) {
+            return $this->isPppk($lp->pegawai);
+        });
 
         $zip = new \ZipArchive();
         $zipFileName = "Rekap_Lembur_{$request->bulan}_{$request->tahun}.zip";
         $zipFilePath = tempnam(sys_get_temp_dir(), 'zip');
 
+        $tempFiles = [];
+
         if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
-            if ($file1)
-                $zip->addFile($file1, "Rekap_Uang_{$request->bulan}_{$request->tahun}.xlsx");
-            if ($file2)
-                $zip->addFile($file2, "Lembur_Bos_{$request->bulan}_{$request->tahun}.xlsx");
-            if ($file3)
-                $zip->addFile($file3, "Lembur_Web_Gaji_{$request->bulan}_{$request->tahun}.xlsx");
+            if ($lemburPns->isNotEmpty()) {
+                $file1Pns = $this->buildRekapUang($lemburPns, $request->bulan, $request->tahun);
+                $file2Pns = $this->buildLemburBos($lemburPns, $request->bulan, $request->tahun);
+                $file3Pns = $this->buildLemburWebGaji($lemburPns, $request->bulan, $request->tahun);
+
+                if ($file1Pns) {
+                    $zip->addFile($file1Pns, "PNS/Rekap_Uang_{$request->bulan}_{$request->tahun}.xlsx");
+                    $tempFiles[] = $file1Pns;
+                }
+                if ($file2Pns) {
+                    $zip->addFile($file2Pns, "PNS/Lembur_Bos_{$request->bulan}_{$request->tahun}.xlsx");
+                    $tempFiles[] = $file2Pns;
+                }
+                if ($file3Pns) {
+                    $zip->addFile($file3Pns, "PNS/Lembur_Web_Gaji_{$request->bulan}_{$request->tahun}.xlsx");
+                    $tempFiles[] = $file3Pns;
+                }
+            }
+
+            if ($lemburPppk->isNotEmpty()) {
+                $file1Pppk = $this->buildRekapUang($lemburPppk, $request->bulan, $request->tahun);
+                $file2Pppk = $this->buildLemburBos($lemburPppk, $request->bulan, $request->tahun);
+                $file3Pppk = $this->buildLemburWebGaji($lemburPppk, $request->bulan, $request->tahun);
+
+                if ($file1Pppk) {
+                    $zip->addFile($file1Pppk, "PPPK/Rekap_Uang_{$request->bulan}_{$request->tahun}.xlsx");
+                    $tempFiles[] = $file1Pppk;
+                }
+                if ($file2Pppk) {
+                    $zip->addFile($file2Pppk, "PPPK/Lembur_Bos_{$request->bulan}_{$request->tahun}.xlsx");
+                    $tempFiles[] = $file2Pppk;
+                }
+                if ($file3Pppk) {
+                    $zip->addFile($file3Pppk, "PPPK/Lembur_Web_Gaji_{$request->bulan}_{$request->tahun}.xlsx");
+                    $tempFiles[] = $file3Pppk;
+                }
+            }
+
             $zip->close();
-            foreach ([$file1, $file2, $file3] as $file) {
+
+            foreach ($tempFiles as $file) {
                 if ($file && file_exists($file)) {
                     unlink($file);
                 }
