@@ -123,6 +123,14 @@
             {{ page.props.errors?.ttd_rekap }}
           </div>
         </div>
+        <div>
+          <label class="block font-bold mb-2">Kategori Pegawai</label>
+          <Select v-model="form.kategori_pegawai" placeholder="Pilih kategori pegawai" :options="kategoriPegawaiOptions"
+            optionLabel="label" optionValue="value" fluid />
+          <div v-if="page.props.errors.kategori_pegawai" class="text-red-500 text-sm mt-2">
+            {{ page.props.errors?.kategori_pegawai }}
+          </div>
+        </div>
       </div>
       <template #footer>
         <Button label="Cancel" @click="createDialog = false" size="small" severity="danger" autofocus />
@@ -401,6 +409,11 @@ watch(
 );
 //print
 const createDialog = ref(false);
+const kategoriPegawaiOptions = ref([
+  { label: "Semua (ZIP jika ada keduanya)", value: "all" },
+  { label: "PNS Saja", value: "pns" },
+  { label: "PPPK Saja", value: "pppk" },
+]);
 const form = useForm({
   _token: null,
   bulan: search.value.bulan,
@@ -412,6 +425,7 @@ const form = useForm({
     "0"
   )}/KP.300/${currentYear}`,
   ttd_rekap: null,
+  kategori_pegawai: "all",
 });
 watch(
   () => createDialog.value,
@@ -423,6 +437,7 @@ watch(
         2,
         "0"
       )}/KP.300/${currentYear}`;
+      form.kategori_pegawai = "all";
     }
   }
 );

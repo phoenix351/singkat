@@ -127,16 +127,22 @@ class LemburController extends Controller
 
         $myTeam = AnggotaTimKerja::from('sulutweb_man_management.keanggotaan_timkerja as mkt')
             ->join('sulutweb_man_management.timkerja as ttk', 'mkt.tim_id', 'ttk.id')
-            ->select(['mkt.*', 'ttk.label as tim_kerja'])
+            ->select(['mkt.*', 'ttk.label as tim_kerja', 'ttk.tahun as tahun'])
             ->where('mkt.pegawai_id', Auth::user()->id)->get();
         $role = Role::currentRole();
         if ($role == 'admin') {
-            $myTeam = TimKerja::where('tahun', date('Y'))
+            $myTeam = TimKerja::orderBy('tahun', 'desc')
                 ->orderBy('label', 'asc')
-                ->select(['id as tim_id', 'label as tim_kerja'])
+                ->select(['id as tim_id', 'label as tim_kerja', 'tahun'])
                 ->get();
         }
         $keanggotaan = $myTeam->pluck('keanggotaan')->toArray();
+        $tahunTim = TimKerja::select('tahun')
+            ->distinct()
+            ->whereNotNull('tahun')
+            ->where('tahun', '!=', '')
+            ->orderBy('tahun', 'desc')
+            ->pluck('tahun');
 
         if ($request->paginated) {
             return response()->json($lembur);
@@ -144,7 +150,8 @@ class LemburController extends Controller
         return Inertia::render('Simple/Lembur', [
             'lembur' => $lembur,
             'tim' => $myTeam,
-            'keanggotaan' => $keanggotaan
+            'keanggotaan' => $keanggotaan,
+            'tahun_tim' => $tahunTim,
         ]);
     }
 

@@ -400,22 +400,37 @@
           </div>
         </div>
         <div v-if="!form.lintas_tim_kerja">
-          <label class="block font-bold mb-2">Tim Kerja</label>
-          <Select
-            placeholder="Pilih tim kerja"
-            :options="tim"
-            class="w-full"
-            showClear
-            filter
-            option-label="tim_kerja"
-            option-value="tim_id"
-            v-model="form.tim_id"
-          />
-          <div
-            v-if="page.props.errors.tim_id"
-            class="text-red-500 text-sm mt-2"
-          >
-            {{ page.props.errors?.tim_id }}
+          <div class="flex flex-col sm:flex-row gap-2">
+            <div class="w-full sm:w-28 shrink-0">
+              <label class="block font-bold mb-2">Tahun</label>
+              <Select
+                placeholder="Pilih tahun"
+                :options="timYearOptions"
+                option-label="label"
+                option-value="value"
+                class="w-full"
+                v-model="selectedTimYear"
+              />
+            </div>
+            <div class="flex-1 min-w-0">
+              <label class="block font-bold mb-2">Tim Kerja</label>
+              <Select
+                placeholder="Pilih tim kerja"
+                :options="filteredTim"
+                class="w-full"
+                showClear
+                filter
+                option-label="tim_kerja"
+                option-value="tim_id"
+                v-model="form.tim_id"
+              />
+              <div
+                v-if="page.props.errors.tim_id"
+                class="text-red-500 text-sm mt-2"
+              >
+                {{ page.props.errors?.tim_id }}
+              </div>
+            </div>
           </div>
         </div>
         <div>
@@ -462,22 +477,37 @@
           </div>
         </div>
         <div v-if="form.lintas_tim_kerja">
-          <label class="block font-bold mb-2">Tim Penanggung Jawab</label>
-          <Select
-            placeholder="Pilih tim penanggung jawab"
-            :options="tim"
-            class="w-full"
-            showClear
-            filter
-            option-label="tim_kerja"
-            option-value="tim_id"
-            v-model="form.tim_penanggung_jawab_id"
-          />
-          <div
-            v-if="page.props.errors.tim_penanggung_jawab_id"
-            class="text-red-500 text-sm mt-2"
-          >
-            {{ page.props.errors?.tim_penanggung_jawab_id }}
+          <div class="flex flex-col sm:flex-row gap-2">
+            <div class="w-full sm:w-28 shrink-0">
+              <label class="block font-bold mb-2">Tahun</label>
+              <Select
+                placeholder="Pilih tahun"
+                :options="timYearOptions"
+                option-label="label"
+                option-value="value"
+                class="w-full"
+                v-model="selectedTimYear"
+              />
+            </div>
+            <div class="flex-1 min-w-0">
+              <label class="block font-bold mb-2">Tim Penanggung Jawab</label>
+              <Select
+                placeholder="Pilih tim penanggung jawab"
+                :options="filteredTim"
+                class="w-full"
+                showClear
+                filter
+                option-label="tim_kerja"
+                option-value="tim_id"
+                v-model="form.tim_penanggung_jawab_id"
+              />
+              <div
+                v-if="page.props.errors.tim_penanggung_jawab_id"
+                class="text-red-500 text-sm mt-2"
+              >
+                {{ page.props.errors?.tim_penanggung_jawab_id }}
+              </div>
+            </div>
           </div>
         </div>
         
@@ -829,6 +859,9 @@ const props = defineProps({
   keanggotaan: {
     type: Array,
   },
+  tahun_tim: {
+    type: Array,
+  },
 });
 const paginatedItem = ref(props.lembur);
 watch(
@@ -875,6 +908,70 @@ watch(searchField, () => delayedFetchData());
 watch(filterModel, () => delayedFetchData(), { deep: true });
 //submit
 const createDialog = ref(false);
+
+const timYearOptions = computed(() => {
+  let years =
+    props.tahun_tim && props.tahun_tim.length > 0
+      ? props.tahun_tim
+      : [
+          ...new Set(
+            (props.tim || [])
+              .map((t) => t.tahun)
+              .filter((y) => y !== null && y !== undefined && y !== "")
+          ),
+        ];
+  if (years.length === 0) years = [currentYear];
+  return years
+    .map((y) => Number(y))
+    .sort((a, b) => b - a)
+    .map((y) => ({ label: y.toString(), value: y }));
+});
+
+const getDefaultTimYear = () => {
+  if (timYearOptions.value.some((y) => y.value === currentYear)) return currentYear;
+  return timYearOptions.value[0]?.value ?? currentYear;
+};
+
+const selectedTimYear = ref(getDefaultTimYear());
+
+watch(
+  timYearOptions,
+  (opts) => {
+    if (opts.length > 0 && !opts.some((y) => y.value === selectedTimYear.value)) {
+      selectedTimYear.value = getDefaultTimYear();
+    }
+  },
+  { immediate: true }
+);
+
+const filteredTim = computed(() => {
+  if (!props.tim) return [];
+  return props.tim.filter((t) => {
+    return !t.tahun || t.tahun == selectedTimYear.value;
+  });
+});
+
+watch(selectedTimYear, () => {
+  if (form.tim_id) {
+    const exists = filteredTim.value.some((t) => t.tim_id == form.tim_id);
+    if (!exists) {
+      form.tim_id = null;
+    }
+  }
+  if (form.tim_penanggung_jawab_id) {
+    const exists = filteredTim.value.some((t) => t.tim_id == form.tim_penanggung_jawab_id);
+    if (!exists) {
+      form.tim_penanggung_jawab_id = null;
+    }
+  }
+});
+
+watch(createDialog, (v) => {
+  if (v) {
+    selectedTimYear.value = getDefaultTimYear();
+  }
+});
+
 const form = useForm({
   _token: null,
   lintas_tim_kerja: null,
