@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\SsoController;
 use App\Http\Controllers\Singkat\AbkController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -11,9 +12,14 @@ use App\Http\Controllers\SKController;
 use App\Http\Controllers\TokenController;
 
 // ROute SSO 
-Route::get('/sso-login', [LoginController::class, 'sso_redirect'])->name('sso-login');
-Route::get('/sso-callback', [LoginController::class, 'sso_callback'])->name('sso-callback');
-Route::get('/sso-api/{nip_lama}', [LoginController::class, 'ssoAPI'])->name('sso-api');
+// Route::get('/sso-login', [LoginController::class, 'sso_redirect'])->name('sso-login');
+// Route::get('/sso-callback', [LoginController::class, 'sso_callback'])->name('sso-callback');
+// Route::get('/sso-api/{nip_lama}', [LoginController::class, 'ssoAPI'])->name('sso-api');
+
+Route::get('/sso-login', [SsoController::class, 'ssoRedirect'])->name('sso-login');
+Route::get('/sso-callback', [SsoController::class, 'ssoCallback'])->name('sso-callback');
+Route::get('/sso-search', [SsoController::class, 'ssoAPI'])->name('sso-api');
+Route::get('/sso-logout', [SsoController::class, 'ssoLogout'])->name('sso-logout');
 
 Route::get('/', function () {
     $user = Auth::user();
@@ -46,8 +52,8 @@ Route::get('/token', function () {
 // Ekspor ABK
 
 require __DIR__ . '/auth.php';
-require __DIR__ .'/singkat.php';
-require __DIR__ .'/simple.php';
+require __DIR__ . '/singkat.php';
+require __DIR__ . '/simple.php';
 require __DIR__ . '/meeting.php';
 require __DIR__ . '/mmanagement.php';
 require __DIR__ . '/se2026.php';

@@ -36,9 +36,11 @@ return [
     ],
 
     'sso' => [
-        'client_id' => env('SSO_CLIENT_ID'),
-        'client_secret' => env('SSO_CLIENT_SECRET'),
-        'redirect_uri' => env('SSO_REDIRECT_URL'),
+        'base_url' => env('KEYCLOAK_URL', 'https://accounts.bps.go.id'),
+        'realm' => env('REALM', 'pegawai'),
+        'client_id' => env('CLIENT_ID', env('SSO_CLIENT_ID')),
+        'client_secret' => env('CLIENT_SECRET', env('SSO_CLIENT_SECRET')),
+        'redirect_uri' => env('REDIRECT_URI', env('SSO_REDIRECT_URL', 'http://localhost:8000/sso-callback')),
     ],
 
 ];
