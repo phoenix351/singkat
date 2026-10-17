@@ -221,12 +221,11 @@ class SpklController extends Controller
                 }
                 $tgl = Carbon::parse($tanggal)->locale('id');
                 $presensi->addCell(2000)->addText($tgl->translatedFormat('l, j F Y'));
-                $presensi->addCell(2000)->addText($firstItem->jumlah_jam);
+                $maxDurasi = $dateItems->max('jumlah_jam');
+                $presensi->addCell(2000)->addText((string) $maxDurasi);
                 $jam_berangkat = $firstItem->jam_berangkat;
                 $jam_pulang = $firstItem->jam_pulang;
                 $dayOfWeek = $tgl->dayOfWeekIso;
-
-                $maxDurasi = $dateItems->max('jumlah_jam');
 
                 $lamanya = 0;
                 $tampil_berangkat = '-';
