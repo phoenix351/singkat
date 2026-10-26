@@ -20,8 +20,8 @@
             <button @click="toggleNotificationMenu"
               class="relative p-2 text-gray-500 hover:text-gray-700 transition-colors flex items-center justify-center focus:outline-none"
               :title="totalNotificationCount > 0
-                  ? `Ada ${totalNotificationCount} notifikasi yang perlu perhatian`
-                  : 'Tidak ada notifikasi'
+                ? `Ada ${totalNotificationCount} notifikasi yang perlu perhatian`
+                : 'Tidak ada notifikasi'
                 ">
               <OverlayBadge :value="totalNotificationCount || null" severity="danger" size="small">
                 <i class="pi pi-bell text-xl"></i>
@@ -138,7 +138,7 @@
       <footer
         class="bg-white py-4 px-6 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
         <p class="text-xs text-slate-500 dark:text-slate-400">
-          &copy; 2026 Simple versi 1.2.1 &mdash;
+          &copy; 2026 Simple versi 1.2.2 &mdash;
           <a href="https://sulut.bps.go.id" class="font-bold">BPS Provinsi Sulawesi Utara</a>
           dibuat oleh:
           <a href="https://github.com/rifqind" class="font-bold">AuraSphere</a>, didukung
