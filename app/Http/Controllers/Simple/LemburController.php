@@ -230,41 +230,80 @@ class LemburController extends Controller
                 return redirect()->route('simple.lembur')->with('error', 'Terdapat error : ' . $th->getMessage());
             }
         }
+        $rawTanggal = $request->input('tanggal');
+        if (is_array($rawTanggal)) {
+            $filteredTanggal = array_values(array_filter($rawTanggal));
+            $request->merge(['tanggal' => $filteredTanggal]);
+        }
+
         $validated = $request->validate([
             'tim_id' => ['nullable', 'integer'],
             'tim_penanggung_jawab_id' => ['nullable', 'integer', 'required_without:tim_id'],
             'anggotalembur' => ['required', 'array'],
-            'tanggal' => ['required', 'date'],
+            'tanggal' => ['required'],
+            'tanggal.*' => ['date'],
             'jumlah_jam' => ['required', 'numeric', 'max:24'],
             'maksud_lembur' => ['required', 'string'],
             'link_dokumentasi' => ['required', 'string']
         ], [
             'anggotalembur.required' => 'Anggota tim harus diisi',
             'tanggal.required' => 'Tanggal harus diisi',
+            'tanggal.*.date' => 'Format tanggal tidak valid',
             'jumlah_jam.required' => 'Jumlah jam harus diisi',
             'jumlah_jam.max' => 'Jumlah jam tidak boleh lebih dari 24',
             'maksud_lembur.required' => 'Maksud lembur harus diisi',
             'link_dokumentasi.required' => 'Link dokumentasi harus diisi',
             'tim_penanggung_jawab_id.required_without' => 'Tim penanggung jawab harus dipilih untuk lembur lintas tim',
         ]);
+
+        $tanggalInput = $validated['tanggal'];
+        if (is_array($tanggalInput)) {
+            $startDate = \Carbon\Carbon::parse($tanggalInput[0])->setTimezone('Asia/Makassar')->startOfDay();
+            $endDate = isset($tanggalInput[1])
+                ? \Carbon\Carbon::parse($tanggalInput[1])->setTimezone('Asia/Makassar')->startOfDay()
+                : $startDate->copy();
+        } else {
+            $startDate = \Carbon\Carbon::parse($tanggalInput)->setTimezone('Asia/Makassar')->startOfDay();
+            $endDate = $startDate->copy();
+        }
+
+        if ($endDate->lt($startDate)) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        if ($startDate->diffInDays($endDate) > 31) {
+            return back()->withErrors(['tanggal' => 'Rentang tanggal maksimal 31 hari'])->withInput();
+        }
+
+        $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+
         try {
             //code...
             DB::connection('sulutweb_simple')->beginTransaction();
-            $validated['tanggal'] = \Carbon\Carbon::parse($validated['tanggal'])->setTimezone('Asia/Makassar')->format('Y-m-d');
-            $lembur = Lembur::create($validated);
-            foreach ($validated['anggotalembur'] as $key => $anggota) {
-                # code...
-                $validated['pegawai_id'] = $anggota;
-                $validated['lembur_id'] = $lembur->id;
-                $validated['created_by'] = Auth::id();
-                $validated['edited_by'] = Auth::id();
-                LemburPegawai::firstOrCreate(
-                    [
-                        'lembur_id' => $lembur->id,
-                        'pegawai_id' => $anggota,
-                    ],
-                    $validated
-                );
+            foreach ($period as $dateObj) {
+                $tanggalStr = $dateObj->format('Y-m-d');
+                $lembur = Lembur::create([
+                    'maksud_lembur' => $validated['maksud_lembur'],
+                    'tim_id' => $validated['tim_id'] ?? null,
+                    'tim_penanggung_jawab_id' => $validated['tim_penanggung_jawab_id'] ?? null,
+                    'link_dokumentasi' => $validated['link_dokumentasi'],
+                ]);
+                foreach ($validated['anggotalembur'] as $anggota) {
+                    LemburPegawai::firstOrCreate(
+                        [
+                            'lembur_id' => $lembur->id,
+                            'pegawai_id' => $anggota,
+                        ],
+                        [
+                            'lembur_id' => $lembur->id,
+                            'pegawai_id' => $anggota,
+                            'tanggal' => $tanggalStr,
+                            'jumlah_jam' => $validated['jumlah_jam'],
+                            'created_by' => Auth::id(),
+                            'edited_by' => Auth::id(),
+                        ]
+                    );
+                }
             }
             DB::connection('sulutweb_simple')->commit();
             return redirect()->route('simple.lembur')->with('success', 'Berhasil menambahkan data');

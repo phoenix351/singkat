@@ -539,14 +539,23 @@
 
         <template v-if="form.anggotalembur && form.anggotalembur.length > 0">
           <div>
-            <label class="block font-bold mb-2">Tanggal</label>
+            <label class="block font-bold mb-2">Tanggal (Bisa 1 Hari atau Rentang Tanggal)</label>
             <DatePicker
               v-model="form.tanggal"
+              selectionMode="range"
+              :manualInput="false"
+              hideOnRangeSelection
               fluid
               showIcon
               dateFormat="dd-mm-yy"
-              placeholder="Isi tanggal lembur"
+              placeholder="Pilih tanggal atau rentang tanggal lembur"
             />
+            <div
+              v-if="selectedDateRangeInfo"
+              class="text-xs text-gray-600 mt-1"
+            >
+              {{ selectedDateRangeInfo }}
+            </div>
             <div
               v-if="page.props.errors.tanggal"
               class="text-red-500 text-sm mt-2"
@@ -754,7 +763,7 @@ import SimpleLayout from "@/Layouts/Simple/SimpleLayout.vue";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { useConfirm } from "primevue";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 
 const isSidebarOpen = ref(true);
 onMounted(() => {
@@ -952,6 +961,7 @@ const filteredTim = computed(() => {
 });
 
 watch(selectedTimYear, () => {
+  if (skipWatch) return;
   if (form.tim_id) {
     const exists = filteredTim.value.some((t) => t.tim_id == form.tim_id);
     if (!exists) {
@@ -967,6 +977,7 @@ watch(selectedTimYear, () => {
 });
 
 watch(createDialog, (v) => {
+  if (skipWatch) return;
   if (v) {
     selectedTimYear.value = getDefaultTimYear();
   }
@@ -984,46 +995,62 @@ const form = useForm({
   add_pegawai: false,
   link_dokumentasi: null,
 });
+
+const selectedDateRangeInfo = computed(() => {
+  if (!form.tanggal) return "";
+  const dates = Array.isArray(form.tanggal)
+    ? form.tanggal.filter(Boolean)
+    : [form.tanggal];
+  if (dates.length === 0) return "";
+  const start = new Date(dates[0]);
+  const end = dates[1] ? new Date(dates[1]) : new Date(dates[0]);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  const diffDays = Math.round(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+  if (diffDays === 1) {
+    return `1 hari terpilih (${formatDateOnly(start)})`;
+  }
+  return `${diffDays} hari terpilih (${formatDateOnly(start)} s.d. ${formatDateOnly(end)}) — akan membentuk ${diffDays} baris pengajuan lembur`;
+});
 const anggotaTim = ref([]);
 const maksudLembur = ref([]);
 let skipWatch = false;
 watch(
   () => form.lintas_tim_kerja,
   async (lintas_tim) => {
+    if (skipWatch) return;
     if (lintas_tim) {
       form.tim_id = null;
-      if (!skipWatch) form.anggotalembur = [];
+      form.anggotalembur = [];
       const { data: anggota } = await axios.get(
         route("man-management.fetch-anggota-tim", { id: "all" })
       );
       anggotaTim.value = anggota;
-      // if (!skipWatch) form.anggotalembur = [...anggota.map((a) => a.value)];
-      skipWatch = false;
     } else {
       form.tim_penanggung_jawab_id = null;
+      form.anggotalembur = [];
     }
   }
 );
 watch(
   () => form.tim_id,
   async (tim) => {
+    if (skipWatch) return;
     if (tim) {
-      if (!skipWatch) form.anggotalembur = [];
+      form.anggotalembur = [];
       const { data: anggota } = await axios.get(
         route("man-management.fetch-anggota-tim", { id: tim })
       );
       anggotaTim.value = anggota;
-      if (!skipWatch) form.anggotalembur = [...anggota.map((a) => a.value)];
+      form.anggotalembur = [...anggota.map((a) => a.value)];
 
-      if (!skipWatch) form.maksud_lembur = null;
+      form.maksud_lembur = null;
       const { data: maksud } = await axios.get(
         route("simple.fetch-maksud", { tim_id: tim })
       );
       maksudLembur.value = maksud;
-      skipWatch = false;
     } else {
       form.anggotalembur = [];
-      skipWatch = false;
     }
   }
 );
@@ -1069,6 +1096,7 @@ const submit = async ({ patch = false, add_pegawai = false }) => {
         onSuccess: () => {
           createDialog.value = false;
           form.reset();
+          fetchData();
         },
       });
     }
@@ -1168,38 +1196,56 @@ const toDocumentation = (link) => {
   window.open(url, "_blank", "noopener,noreferrer");
 };
 const copyData = async (data) => {
-  const isLintasTim = !data.tim_id;
-  if (form.tim_id !== data.tim_id) {
-    skipWatch = true;
-  } else {
-    if (anggotaTim.value.length === 0) {
-      const timId = data.tim_id ?? "all";
-      const { data: anggota } = await axios.get(
-        route("man-management.fetch-anggota-tim", { id: timId })
-      );
-      anggotaTim.value = anggota;
+  skipWatch = true;
+  try {
+    const isLintasTim = !data.tim_id;
+    const targetTimId = isLintasTim
+      ? data.tim_penanggung_jawab_id
+      : data.tim_id;
+    const matchedTim = (props.tim || []).find((t) => t.tim_id == targetTimId);
+    if (matchedTim && matchedTim.tahun) {
+      selectedTimYear.value = Number(matchedTim.tahun);
+    } else {
+      selectedTimYear.value = getDefaultTimYear();
     }
-    if (!isLintasTim && maksudLembur.value.length === 0) {
+
+    const timId = data.tim_id ?? "all";
+    const { data: anggota } = await axios.get(
+      route("man-management.fetch-anggota-tim", { id: timId })
+    );
+    anggotaTim.value = anggota;
+
+    if (!isLintasTim && data.tim_id) {
       const { data: maksud } = await axios.get(
         route("simple.fetch-maksud", { tim_id: data.tim_id })
       );
       maksudLembur.value = maksud;
     }
-  }
 
-  form.lintas_tim_kerja = isLintasTim ? true : null;
-  form.tim_id = data.tim_id;
-  form.tim_penanggung_jawab_id = data.tim_penanggung_jawab_id;
-  form.anggotalembur = data.pegawai
-    ? data.pegawai.map((p) => p.pegawai_id)
-    : [];
-  form.tanggal = null;
-  form.jumlah_jam =
-    data.pegawai && data.pegawai.length > 0 ? data.pegawai[0].jumlah_jam : null;
-  form.maksud_lembur = data.maksud_lembur;
-  form.add_pegawai = false;
-  form.link_dokumentasi = null;
-  createDialog.value = true;
+    const useStringValue =
+      anggota.length > 0 && typeof anggota[0].value === "string";
+
+    form.lintas_tim_kerja = isLintasTim;
+    form.tim_id = data.tim_id;
+    form.tim_penanggung_jawab_id = data.tim_penanggung_jawab_id;
+    form.anggotalembur = data.pegawai
+      ? data.pegawai.map((p) =>
+          useStringValue ? String(p.pegawai_id) : Number(p.pegawai_id)
+        )
+      : [];
+    form.tanggal = null;
+    form.jumlah_jam =
+      data.pegawai && data.pegawai.length > 0
+        ? data.pegawai[0].jumlah_jam
+        : null;
+    form.maksud_lembur = data.maksud_lembur;
+    form.add_pegawai = false;
+    form.link_dokumentasi = null;
+    createDialog.value = true;
+  } finally {
+    await nextTick();
+    skipWatch = false;
+  }
 };
 </script>
 
