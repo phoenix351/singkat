@@ -118,7 +118,7 @@
                 value="Belum diisi"
               />
               <Button
-                v-if="!data.output && data.status != '4'"
+                v-if="!data.output"
                 @click="fillOutput(data)"
                 v-tooltip.top="'Isi output'"
                 icon="pi pi-pencil"
@@ -145,6 +145,20 @@
               value="Tidak ada catatan"
             />
             <span v-else>{{ data.catatan }}</span>
+          </template>
+        </Column>
+        <Column header="Link">
+          <template #body="{ data }">
+            <Button
+              v-if="data?.lembur?.link_dokumentasi"
+              icon="pi pi-external-link"
+              variant="outlined"
+              rounded
+              class="mr-2"
+              :severity="'info'"
+              @click="toDocumentation(data?.lembur?.link_dokumentasi)"
+            ></Button>
+            <div v-else>-</div>
           </template>
         </Column>
         <Column
@@ -395,6 +409,10 @@ const submit = async (params) => {
       },
     });
   } catch (error) {}
+};
+const toDocumentation = (link) => {
+  const url = link.startsWith("http") ? link : `https://${link}`;
+  window.open(url, "_blank", "noopener,noreferrer");
 };
 </script>
 
