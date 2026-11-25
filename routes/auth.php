@@ -18,6 +18,12 @@ Route::middleware('guest')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    Route::get('auth/local-users', [AuthenticatedSessionController::class, 'localUsers'])
+        ->name('auth.local-users');
+
+    Route::post('auth/local-login', [AuthenticatedSessionController::class, 'localLogin'])
+        ->name('auth.local-login');
+
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
